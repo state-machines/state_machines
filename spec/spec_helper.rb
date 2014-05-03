@@ -1,3 +1,4 @@
+require 'rspec/its'
 require 'state_machines'
 require 'stringio'
 Dir['./spec/support/**/*.rb'].sort.each { |f| require f }

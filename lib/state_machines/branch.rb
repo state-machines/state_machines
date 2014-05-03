@@ -1,7 +1,3 @@
-require 'state_machines/matcher'
-require 'state_machines/eval_helpers'
-require 'state_machines/assertions'
-
 module StateMachines
   # Represents a set of requirements that must be met in order for a transition
   # or callback to occur.  Branches verify that the event, from state, and to

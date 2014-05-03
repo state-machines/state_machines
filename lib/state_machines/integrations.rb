@@ -1,11 +1,4 @@
 module StateMachines
-  # An invalid integration was specified
-  class IntegrationNotFound < Error
-    def initialize(name)
-      super(nil, "#{name.inspect} is an invalid integration")
-    end
-  end
-  
   # Integrations allow state machines to take advantage of features within the
   # context of a particular library.  This is currently most useful with
   # database libraries.  For example, the various database integrations allow
@@ -25,89 +18,104 @@ module StateMachines
   # built-in integrations for more information about how to define additional
   # integrations.
   module Integrations
-    # Attempts to find an integration that matches the given class.  This will
-    # look through all of the built-in integrations under the StateMachines::Integrations
-    # namespace and find one that successfully matches the class.
-    # 
-    # == Examples
-    # 
-    #   class Vehicle
-    #   end
-    #   
-    #   class ActiveModelVehicle
-    #     include ActiveModel::Observing
-    #     include ActiveModel::Validations
-    #   end
-    #   
-    #   class ActiveRecordVehicle < ActiveRecord::Base
-    #   end
-    #   
-    #   class DataMapperVehicle
-    #     include DataMapper::Resource
-    #   end
-    #   
-    #   class MongoidVehicle
-    #     include Mongoid::Document
-    #   end
-    #   
-    #   class MongoMapperVehicle
-    #     include MongoMapper::Document
-    #   end
-    #   
-    #   class SequelVehicle < Sequel::Model
-    #   end
-    #   
-    #   StateMachines::Integrations.match(Vehicle)             # => nil
-    #   StateMachines::Integrations.match(ActiveModelVehicle)  # => StateMachines::Integrations::ActiveModel
-    #   StateMachines::Integrations.match(ActiveRecordVehicle) # => StateMachines::Integrations::ActiveRecord
-    #   StateMachines::Integrations.match(DataMapperVehicle)   # => StateMachines::Integrations::DataMapper
-    #   StateMachines::Integrations.match(MongoidVehicle)      # => StateMachines::Integrations::Mongoid
-    #   StateMachines::Integrations.match(MongoMapperVehicle)  # => StateMachines::Integrations::MongoMapper
-    #   StateMachines::Integrations.match(SequelVehicle)       # => StateMachines::Integrations::Sequel
-    def self.match(klass)
-      all.detect {|integration| integration.matches?(klass)}
-    end
-    
-    # Attempts to find an integration that matches the given list of ancestors.
-    # This will look through all of the built-in integrations under the StateMachines::Integrations
-    # namespace and find one that successfully matches one of the ancestors.
-    # 
-    # == Examples
-    # 
-    #   StateMachines::Integrations.match([])                    # => nil
-    #   StateMachines::Integrations.match(['ActiveRecord::Base') # => StateMachines::Integrations::ActiveModel
-    def self.match_ancestors(ancestors)
-      all.detect {|integration| integration.matches_ancestors?(ancestors)}
-    end
-    
-    # Finds an integration with the given name.  If the integration cannot be
-    # found, then a NameError exception will be raised.
-    # 
-    # == Examples
-    # 
-    #   StateMachines::Integrations.find_by_name(:active_record) # => StateMachines::Integrations::ActiveRecord
-    #   StateMachines::Integrations.find_by_name(:active_model)  # => StateMachines::Integrations::ActiveModel
-    #   StateMachines::Integrations.find_by_name(:data_mapper)   # => StateMachines::Integrations::DataMapper
-    #   StateMachines::Integrations.find_by_name(:mongoid)       # => StateMachines::Integrations::Mongoid
-    #   StateMachines::Integrations.find_by_name(:mongo_mapper)  # => StateMachines::Integrations::MongoMapper
-    #   StateMachines::Integrations.find_by_name(:sequel)        # => StateMachines::Integrations::Sequel
-    #   StateMachines::Integrations.find_by_name(:invalid)       # => StateMachines::IntegrationNotFound: :invalid is an invalid integration
-    def self.find_by_name(name)
-      all.detect {|integration| integration.integration_name == name} || raise(IntegrationNotFound.new(name))
-    end
-    
-    # Gets a list of all of the available integrations for use.  This will
-    # always list the ActiveModel integration last.
-    # 
-    # == Example
-    # 
-    #   StateMachines::Integrations.all
-    #   # => [StateMachines::Integrations::ActiveRecord, StateMachines::Integrations::DataMapper
-    #   #     StateMachines::Integrations::Mongoid, StateMachines::Integrations::MongoMapper,
-    #   #     StateMachines::Integrations::Sequel, StateMachines::Integrations::ActiveModel]
-    def self.all
-      constants = self.constants.map {|c| c.to_s}.select {|c| c }.sort
-      constants.map {|c| const_get(c)}
+    @integrations = Set.new
+
+    class << self
+      #  Register integration
+      def register(arg)
+        #TODO check name conflict
+        case arg.class.to_s
+          when 'Module'
+            add(arg)
+          else
+            fail IntegrationError
+        end
+        true
+      end
+
+
+      # Gets a list of all of the available integrations for use.
+      #
+      # == Example
+      #
+      #   StateMachines::Integrations.integrations
+      #   # => []
+      #   StateMachines::Integrations.register(StateMachines::Integrations::ActiveModel)
+      #   StateMachines::Integrations.integrations
+      #   # => [StateMachines::Integrations::ActiveModel]
+      def integrations
+        # Register all namespaced integrations
+        name_spaced_integrations
+        @integrations
+      end
+
+
+      # Attempts to find an integration that matches the given class.  This will
+      # look through all of the built-in integrations under the StateMachines::Integrations
+      # namespace and find one that successfully matches the class.
+      # 
+      # == Examples
+      # 
+      #   class Vehicle
+      #   end
+      #   
+      #   class ActiveModelVehicle
+      #     include ActiveModel::Observing
+      #     include ActiveModel::Validations
+      #   end
+      #   
+      #   class ActiveRecordVehicle < ActiveRecord::Base
+      #   end
+      #   
+      #   StateMachines::Integrations.match(Vehicle)             # => nil
+      #   StateMachines::Integrations.match(ActiveModelVehicle)  # => StateMachines::Integrations::ActiveModel
+      #   StateMachines::Integrations.match(ActiveRecordVehicle) # => StateMachines::Integrations::ActiveRecord
+      def match(klass)
+        integrations.detect { |integration| integration.matches?(klass) }
+      end
+
+      # Attempts to find an integration that matches the given list of ancestors.
+      # This will look through all of the built-in integrations under the StateMachines::Integrations
+      # namespace and find one that successfully matches one of the ancestors.
+      #
+      # == Examples
+      #
+      #   StateMachines::Integrations.match_ancestors([])                    # => nil
+      #   StateMachines::Integrations.match_ancestors(['ActiveRecord::Base']) # => StateMachines::Integrations::ActiveModel
+      def match_ancestors(ancestors)
+        integrations.detect { |integration| integration.matches_ancestors?(ancestors) }
+      end
+
+      # Finds an integration with the given name.  If the integration cannot be
+      # found, then a NameError exception will be raised.
+      #
+      # == Examples
+      #
+      #   StateMachines::Integrations.find_by_name(:active_model)  # => StateMachines::Integrations::ActiveModel
+      #   StateMachines::Integrations.find_by_name(:active_record) # => StateMachines::Integrations::ActiveRecord
+      #   StateMachines::Integrations.find_by_name(:invalid)       # => StateMachines::IntegrationNotFound: :invalid is an invalid integration
+      def find_by_name(name)
+        integrations.detect { |integration| integration.integration_name == name } || raise(IntegrationNotFound.new(name))
+      end
+
+
+      private
+
+      def name_spaced_integrations
+        self.constants.each do |const|
+          integration = self.const_get(const)
+          add(integration) if integration.respond_to?(:integration_name)
+        end
+      end
+
+      def add(integration)
+        @integrations << integration
+      end
+
+      def reset
+        @integrations = Set.new
+        name_spaced_integrations
+      end
     end
   end
 end

@@ -47,4 +47,13 @@ def assert_instance_of(klass, obj)
   expect(obj).to be_a klass
 end
 
+def assert_throws(symbol, &block)
+  expect(block).to throw_symbol(symbol)
+end
+
+def assert_match(value, obj)
+  expect(obj).to match(value)
+end
+
+
 

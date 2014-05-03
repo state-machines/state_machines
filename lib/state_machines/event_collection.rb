@@ -1,12 +1,10 @@
-require 'state_machines/node_collection'
-
 module StateMachines
   # Represents a collection of events in a state machine
   class EventCollection < NodeCollection
     def initialize(machine) #:nodoc:
       super(machine, :index => [:name, :qualified_name])
     end
-    
+
     # Gets the list of events that can be fired on the given object.
     # 
     # Valid requirement options:
@@ -41,9 +39,9 @@ module StateMachines
     #   vehicle.state = 'idling'
     #   events.valid_for(vehicle)           # => [#<StateMachines::Event name=:park transitions=[:idling => :parked]>]
     def valid_for(object, requirements = {})
-      match(requirements).select {|event| event.can_fire?(object, requirements)}
+      match(requirements).select { |event| event.can_fire?(object, requirements) }
     end
-    
+
     # Gets the list of transitions that can be run on the given object.
     # 
     # Valid requirement options:
@@ -81,9 +79,9 @@ module StateMachines
     #   # Search for explicit transitions regardless of the current state
     #   events.transitions_for(vehicle, :from => :parked) # => [#<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>]
     def transitions_for(object, requirements = {})
-      match(requirements).map {|event| event.transition_for(object, requirements)}.compact
+      match(requirements).map { |event| event.transition_for(object, requirements) }.compact
     end
-    
+
     # Gets the transition that should be performed for the event stored in the
     # given object's event attribute.  This also takes an additional parameter
     # for automatically invalidating the object if the event or transition are
@@ -115,27 +113,27 @@ module StateMachines
     #   events.attribute_transition_for(vehicle)    # => #<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>
     def attribute_transition_for(object, invalidate = false)
       return unless machine.action
-      
-      result = machine.read(object, :event_transition) || if event_name = machine.read(object, :event)
-        if event = self[event_name.to_sym, :name]
-          event.transition_for(object) || begin
-            # No valid transition: invalidate
-            machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
-            false
-          end
-        else
-          # Event is unknown: invalidate
-          machine.invalidate(object, :event, :invalid) if invalidate
-          false
-        end
-      end
-      
-      result
+
+      # TODO, simplify
+      machine.read(object, :event_transition) || if event_name = machine.read(object, :event)
+                                                   if event = self[event_name.to_sym, :name]
+                                                     event.transition_for(object) || begin
+                                                                                       # No valid transition: invalidate
+                                                       machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
+                                                       false
+                                                     end
+                                                   else
+                                                     # Event is unknown: invalidate
+                                                     machine.invalidate(object, :event, :invalid) if invalidate
+                                                     false
+                                                   end
+                                                 end
+
     end
-    
+
     private
-      def match(requirements) #:nodoc:
-        requirements && requirements[:on] ? [fetch(requirements.delete(:on))] : self
-      end
+    def match(requirements) #:nodoc:
+      requirements && requirements[:on] ? [fetch(requirements.delete(:on))] : self
+    end
   end
 end

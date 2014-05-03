@@ -521,6 +521,7 @@ describe StateMachines::Machine do
 
     after(:all) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -612,6 +613,7 @@ describe StateMachines::Machine do
     after(:each) do
       self.class.send(:remove_const, 'Vehicle')
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -681,6 +683,7 @@ describe StateMachines::Machine do
 
     after(:each) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -942,6 +945,7 @@ describe StateMachines::Machine do
 
     after(:each) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -986,6 +990,7 @@ describe StateMachines::Machine do
 
     after(:each) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -1625,6 +1630,7 @@ describe StateMachines::Machine do
     after(:each) do
       $stderr = @original_stderr
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
 
 
@@ -1879,6 +1885,7 @@ describe StateMachines::Machine do
     after(:each) do
       $stderr = @original_stderr
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -2343,11 +2350,11 @@ describe StateMachines::Machine do
     let!(:same_event) { machine.event(:ignite) }
 
     it 'should_not_create_new_event ' do
-      assert_same event, same_event
+      expect(event).to equal(same_event)
     end
 
     it 'should_allow_accessing_event_without_block ' do
-      assert_equal event, machine.event(:ignite)
+      expect(machine.event(:ignite)).to eq(event)
     end
   end
 
@@ -3028,6 +3035,7 @@ describe StateMachines::Machine do
 
     after(:each) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 
@@ -3149,6 +3157,7 @@ describe StateMachines::Machine do
 
     after(:each) do
       StateMachines::Integrations.send(:remove_const, 'Custom')
+      StateMachines::Integrations.send(:reset)
     end
   end
 

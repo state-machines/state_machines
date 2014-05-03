@@ -1,12 +1,10 @@
-require 'state_machines/node_collection'
-
 module StateMachines
   # Represents a collection of states in a state machine
   class StateCollection < NodeCollection
     def initialize(machine) #:nodoc:
       super(machine, :index => [:name, :qualified_name, :value])
     end
-    
+
     # Determines whether the given object is in a specific state.  If the
     # object's current value doesn't match the state, then this will return
     # false, otherwise true.  If the given state is unknown, then an IndexError
@@ -29,7 +27,7 @@ module StateMachines
     def matches?(object, name)
       fetch(name).matches?(machine.read(object, :state))
     end
-    
+
     # Determines the current state of the given object as configured by this
     # state machine.  This will attempt to find a known state that matches
     # the value of the attribute on the object.
@@ -54,9 +52,9 @@ module StateMachines
     #   states.match(vehicle)         # => nil
     def match(object)
       value = machine.read(object, :state)
-      self[value, :value] || detect {|state| state.matches?(value)}
+      self[value, :value] || detect { |state| state.matches?(value) }
     end
-    
+
     # Determines the current state of the given object as configured by this
     # state machine.  If no state is found, then an ArgumentError will be
     # raised.
@@ -79,7 +77,7 @@ module StateMachines
     def match!(object)
       match(object) || raise(ArgumentError, "#{machine.read(object, :state).inspect} is not a known #{machine.name} value")
     end
-    
+
     # Gets the order in which states should be displayed based on where they
     # were first referenced.  This will order states in the following priority:
     # 
@@ -91,22 +89,22 @@ module StateMachines
     # 
     # This order will determine how the GraphViz visualizations are rendered.
     def by_priority
-      order = select {|state| state.initial}.map {|state| state.name}
-      
-      machine.events.each {|event| order += event.known_states}
-      order += select {|state| state.context_methods.any?}.map {|state| state.name}
-      order += keys(:name) - machine.callbacks.values.flatten.map {|callback| callback.known_states}.flatten
+      order = select { |state| state.initial }.map { |state| state.name }
+
+      machine.events.each { |event| order += event.known_states }
+      order += select { |state| state.context_methods.any? }.map { |state| state.name }
+      order += keys(:name) - machine.callbacks.values.flatten.map { |callback| callback.known_states }.flatten
       order += keys(:name)
-      
+
       order.uniq!
-      order.map! {|name| self[name]}
+      order.map! { |name| self[name] }
       order
     end
-    
+
     private
-      # Gets the value for the given attribute on the node
-      def value(node, attribute)
-        attribute == :value ? node.value(false) : super
-      end
+    # Gets the value for the given attribute on the node
+    def value(node, attribute)
+      attribute == :value ? node.value(false) : super
+    end
   end
 end

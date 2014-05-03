@@ -1,9 +1,3 @@
-require 'state_machines/transition'
-require 'state_machines/branch'
-require 'state_machines/assertions'
-require 'state_machines/matcher_helpers'
-require 'state_machines/error'
-
 module StateMachines
   # An invalid event was specified
   class InvalidEvent < Error

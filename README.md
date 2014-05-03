@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/seuros/state_machines.svg?branch=master)](https://travis-ci.org/seuros/state_machines)
+[![Code Climate](https://codeclimate.com/github/seuros/state_machines.png)](https://codeclimate.com/github/seuros/state_machines)
 # State Machines
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
@@ -19,6 +21,29 @@ Or install it yourself as:
 ## Usage
 
 TODO: Write usage instructions here
+
+## Dependencies
+
+Ruby versions officially supported and tested:
+
+* Ruby (MRI) 1.9.3+
+* JRuby (1.9)
+* Rubinius
+
+
+
+For graphing state machine:
+
+* [state_machines-graphviz](http://github.com/seuros/state_machines-graphviz)
+
+For documenting state machines:
+
+* [state_machines-yard](http://github.com/seuros/state_machines-yard)
+
+
+## TODO
+
+Add matchers/assertions for rspec and minitest
 
 ## Contributing
 

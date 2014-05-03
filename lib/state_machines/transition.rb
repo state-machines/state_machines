@@ -1,6 +1,3 @@
-require 'state_machines/transition_collection'
-require 'state_machines/error'
-
 module StateMachines
   # An invalid transition was attempted
   class InvalidTransition < Error

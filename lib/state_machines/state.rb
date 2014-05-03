@@ -1,6 +1,3 @@
-require 'state_machines/assertions'
-require 'state_machines/state_context'
-
 module StateMachines
   # A state defines a value that an attribute can be in after being transitioned
   # 0 or more times.  States can represent a value of any type in Ruby, though
