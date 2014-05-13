@@ -21,7 +21,6 @@ require 'state_machines/transition'
 require 'state_machines/transition_collection'
 
 require 'state_machines/branch'
-require 'state_machines/error'
 
 require 'state_machines/helper_module'
 require 'state_machines/state'
