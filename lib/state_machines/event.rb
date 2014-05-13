@@ -1,16 +1,4 @@
 module StateMachines
-  # An invalid event was specified
-  class InvalidEvent < Error
-    # The event that was attempted to be run
-    attr_reader :event
-
-    def initialize(object, event_name) #:nodoc:
-      @event = event_name
-
-      super(object, "#{event.inspect} is an unknown state machine event")
-    end
-  end
-
   # An event defines an action that transitions an attribute from one state to
   # another.  The state that an attribute is transitioned to depends on the
   # branches configured for the event.
@@ -52,8 +40,8 @@ module StateMachines
       reset
 
       # Output a warning if another event has a conflicting qualified name
-      if conflict = machine.owner_class.state_machines.detect { |other_name, other_machine| other_machine != @machine && other_machine.events[qualified_name, :qualified_name] }
-        name, other_machine = conflict
+      if conflict = machine.owner_class.state_machines.detect { |_other_name, other_machine| other_machine != @machine && other_machine.events[qualified_name, :qualified_name] }
+        _name, other_machine = conflict
         warn "Event #{qualified_name.inspect} for #{machine.name.inspect} is already defined in #{other_machine.name.inspect}"
       else
         add_actions

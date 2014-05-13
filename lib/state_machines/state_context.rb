@@ -1,7 +1,5 @@
 module StateMachines
-  # A method was called in an invalid state context
-  class InvalidContext < Error
-  end
+
   
   # Represents a module which will get evaluated within the context of a state.
   # 

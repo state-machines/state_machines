@@ -112,7 +112,7 @@ module StateMachines
         @integrations << integration
       end
 
-      def reset
+      def reset # testing only
         @integrations = Set.new
         name_spaced_integrations
       end
