@@ -1,6 +1,0 @@
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/model_base')
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/vehicle')
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/car')
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/auto_shop')
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/motorcycle')
-require File.expand_path(File.dirname(__FILE__) + '/../internal/app/models/traffic_light')

@@ -2,7 +2,7 @@ class Hash
   # Provides a set of helper methods for making assertions about the content
   # of various objects
 
-  unless defined?(ActiveSupport)
+  unless respond_to?(:assert_valid_keys)
     # Validate all keys in a hash match <tt>*valid_keys</tt>, raising ArgumentError
     # on a mismatch. Note that keys are NOT treated indifferently, meaning if you
     # use strings for keys but assert symbols as keys, this will fail.
@@ -28,10 +28,10 @@ class Hash
   # == Examples
   #
   #   options = {:only => :on, :except => :off}
-  #   assert_exclusive_keys(options, :only)                   # => nil
-  #   assert_exclusive_keys(options, :except)                 # => nil
-  #   assert_exclusive_keys(options, :only, :except)          # => ArgumentError: Conflicting keys: only, except
-  #   assert_exclusive_keys(options, :only, :except, :with)   # => ArgumentError: Conflicting keys: only, except
+  #   options.assert_exclusive_keys(:only)                   # => nil
+  #   options.assert_exclusive_keys(:except)                 # => nil
+  #   options.assert_exclusive_keys(:only, :except)          # => ArgumentError: Conflicting keys: only, except
+  #   options.assert_exclusive_keys(:only, :except, :with)   # => ArgumentError: Conflicting keys: only, except
   def assert_exclusive_keys(*exclusive_keys)
     conflicting_keys = exclusive_keys & keys
     raise ArgumentError, "Conflicting keys: #{conflicting_keys.join(', ')}" unless conflicting_keys.length <= 1

@@ -439,14 +439,13 @@ module StateMachines
       end
 
 
-      def draw(class_names, options = {})
+      def draw(*)
         fail NotImplementedError
       end
-    end
 
-    # Default messages to use for validation errors in ORM integrations
-    class << self;
-      attr_accessor :default_messages;
+      # Default messages to use for validation errors in ORM integrations
+      attr_accessor :default_messages
+      attr_accessor :ignore_method_conflicts
     end
     @default_messages = {
         :invalid => 'is invalid',
@@ -456,9 +455,6 @@ module StateMachines
 
     # Whether to ignore any conflicts that are detected for helper methods that
     # get generated for a machine's owner class.  Default is false.
-    class << self;
-      attr_accessor :ignore_method_conflicts;
-    end
     @ignore_method_conflicts = false
 
     # The class that the machine is defined in
@@ -1828,20 +1824,20 @@ module StateMachines
     # Marks the given object as invalid with the given message.
     # 
     # By default, this is a no-op.
-    def invalidate(object, attribute, message, values = [])
+    def invalidate(_object, _attribute, _message, _values = [])
     end
 
     # Gets a description of the errors for the given object.  This is used to
     # provide more detailed information when an InvalidTransition exception is
     # raised.
-    def errors_for(object)
+    def errors_for(_object)
       ''
     end
 
     # Resets any errors previously added when invalidating the given object.
     # 
     # By default, this is a no-op.
-    def reset(object)
+    def reset(_object)
     end
 
     # Generates the message to use when invalidating the given object after
@@ -1872,7 +1868,7 @@ module StateMachines
     end
 
 
-    def draw(graph_options = {})
+    def draw(*)
       fail NotImplementedError
     end
 
