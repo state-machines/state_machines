@@ -1,6 +1,6 @@
-require 'test_helper'
+require_relative '../../test_helper'
 
-class AssertExclusiveKeysTest < MiniTest::Test
+class AssertExclusiveKeysTest < StateMachinesTest
   def test_should_not_raise_exception_if_no_keys_found
     { on: :park }.assert_exclusive_keys(:only, :except)
   end

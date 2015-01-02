@@ -1,6 +1,6 @@
-require 'test_helper'
+require_relative '../../test_helper'
 
-class AssertValidKeysTest < MiniTest::Test
+class AssertValidKeysTest < StateMachinesTest
   def test_should_not_raise_exception_if_key_is_valid
     { name: 'foo', value: 'bar' }.assert_valid_keys(:name, :value, :force)
   end

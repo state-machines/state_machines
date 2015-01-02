@@ -1,6 +1,6 @@
-require 'test_helper'
+require_relative '../test_helper'
 
-class HelperModuleTest < MiniTest::Test
+class HelperModuleTest < StateMachinesTest
   def setup
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass)

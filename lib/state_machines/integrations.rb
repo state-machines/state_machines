@@ -1,3 +1,5 @@
+require 'set'
+
 module StateMachines
   # Integrations allow state machines to take advantage of features within the
   # context of a particular library.  This is currently most useful with
@@ -22,17 +24,26 @@ module StateMachines
 
     class << self
       #  Register integration
-      def register(arg)
-        #TODO check name conflict
-        case arg.class.to_s
+      def register(name_or_module)
+        case name_or_module.class.to_s
           when 'Module'
-            add(arg)
+            add(name_or_module)
           else
             fail IntegrationError
         end
         true
       end
 
+
+      def unregister(name) #:nodoc:#
+        @integrations.delete(name)
+      end
+
+      def reset #:nodoc:#
+        name_spaced_integrations
+        @integrations = Set.new
+        true
+      end
 
       # Gets a list of all of the available integrations for use.
       #
@@ -48,6 +59,7 @@ module StateMachines
         name_spaced_integrations
         @integrations
       end
+      alias_method :list, :integrations
 
 
       # Attempts to find an integration that matches the given class.  This will
@@ -104,17 +116,12 @@ module StateMachines
       def name_spaced_integrations
         self.constants.each do |const|
           integration = self.const_get(const)
-          add(integration) if integration.respond_to?(:integration_name)
+          add(integration)
         end
       end
 
       def add(integration)
-        @integrations << integration
-      end
-
-      def reset # testing only
-        @integrations = Set.new
-        name_spaced_integrations
+        @integrations << integration  if integration.respond_to?(:integration_name)
       end
     end
   end

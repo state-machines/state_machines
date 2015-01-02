@@ -1,10 +1,10 @@
 language: ruby
+sudo: false
 script: "bundle exec rake"
+cache: bundler
 rvm:
   - 2.1
   - 2.0.0
-  - 1.9.3
   - 2.2
-  - ruby-head
-  - jruby-19mode
+  - jruby
   - rbx-2
