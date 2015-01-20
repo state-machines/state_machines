@@ -14,8 +14,27 @@ module StateMachines
   # An invalid integration was specified
   class IntegrationNotFound < Error
     def initialize(name)
-      valid_integrations_name = Integrations.list.collect(&:integration_name)
-      super(nil, "#{name.inspect} is an invalid integration. Valid integrations are: #{valid_integrations_name.join(', ')} ")
+      super(nil, "#{name.inspect} is an invalid integration. #{error_message}")
+    end
+
+    def valid_integrations
+      "Valid integrations are: #{valid_integrations_name}"
+    end
+
+    def valid_integrations_name
+      Integrations.list.collect(&:integration_name)
+    end
+
+    def no_integrations
+      'No integrations registered'
+    end
+
+    def error_message
+      if Integrations.list.size.zero?
+        no_integrations
+      else
+        valid_integrations
+      end
     end
   end
 

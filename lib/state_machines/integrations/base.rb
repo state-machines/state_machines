@@ -17,13 +17,6 @@ module StateMachines
           end
         end
 
-        # Whether this integration is available for the current library.  This
-        # is only true if the ORM that the integration is for is currently
-        # defined.
-        def available?
-          matching_ancestors.any? && Object.const_defined?(matching_ancestors[0].split('::')[0])
-        end
-
         # The list of ancestor names that cause this integration to matched.
         def matching_ancestors
           []

@@ -40,8 +40,8 @@ module StateMachines
       end
 
       def reset #:nodoc:#
-        name_spaced_integrations
         @integrations = Set.new
+        name_spaced_integrations
         true
       end
 
@@ -59,6 +59,7 @@ module StateMachines
         name_spaced_integrations
         @integrations
       end
+
       alias_method :list, :integrations
 
 
@@ -115,7 +116,7 @@ module StateMachines
 
       def name_spaced_integrations
         # FIXME, Integrations should be add before their dependencies.
-        self.constants.reverse.each do |const|
+        self.constants.reject{ |i| i==:Base }.each do |const|
           integration = self.const_get(const)
           add(integration)
         end

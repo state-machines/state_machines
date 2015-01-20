@@ -590,8 +590,8 @@ For documenting state machines:
 
 ## TODO
 
-Add matchers/assertions for rspec and minitest
-Fix integration dependency
+* Add matchers/assertions for rspec and minitest
+* Fix integrations dependency
 
 ## Contributing
 
