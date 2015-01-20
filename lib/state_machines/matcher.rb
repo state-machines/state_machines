@@ -8,7 +8,7 @@ module StateMachines
     
     # Creates a new matcher for querying against the given set of values
     def initialize(values = [])
-      @values = values.is_a?(Array) ? values : [values] 
+      @values = values.is_a?(Array) ? values : [values]
     end
     
     # Generates a subset of values that exists in both the set of values being

@@ -9,7 +9,6 @@ module StateMachines
   # behavior can be utilized.
   class State
 
-
     # The state machine for which this state is defined
     attr_accessor :machine
 

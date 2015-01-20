@@ -28,10 +28,10 @@ module StateMachines
     # Whether the transition is only existing temporarily for the object
     attr_writer :transient
     
-    # Determines whether the curreny ruby implementation supports pausing and
+    # Determines whether the current ruby implementation supports pausing and
     # resuming transitions
     def self.pause_supported?
-      !defined?(RUBY_ENGINE) || %w(ruby maglev).include?(RUBY_ENGINE)
+      %w(ruby maglev).include?(RUBY_ENGINE)
     end
     
     # Creates a new, specific transition

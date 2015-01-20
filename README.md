@@ -26,8 +26,8 @@ Or install it yourself as:
 
 Ruby versions officially supported and tested:
 
-* Ruby (MRI) 1.9.3+
-* JRuby (1.9)
+* Ruby (MRI) 2.0.0+
+* JRuby
 * Rubinius
 
 For graphing state machine:
@@ -42,6 +42,7 @@ For documenting state machines:
 ## TODO
 
 Add matchers/assertions for rspec and minitest
+Fix integration dependency
 
 ## Contributing
 

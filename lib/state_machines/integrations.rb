@@ -114,7 +114,8 @@ module StateMachines
       private
 
       def name_spaced_integrations
-        self.constants.each do |const|
+        # FIXME, Integrations should be add before their dependencies.
+        self.constants.reverse.each do |const|
           integration = self.const_get(const)
           add(integration)
         end

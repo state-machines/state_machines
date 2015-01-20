@@ -1,7 +1,6 @@
 require 'bundler/gem_tasks'
 require 'rake/testtask'
 Rake::TestTask.new(:functional) do |t|
-  # t.pattern = 'test/**/*_test.rb'
   t.test_files = FileList['test/functional/*_test.rb']
 end
 
