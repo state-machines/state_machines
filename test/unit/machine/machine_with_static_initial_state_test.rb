@@ -40,7 +40,7 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
     assert_equal 'idling', object.state
   end
 
-  def test_should_set_initial_state_prior_to_initialization
+  def test_should_not_initial_state_prior_to_initialization
     base = Class.new do
       attr_accessor :state_on_init
 
@@ -51,7 +51,7 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
     klass = Class.new(base)
     StateMachines::Machine.new(klass, initial: :parked)
 
-    assert_equal 'parked', klass.new.state_on_init
+    assert_nil klass.new.state_on_init
   end
 
   def test_should_be_included_in_known_states

@@ -7,8 +7,8 @@ class MachineCollectionStateInitializationTest < StateMachinesTest
     @klass = Class.new
 
     @machines[:state] = StateMachines::Machine.new(@klass, :state, initial: :parked)
-    @machines[:alarm_state] = StateMachines::Machine.new(@klass, :alarm_state, initial: lambda { |_object| :active })
-    @machines[:alarm_state].state :active, value: lambda { 'active' }
+    @machines[:alarm_state] = StateMachines::Machine.new(@klass, :alarm_state, initial: ->(_object) { :active })
+    @machines[:alarm_state].state :active, value: -> { 'active' }
 
     # Prevent the auto-initialization hook from firing
     @klass.class_eval do
@@ -25,17 +25,17 @@ class MachineCollectionStateInitializationTest < StateMachinesTest
     assert_raises(ArgumentError) { @machines.initialize_states(@object, invalid: true) }
   end
 
-  def test_should_only_initialize_static_states_prior_to_block
+  def test_should_initialize_static_states_after_block
     @machines.initialize_states(@object) do
       @state_in_block = @object.state
       @alarm_state_in_block = @object.alarm_state
     end
 
-    assert_equal 'parked', @state_in_block
+    assert_nil @state_in_block
     assert_nil @alarm_state_in_block
   end
 
-  def test_should_only_initialize_dynamic_states_after_block
+  def test_should_initialize_dynamic_states_after_block
     @machines.initialize_states(@object) do
       @alarm_state_in_block = @object.alarm_state
     end
