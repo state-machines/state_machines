@@ -1,8 +1,6 @@
 module StateMachines
   # Represents a collection of state machines for a class
   class MachineCollection < Hash
-
-    
     # Initializes the state of each machine in the given object.  This can allow
     # states to be initialized in two groups: static and dynamic.  For example:
     # 
@@ -13,9 +11,9 @@ module StateMachines
     # If no block is provided, then all states will still be initialized.
     # 
     # Valid configuration options:
-    # * <tt>:static</tt> - Whether to initialize static states.  If set to
-    #   :force, the state will be initialized regardless of its current value.
-    #   Default is :force.
+    # * <tt>:static</tt> - Whether to initialize static states. Unless set to
+    #   false, the state will be initialized regardless of its current value.
+    #   Default is true.
     # * <tt>:dynamic</tt> - Whether to initialize dynamic states.  If set to
     #   :force, the state will be initialized regardless of its current value.
     #   Default is true.

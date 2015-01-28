@@ -29,17 +29,6 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
     assert_equal 'parked', @klass.new.state
   end
 
-  def test_not_set_initial_state_even_if_not_empty
-    @klass.class_eval do
-      def initialize(_attributes = {})
-        self.state = 'idling'
-        super()
-      end
-    end
-    object = @klass.new
-    assert_equal 'idling', object.state
-  end
-
   def test_should_not_initial_state_prior_to_initialization
     base = Class.new do
       attr_accessor :state_on_init
