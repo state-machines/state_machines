@@ -57,10 +57,10 @@ class MachineCollectionStateInitializationTest < StateMachinesTest
     assert_equal 'active', @object.alarm_state
   end
 
-  def test_should_not_initialize_existing_static_states_by_default
+  def test_should_initialize_existing_static_states_by_default
     @object.state = 'idling'
     @machines.initialize_states(@object)
-    assert_equal 'idling', @object.state
+    assert_equal 'parked', @object.state
   end
 
   def test_should_initialize_existing_static_states_if_forced
@@ -69,10 +69,10 @@ class MachineCollectionStateInitializationTest < StateMachinesTest
     assert_equal 'parked', @object.state
   end
 
-  def test_should_not_initialize_existing_static_states_if_not_forced
+  def test_should_initialize_existing_static_states_if_not_forced
     @object.state = 'idling'
     @machines.initialize_states(@object, static: true)
-    assert_equal 'idling', @object.state
+    assert_equal 'parked', @object.state
   end
 
   def test_should_skip_dynamic_states_if_disabled

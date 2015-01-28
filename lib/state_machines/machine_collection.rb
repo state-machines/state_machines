@@ -1,8 +1,6 @@
 module StateMachines
   # Represents a collection of state machines for a class
   class MachineCollection < Hash
-
-    
     # Initializes the state of each machine in the given object.  This can allow
     # states to be initialized in two groups: static and dynamic.  For example:
     # 
@@ -13,22 +11,25 @@ module StateMachines
     # If no block is provided, then all states will still be initialized.
     # 
     # Valid configuration options:
-    # * <tt>:static</tt> - Whether to initialize static states.  If set to
-    #   :force, the state will be initialized regardless of its current value.
-    #   Default is :force.
+    # * <tt>:static</tt> - Whether to initialize static states. Unless set to
+    #   false, the state will be initialized regardless of its current value.
+    #   Default is true.
     # * <tt>:dynamic</tt> - Whether to initialize dynamic states.  If set to
     #   :force, the state will be initialized regardless of its current value.
     #   Default is true.
     # * <tt>:to</tt> - A hash to write the initialized state to instead of
     #   writing to the object.  Default is to write directly to the object.
-    def initialize_states(object, options = {})
+    def initialize_states(object, options = {}, attributes = {})
       options.assert_valid_keys( :static, :dynamic, :to)
       options = {:static => true, :dynamic => true}.merge(options)
 
       result = yield if block_given?
 
       each_value do |machine| 
-        machine.initialize_state(object, :force => options[:static] == :force, :to => options[:to]) unless machine.dynamic_initial_state?
+        unless machine.dynamic_initial_state?
+          force = options[:static] == :force || !attributes.keys.include?(machine.attribute)
+          machine.initialize_state(object, force: force, :to => options[:to])
+        end
       end if options[:static]
       
       each_value do |machine|
