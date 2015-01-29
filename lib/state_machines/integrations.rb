@@ -111,12 +111,15 @@ module StateMachines
         integrations.detect { |integration| integration.integration_name == name } || raise(IntegrationNotFound.new(name))
       end
 
-
       private
 
       def name_spaced_integrations
         # FIXME, Integrations should be add before their dependencies.
-        self.constants.reject{ |i| i==:Base }.each do |const|
+        constants = self.constants.reject { |i| i == :Base }
+        constants = constants.map(&:to_s).select { |c| c != 'ActiveModel' }.sort
+        constants << 'ActiveModel' if defined?(ActiveModel)
+
+        constants.each do |const|
           integration = self.const_get(const)
           add(integration)
         end
