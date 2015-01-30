@@ -20,7 +20,7 @@ module StateMachines
   # built-in integrations for more information about how to define additional
   # integrations.
   module Integrations
-    @integrations = Set.new
+    @integrations = []
 
     class << self
       #  Register integration
@@ -34,15 +34,8 @@ module StateMachines
         true
       end
 
-
-      def unregister(name) #:nodoc:#
-        @integrations.delete(name)
-      end
-
       def reset #:nodoc:#
-        @integrations = Set.new
-        name_spaced_integrations
-        true
+        @integrations = []
       end
 
       # Gets a list of all of the available integrations for use.
@@ -56,7 +49,6 @@ module StateMachines
       #   # => [StateMachines::Integrations::ActiveModel]
       def integrations
         # Register all namespaced integrations
-        name_spaced_integrations
         @integrations
       end
 
@@ -114,16 +106,10 @@ module StateMachines
 
       private
 
-      def name_spaced_integrations
-        # FIXME, Integrations should be add before their dependencies.
-        self.constants.reject{ |i| i==:Base }.each do |const|
-          integration = self.const_get(const)
-          add(integration)
-        end
-      end
-
       def add(integration)
-        @integrations << integration  if integration.respond_to?(:integration_name)
+        if integration.respond_to?(:integration_name)
+          @integrations.insert(0, integration) unless @integrations.include?(integration)
+        end
       end
     end
   end

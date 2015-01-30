@@ -1,3 +1,5 @@
+*   Namespaced integrations are not registered by default anymore
+
 *   Pass `static: false` in case you don't want initial states to be forced. e.g.
 
     ```ruby

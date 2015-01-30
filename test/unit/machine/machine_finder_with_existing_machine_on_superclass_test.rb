@@ -1,16 +1,16 @@
 require_relative '../../test_helper'
 
 class MachineFinderWithExistingMachineOnSuperclassTest < StateMachinesTest
-  def setup
-    integration = Module.new do
-      include StateMachines::Integrations::Base
+  module Custom
+    include StateMachines::Integrations::Base
 
-      def self.matches?(_klass)
-        false
-      end
+    def self.matches?(_klass)
+      false
     end
-    StateMachines::Integrations.const_set('Custom', integration)
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
+  end
+
+  def setup
+    StateMachines::Integrations.register(MachineFinderWithExistingMachineOnSuperclassTest::Custom)
 
     @base_class = Class.new
     @base_machine = StateMachines::Machine.new(@base_class, :status, action: :save, integration: :custom)
@@ -76,11 +76,10 @@ class MachineFinderWithExistingMachineOnSuperclassTest < StateMachinesTest
       ancestors
     end
 
-    assert(class_ancestors.include?(StateMachines::Integrations::Custom))
+    assert(class_ancestors.include?(MachineFinderWithExistingMachineOnSuperclassTest::Custom))
   end
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end

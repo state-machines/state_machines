@@ -1,8 +1,22 @@
 require_relative '../../test_helper'
 
 class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
+  module Custom
+    include StateMachines::Integrations::Base
+
+    def create_with_scope(_name)
+      lambda { |_klass, _values| [] }
+    end
+
+    def create_without_scope(_name)
+      lambda { |_klass, _values| [] }
+    end
+  end
+
   def setup
     @original_stderr, $stderr = $stderr, StringIO.new
+
+    StateMachines::Integrations.register(MachineWithConflictingHelpersBeforeDefinitionTest::Custom)
 
     @superclass = Class.new do
       def self.with_state
@@ -68,19 +82,6 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
       end
     end
     @klass = Class.new(@superclass)
-
-    StateMachines::Integrations.const_set('Custom', Module.new do
-                                                    include StateMachines::Integrations::Base
-
-                                                    def create_with_scope(_name)
-                                                      lambda { |_klass, _values| [] }
-                                                    end
-
-                                                    def create_without_scope(_name)
-                                                      lambda { |_klass, _values| [] }
-                                                    end
-                                                  end)
-
     @machine = StateMachines::Machine.new(@klass, integration: :custom)
     @machine.state :parked, :idling
     @machine.event :ignite
@@ -169,7 +170,6 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
 
   def teardown
     $stderr = @original_stderr
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end
 
