@@ -1,22 +1,22 @@
 require_relative '../../test_helper'
 
 class MachineWithCustomInvalidationTest < StateMachinesTest
-  def setup
-    @integration = Module.new do
-      include StateMachines::Integrations::Base
+  module Custom
+    include StateMachines::Integrations::Base
 
-      def invalidate(object, _attribute, message, values = [])
-        object.error = generate_message(message, values)
-      end
+    def invalidate(object, _attribute, message, values = [])
+      object.error = generate_message(message, values)
     end
-    StateMachines::Integrations.const_set('Custom', @integration)
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
+  end
+
+  def setup
+    StateMachines::Integrations.register(MachineWithCustomInvalidationTest::Custom)
 
     @klass = Class.new do
       attr_accessor :error
     end
 
-    @machine = StateMachines::Machine.new(@klass, integration: :custom, messages: { invalid_transition: 'cannot %s' })
+    @machine = StateMachines::Machine.new(@klass, integration: :custom, messages: {invalid_transition: 'cannot %s'})
     @machine.state :parked
 
     @object = @klass.new
@@ -34,7 +34,6 @@ class MachineWithCustomInvalidationTest < StateMachinesTest
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end
 

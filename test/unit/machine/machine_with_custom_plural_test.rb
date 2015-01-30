@@ -2,7 +2,6 @@ require_relative '../../test_helper'
 
 class MachineWithCustomPluralTest < StateMachinesTest
   def setup
-    StateMachines::Integrations.reset
     @integration = Module.new do
       include StateMachines::Integrations::Base
 
@@ -11,18 +10,18 @@ class MachineWithCustomPluralTest < StateMachinesTest
       @without_scopes = []
 
       def create_with_scope(name)
-        StateMachines::Integrations::Custom.with_scopes << name
+        MachineWithCustomPluralTest::Custom.with_scopes << name
         lambda {}
       end
 
       def create_without_scope(name)
-        StateMachines::Integrations::Custom.without_scopes << name
+        MachineWithCustomPluralTest::Custom.without_scopes << name
         lambda {}
       end
     end
 
-    StateMachines::Integrations.const_set('Custom', @integration)
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
+    MachineWithCustomPluralTest.const_set('Custom', @integration)
+    StateMachines::Integrations.register(MachineWithCustomPluralTest::Custom)
   end
 
   def test_should_define_a_singular_and_plural_with_scope
@@ -47,7 +46,7 @@ class MachineWithCustomPluralTest < StateMachinesTest
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
+    MachineWithCustomPluralTest.send(:remove_const, 'Custom')
   end
 end
 

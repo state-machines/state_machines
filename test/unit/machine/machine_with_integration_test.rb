@@ -1,34 +1,36 @@
 require_relative '../../test_helper'
 
 class MachineWithIntegrationTest < StateMachinesTest
+
+  module Custom
+    include StateMachines::Integrations::Base
+
+    @defaults = {action: :save, use_transactions: false}
+
+    attr_reader :initialized, :with_scopes, :without_scopes, :ran_transaction
+
+    def after_initialize
+      @initialized = true
+    end
+
+    def create_with_scope(name)
+      (@with_scopes ||= []) << name
+      lambda {}
+    end
+
+    def create_without_scope(name)
+      (@without_scopes ||= []) << name
+      lambda {}
+    end
+
+    def transaction(_)
+      @ran_transaction = true
+      yield
+    end
+  end
+
   def setup
-    StateMachines::Integrations.const_set('Custom', Module.new do
-                                                    include StateMachines::Integrations::Base
-
-                                                    @defaults = { action: :save, use_transactions: false }
-
-                                                    attr_reader :initialized, :with_scopes, :without_scopes, :ran_transaction
-
-                                                    def after_initialize
-                                                      @initialized = true
-                                                    end
-
-                                                    def create_with_scope(name)
-                                                      (@with_scopes ||= []) << name
-                                                      lambda {}
-                                                    end
-
-                                                    def create_without_scope(name)
-                                                      (@without_scopes ||= []) << name
-                                                      lambda {}
-                                                    end
-
-                                                    def transaction(_)
-                                                      @ran_transaction = true
-                                                      yield
-                                                    end
-                                                  end)
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
+    StateMachines::Integrations.register(MachineWithIntegrationTest::Custom)
 
 
     @machine = StateMachines::Machine.new(Class.new, integration: :custom)
@@ -66,6 +68,5 @@ class MachineWithIntegrationTest < StateMachinesTest
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end

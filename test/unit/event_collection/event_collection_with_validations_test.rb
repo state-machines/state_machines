@@ -1,20 +1,20 @@
 require_relative '../../test_helper'
 
 class EventCollectionWithValidationsTest < StateMachinesTest
+  module Custom
+    include StateMachines::Integrations::Base
+
+    def invalidate(object, _attribute, message, values = [])
+      (object.errors ||= []) << generate_message(message, values)
+    end
+
+    def reset(object)
+      object.errors = []
+    end
+  end
+
   def setup
-    StateMachines::Integrations.const_set('Custom', Module.new do
-                                                    include StateMachines::Integrations::Base
-
-                                                    def invalidate(object, _attribute, message, values = [])
-                                                      (object.errors ||= []) << generate_message(message, values)
-                                                    end
-
-                                                    def reset(object)
-                                                      object.errors = []
-                                                    end
-                                                  end)
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
-
+    StateMachines::Integrations.register(EventCollectionWithValidationsTest::Custom)
 
     @klass = Class.new do
       attr_accessor :errors
@@ -69,7 +69,6 @@ class EventCollectionWithValidationsTest < StateMachinesTest
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end
 

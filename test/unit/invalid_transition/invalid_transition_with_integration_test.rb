@@ -1,17 +1,16 @@
 require_relative '../../test_helper'
 
 class InvalidTransitionWithIntegrationTest < StateMachinesTest
+  module Custom
+    include StateMachines::Integrations::Base
+
+    def errors_for(object)
+      object.errors
+    end
+  end
+
   def setup
-    StateMachines::Integrations.const_set('Custom', Module.new do
-                                                    include StateMachines::Integrations::Base
-
-                                                    def errors_for(object)
-                                                      object.errors
-                                                    end
-                                                  end)
-
-    StateMachines::Integrations.register(StateMachines::Integrations::Custom)
-
+    StateMachines::Integrations.register(InvalidTransitionWithIntegrationTest::Custom)
 
     @klass = Class.new do
       attr_accessor :errors
@@ -42,6 +41,5 @@ class InvalidTransitionWithIntegrationTest < StateMachinesTest
 
   def teardown
     StateMachines::Integrations.reset
-    StateMachines::Integrations.send(:remove_const, 'Custom')
   end
 end
