@@ -98,4 +98,14 @@ class MachineCollectionStateInitializationTest < StateMachinesTest
     @machines.initialize_states(@object, dynamic: true)
     assert_equal 'inactive', @object.alarm_state
   end
+
+  def test_shouldnt_force_state_given_either_as_string_or_symbol
+    @object.state = 'notparked'
+
+    @machines.initialize_states(@object, {}, { state: "parked" })
+    assert_equal 'notparked', @object.state
+
+    @machines.initialize_states(@object, {}, { "state" => "parked" })
+    assert_equal 'notparked', @object.state
+  end
 end
