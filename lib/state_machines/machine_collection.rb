@@ -27,7 +27,7 @@ module StateMachines
 
       each_value do |machine| 
         unless machine.dynamic_initial_state?
-          force = options[:static] == :force || !attributes.keys.include?(machine.attribute)
+          force = options[:static] == :force || !attributes.keys.map(&:to_sym).include?(machine.attribute)
           machine.initialize_state(object, force: force, :to => options[:to])
         end
       end if options[:static]
