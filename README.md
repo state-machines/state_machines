@@ -39,7 +39,7 @@ Class definition:
 class Vehicle
   attr_accessor :seatbelt_on, :time_used, :auto_shop_busy
 
-  state_machine state, initial: :parked do
+  state_machine :state, initial: :parked do
     before_transition parked: :any - :parked, do: :put_on_seatbelt
 
     after_transition on: :crash, do: :tow
