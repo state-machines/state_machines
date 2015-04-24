@@ -30,10 +30,10 @@ module StateMachines
       fail ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
       options.assert_valid_keys(:actions, :after, :transaction)
-      options = {:actions => true, :after => true, :transaction => true}.merge(options)
+      options = {actions: true, after: true, use_transaction: true}.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
-      @use_transaction = options[:transaction]
+      @use_transaction = options[:use_transaction]
     end
     
     # Runs each of the collection's transitions in parallel.
@@ -192,7 +192,7 @@ module StateMachines
   # based events
   class AttributeTransitionCollection < TransitionCollection
     def initialize(transitions = [], options = {}) #:nodoc:
-      super(transitions, {:transaction => false, :actions => false}.merge(options))
+      super(transitions, {use_transaction: false, :actions => false}.merge(options))
     end
     
     private
