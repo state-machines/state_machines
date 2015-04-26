@@ -44,8 +44,6 @@ module StateMachines
     def fire_events(object, *events)
       run_action = [true, false].include?(events.last) ? events.pop : true
 
-      use_transaction = nil
-
       # Generate the transitions to run for each event
       transitions = events.collect do |event_name|
         # Find the actual event being run
@@ -58,18 +56,13 @@ module StateMachines
         unless transition = event.transition_for(object)
           event.on_failure(object)
         end
-
-        # Determine use_transaction setting for this set of transitions.  If from multiple state_machines, the settings must match.
-        raise 'fire_events encountered mismatched use_configurations for multiple state_machines' if !use_transaction.nil? && use_transaction != machine.use_transaction
-        use_transaction = machine.use_transaction
-
         transition
       end.compact
 
       # Run the events in parallel only if valid transitions were found for
       # all of them
       if events.length == transitions.length
-        TransitionCollection.new(transitions, {use_transaction: use_transaction, actions: run_action}).perform
+        TransitionCollection.new(transitions, {use_transactions: resolve_use_transactions, actions: run_action}).perform
       else
         false
       end
@@ -81,16 +74,23 @@ module StateMachines
     # 
     # These should only be fired as a result of the action being run.
     def transitions(object, action, options = {})
-      use_transaction = nil
       transitions = map do |name, machine|
         machine.events.attribute_transition_for(object, true) if machine.action == action
-
-        # Determine use_transaction setting for this set of transitions.  If from multiple state_machines, the settings must match.
-        raise 'fire_events encountered mismatched use_configurations for multiple state_machines' if !use_transaction.nil? && use_transaction != machine.use_transaction
-        use_transaction = machine.use_transaction
       end
 
-      AttributeTransitionCollection.new(transitions.compact, {use_transaction: use_transaction}.merge(options))
+      AttributeTransitionCollection.new(transitions.compact, {use_transactions: resolve_use_transactions}.merge(options))
+    end
+
+    protected
+
+    def resolve_use_transactions
+      use_transactions = nil
+      each_value do |machine|
+        # Determine use_transactions setting for this set of transitions.  If from multiple state_machines, the settings must match.
+        raise 'Encountered mismatched use_transactions configurations for multiple state_machines' if !use_transactions.nil? && use_transactions != machine.use_transactions
+        use_transactions = machine.use_transactions
+      end
+      use_transactions
     end
   end
 end
