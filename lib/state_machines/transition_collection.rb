@@ -10,7 +10,7 @@ module StateMachines
     attr_reader :skip_after
     
     # Whether transitions should wrapped around a transaction block
-    attr_reader :use_transaction
+    attr_reader :use_transactions
     
     # Creates a new collection of transitions that can be run in parallel.  Each
     # transition *must* be for a different attribute.
@@ -29,11 +29,11 @@ module StateMachines
       attributes = map {|transition| transition.attribute}.uniq
       fail ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
-      options.assert_valid_keys(:actions, :after, :transaction)
-      options = {:actions => true, :after => true, :transaction => true}.merge(options)
+      options.assert_valid_keys(:actions, :after, :use_transactions)
+      options = {actions: true, after: true, use_transactions: true}.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
-      @use_transaction = options[:transaction]
+      @use_transactions = options[:use_transactions]
     end
     
     # Runs each of the collection's transitions in parallel.
@@ -177,7 +177,7 @@ module StateMachines
       # Runs a block within a transaction for the object being transitioned.  If
       # transactions are disabled, then this is a no-op.
       def within_transaction
-        if use_transaction && !empty?
+        if use_transactions && !empty?
           first.within_transaction do
             yield
             success?
@@ -192,7 +192,7 @@ module StateMachines
   # based events
   class AttributeTransitionCollection < TransitionCollection
     def initialize(transitions = [], options = {}) #:nodoc:
-      super(transitions, {:transaction => false, :actions => false}.merge(options))
+      super(transitions, {use_transactions: false, :actions => false}.merge(options))
     end
     
     private

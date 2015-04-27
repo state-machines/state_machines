@@ -14,7 +14,7 @@ class TransitionCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_use_transaction
-    assert @transitions.use_transaction
+    assert @transitions.use_transactions
   end
 
   def test_should_be_empty

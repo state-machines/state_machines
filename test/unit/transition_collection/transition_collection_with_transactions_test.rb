@@ -21,7 +21,7 @@ class TransitionCollectionWithTransactionsTest < StateMachinesTest
     @object = @klass.new
     @transitions = StateMachines::TransitionCollection.new([
       StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], transaction: true)
+    ], use_transactions: true)
   end
 
   def test_should_run_before_callbacks_within_transaction

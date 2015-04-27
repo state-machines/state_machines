@@ -14,7 +14,7 @@ class AttributeTransitionCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_use_transaction
-    refute @transitions.use_transaction
+    refute @transitions.use_transactions
   end
 
   def test_should_be_empty
