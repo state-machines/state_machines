@@ -212,6 +212,7 @@ module StateMachines
             super
           rescue Exception
             rollback unless @before_run
+            @success = nil  # mimics ActiveRecord.save behavior on rollback
             raise
           end
           
