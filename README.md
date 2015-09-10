@@ -4,6 +4,8 @@
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
 
+*Please note that multiple integrations are available for Active Model, Active Record, Mongoid in the State Machines organisation*
+
 ## Installation
 
 Add this line to your application's Gemfile:
