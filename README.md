@@ -4,7 +4,7 @@
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
 
-*Please note that multiple integrations are available for Active Model, Active Record, Mongoid in the State Machines organisation*
+*Please note that multiple integrations are available for [Active Model](https://github.com/state-machines/state_machines-activemodel), [Active Record](https://github.com/state-machines/state_machines-activerecord), [Mongoid](https://github.com/state-machines/state_machines-mongoid) and more in the [State Machines organisation](https://github.com/state-machines)*
 
 ## Installation
 
