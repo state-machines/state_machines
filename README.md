@@ -42,10 +42,10 @@ class Vehicle
   attr_accessor :seatbelt_on, :time_used, :auto_shop_busy
 
   state_machine :state, initial: :parked do
-    before_transition parked: :any - :parked, do: :put_on_seatbelt
-
+    before_transition parked: any - :parked, do: :put_on_seatbelt
+    
     after_transition on: :crash, do: :tow
-    after_transition on: :repair, :do: :fix
+    after_transition on: :repair, do: :fix
     after_transition any => :parked do |vehicle, transition|
       vehicle.seatbelt_on = false
     end
@@ -85,7 +85,7 @@ class Vehicle
     event :repair do
       # The first transition that matches the state and passes its conditions
       # will be used
-      transition stalled: parked, unless: :auto_shop_busy
+      transition stalled: :parked, unless: :auto_shop_busy
       transition stalled: same
     end
 
@@ -427,7 +427,7 @@ class Vehicle
     ...
 
     state :parked do
-      transition to::idling, :on => [:ignite, :shift_up], if: :seatbelt_on?
+      transition to: :idling, :on => [:ignite, :shift_up], if: :seatbelt_on?
 
       def speed
         0
