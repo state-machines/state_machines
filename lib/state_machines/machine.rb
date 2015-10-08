@@ -419,7 +419,11 @@ module StateMachines
         name = args.first || :state
 
         # Find an existing machine
-        if owner_class.respond_to?(:state_machines) && machine = owner_class.state_machines[name]
+        machine = owner_class.respond_to?(:state_machines) &&
+          (args.first && owner_class.state_machines[name] ||
+          owner_class.state_machines.values.first) || nil
+
+        if machine
           # Only create a new copy if changes are being made to the machine in
           # a subclass
           if machine.owner_class != owner_class && (options.any? || block_given?)
