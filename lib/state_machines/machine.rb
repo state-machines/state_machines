@@ -420,7 +420,7 @@ module StateMachines
 
         # Find an existing machine
         machine = owner_class.respond_to?(:state_machines) &&
-          (args.first && owner_class.state_machines[name] ||
+          (args.first && owner_class.state_machines[name] || !args.first &&
           owner_class.state_machines.values.first) || nil
 
         if machine
