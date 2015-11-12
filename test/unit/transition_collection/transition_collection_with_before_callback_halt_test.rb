@@ -1,6 +1,6 @@
 require_relative '../../test_helper'
 
-class TransitionCollectionWithAfterCallbackHaltTest < StateMachinesTest
+class TransitionCollectionWithBeforeCallbackHaltTest < StateMachinesTest
   def setup
     @klass = Class.new do
       attr_reader :saved
@@ -16,8 +16,8 @@ class TransitionCollectionWithAfterCallbackHaltTest < StateMachinesTest
     @machine.state :idling
     @machine.event :ignite
 
+    @machine.before_transition { @before_count += 1; throw :halt }
     @machine.before_transition { @before_count += 1 }
-    @machine.after_transition { @after_count += 1; throw :halt }
     @machine.after_transition { @after_count += 1 }
     @machine.around_transition { |block| @before_count += 1; block.call; @after_count += 1 }
 
@@ -29,19 +29,23 @@ class TransitionCollectionWithAfterCallbackHaltTest < StateMachinesTest
     @result = @transitions.perform
   end
 
-  def test_should_succeed
-    assert_equal true, @result
+  def test_should_not_succeed
+    assert_equal false, @result
   end
 
-  def test_should_persist_state
-    assert_equal 'idling', @object.state
+  def test_should_not_persist_state
+    assert_equal 'parked', @object.state
   end
 
-  def test_should_run_before_callbacks
-    assert_equal 2, @before_count
+  def test_should_not_run_action
+    refute @object.saved
   end
 
-  def test_should_not_run_further_after_callbacks
-    assert_equal 2, @after_count
+  def test_should_not_run_further_before_callbacks
+    assert_equal 1, @before_count
+  end
+
+  def test_should_not_run_after_callbacks
+    assert_equal 0, @after_count
   end
 end
