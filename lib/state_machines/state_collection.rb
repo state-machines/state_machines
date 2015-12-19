@@ -93,7 +93,7 @@ module StateMachines
 
       machine.events.each { |event| order += event.known_states }
       order += select { |state| state.context_methods.any? }.map { |state| state.name }
-      order += keys(:name) - machine.callbacks.values.flatten.map { |callback| callback.known_states }.flatten
+      order += keys(:name) - machine.callbacks.values.flatten.flat_map(&:known_states)
       order += keys(:name)
 
       order.uniq!
