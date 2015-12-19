@@ -45,7 +45,7 @@ module StateMachines
     # 
     #   paths.from_states # => [:parked, :idling, :first_gear, ...]
     def from_states
-      map {|path| path.from_states}.flatten.uniq
+      flat_map(&:from_states).uniq
     end
     
     # Lists all of the states that can be transitioned to through the paths in
@@ -55,7 +55,7 @@ module StateMachines
     # 
     #   paths.to_states # => [:idling, :first_gear, :second_gear, ...]
     def to_states
-      map {|path| path.to_states}.flatten.uniq
+      flat_map(&:to_states).uniq
     end
     
     # Lists all of the events that can be fired through the paths in this
@@ -65,7 +65,7 @@ module StateMachines
     # 
     #   paths.events  # => [:park, :ignite, :shift_up, ...]
     def events
-      map {|path| path.events}.flatten.uniq
+      flat_map(&:events).uniq
     end
     
     private

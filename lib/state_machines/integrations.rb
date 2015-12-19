@@ -1,5 +1,3 @@
-require 'set'
-
 module StateMachines
   # Integrations allow state machines to take advantage of features within the
   # context of a particular library.  This is currently most useful with
@@ -54,7 +52,6 @@ module StateMachines
 
       alias_method :list, :integrations
 
-
       # Attempts to find an integration that matches the given class.  This will
       # look through all of the built-in integrations under the StateMachines::Integrations
       # namespace and find one that successfully matches the class.
@@ -102,7 +99,6 @@ module StateMachines
       def find_by_name(name)
         integrations.detect { |integration| integration.integration_name == name } || raise(IntegrationNotFound.new(name))
       end
-
 
       private
 
