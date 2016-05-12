@@ -10,7 +10,7 @@ module StateMachines
   class State
 
     # The state machine for which this state is defined
-    attr_accessor :machine
+    attr_reader :machine
 
     # The unique identifier for the state used in event and callback definitions
     attr_reader :name
@@ -83,6 +83,11 @@ module StateMachines
     # across different machines.
     def initialize_copy(orig) #:nodoc:
       super
+      @context = StateContext.new(self)
+    end
+
+    def machine=(machine)
+      @machine = machine
       @context = StateContext.new(self)
     end
 
