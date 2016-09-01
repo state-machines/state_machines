@@ -1,6 +1,6 @@
 require_relative '../../test_helper'
 
-class MachineWithActionDefinedInIncludedModuleTest < StateMachinesTest
+class MachineWithActionDefinedInPrependedModuleTest < StateMachinesTest
   def setup
     @mod = mod = Module.new do
       def save
@@ -8,7 +8,7 @@ class MachineWithActionDefinedInIncludedModuleTest < StateMachinesTest
     end
 
     @klass = Class.new do
-      include mod
+      prepend mod
 
       def bar
       end
@@ -34,8 +34,8 @@ class MachineWithActionDefinedInIncludedModuleTest < StateMachinesTest
     assert @object.respond_to?(:state_event_transition=, true)
   end
 
-  def test_should_define_action
-    assert @klass.ancestors.any? { |ancestor| ![@klass, @mod].include?(ancestor) && ancestor.method_defined?(:save) }
+  def test_should_not_define_action
+    assert @klass.ancestors.none? { |ancestor| ![@klass, @mod].include?(ancestor) && ancestor.method_defined?(:save) }
   end
 
   def test_should_keep_action_public
@@ -43,7 +43,7 @@ class MachineWithActionDefinedInIncludedModuleTest < StateMachinesTest
   end
 
   def test_should_mark_action_hook_as_defined
-    assert @machine.action_hook?
+    refute @machine.action_hook?
   end
 
   def test_should_owner_class_ancestor_has_method_return_nil
