@@ -133,7 +133,7 @@ module StateMachines
     #   vehicle = Vehicle.new                         # => #<Vehicle:0xb7c02850 @state="parked", @alarm_state="active">
     #   vehicle.fire_events(:ignite, :disable_alarm)  # => true
     #
-    #   vehicle.fire_events!(:ignite, :disable_alarm) # => StateMachines::InvalidTranstion: Cannot run events in parallel: ignite, disable_alarm
+    #   vehicle.fire_events!(:ignite, :disable_alarm) # => StateMachines::InvalidParallelTransition: Cannot run events in parallel: ignite, disable_alarm
     def fire_events!(*events)
       run_action = [true, false].include?(events.last) ? events.pop : true
       fire_events(*(events + [run_action])) || fail(StateMachines::InvalidParallelTransition.new(self, events))
