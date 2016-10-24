@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/state-machines/state_machines.svg?branch=master)](https://travis-ci.org/state-machines/state_machines)
-[![Code Climate](https://codeclimate.com/github/state-machines/state_machines.png)](https://codeclimate.com/github/state-machines/state_machines)
+[![Code Climate](https://codeclimate.com/github/state-machines/state_machines.svg)](https://codeclimate.com/github/state-machines/state_machines)
 # State Machines
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
