@@ -290,7 +290,7 @@ module StateMachines
       def pausable
         begin
           halted = !catch(:halt) { yield; true }
-        rescue Exception => error
+        rescue => error
           raise unless @resume_block
         end
         
