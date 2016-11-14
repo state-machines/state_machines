@@ -168,7 +168,7 @@ module StateMachines
       def catch_exceptions
         begin
           yield
-        rescue Exception
+        rescue
           rollback
           raise
         end
@@ -210,7 +210,7 @@ module StateMachines
           # Rollback only if exceptions occur during before callbacks
           begin
             super
-          rescue Exception
+          rescue
             rollback unless @before_run
             @success = nil  # mimics ActiveRecord.save behavior on rollback
             raise
