@@ -6,7 +6,7 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
     include StateMachines::Integrations::Base
 
     def self.matching_ancestors
-      ['Vehicle']
+      [Vehicle]
     end
   end
 
@@ -65,7 +65,7 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
     MachineWithCustomIntegrationTest::Custom.class_eval do
       class << self; remove_method :matching_ancestors; end
       def self.matching_ancestors
-        ['Vehicle']
+        [Vehicle]
       end
     end
   end

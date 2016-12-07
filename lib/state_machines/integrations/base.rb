@@ -24,14 +24,13 @@ module StateMachines
 
         # Whether the integration should be used for the given class.
         def matches?(klass)
-          matches_ancestors?(klass.ancestors.map { |ancestor| ancestor.name })
+          matching_ancestors.any? { |ancestor| klass <= ancestor }
         end
 
         # Whether the integration should be used for the given list of ancestors.
         def matches_ancestors?(ancestors)
           (ancestors & matching_ancestors).any?
         end
-
       end
 
       extend ClassMethods

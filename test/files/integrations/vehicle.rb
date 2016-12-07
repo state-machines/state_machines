@@ -2,6 +2,6 @@ module VehicleIntegration
   include StateMachines::Integrations::Base
 
   def self.matching_ancestors
-    ['Vehicle']
+    [Vehicle]
   end
 end

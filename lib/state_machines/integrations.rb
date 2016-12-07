@@ -86,7 +86,7 @@ module StateMachines
       # == Examples
       #
       #   StateMachines::Integrations.match_ancestors([])                    # => nil
-      #   StateMachines::Integrations.match_ancestors(['ActiveRecord::Base']) # => StateMachines::Integrations::ActiveModel
+      #   StateMachines::Integrations.match_ancestors([ActiveRecord::Base]) # => StateMachines::Integrations::ActiveModel
       def match_ancestors(ancestors)
         integrations.detect { |integration| integration.matches_ancestors?(ancestors) }
       end
