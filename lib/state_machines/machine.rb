@@ -2046,14 +2046,12 @@ module StateMachines
     # the method and is further along in the ancestor chain than this
     # machine's helper module.
     def owner_class_ancestor_has_method?(scope, method)
+      return false unless owner_class_has_method?(scope, method)
+
       superclasses = owner_class.ancestors[1..-1].select { |ancestor| ancestor.is_a?(Class) }
 
       if scope == :class
-        # Use singleton classes
-        current = (
-        class << owner_class;
-          self;
-        end)
+        current = owner_class.singleton_class
         superclass = superclasses.first
       else
         current = owner_class
@@ -2068,12 +2066,14 @@ module StateMachines
 
       # Search for for the first ancestor that defined this method
       ancestors.detect do |ancestor|
-        ancestor = (
-        class << ancestor;
-          self;
-        end) if scope == :class && ancestor.is_a?(Class)
+        ancestor = ancestor.singleton_class if scope == :class && ancestor.is_a?(Class)
         ancestor.method_defined?(method) || ancestor.private_method_defined?(method)
       end
+    end
+
+    def owner_class_has_method?(scope, method)
+      target = scope == :class ? owner_class.singleton_class : owner_class
+      target.method_defined?(method) || target.private_method_defined?(method)
     end
 
     # Adds helper methods for accessing naming information about states and
