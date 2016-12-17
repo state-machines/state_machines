@@ -43,7 +43,7 @@ class Vehicle
 
   state_machine :state, initial: :parked do
     before_transition parked: any - :parked, do: :put_on_seatbelt
-    
+
     after_transition on: :crash, do: :tow
     after_transition on: :repair, do: :fix
     after_transition any => :parked do |vehicle, transition|
@@ -545,6 +545,10 @@ class Machine
   def self.new(object, *args, &block)
     machine_class = Class.new
     machine = machine_class.state_machine(*args, &block)
+
+    # this is the `attribute` which stores the value for state in the class
+    # example for the Vehicle it would be `state` reader
+
     attribute = machine.attribute
     action = machine.action
 
@@ -556,7 +560,10 @@ class Machine
       define_method(action) { object.send(action) } if action
     end
 
-    machine_class.new
+    # This won't change the value of the `attribute` on the Vehicle class if it already
+    # has a value assigned to it. Otherwise it will set it to the initial one
+    state = object.send(attribute)
+    machine_class.new.tap{|machine| machine.send("#{attribute}=", state) if state}
   end
 end
 
