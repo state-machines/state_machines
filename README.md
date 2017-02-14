@@ -402,8 +402,8 @@ For example, transitions and callbacks can be defined like so:
 class Vehicle
   state_machine initial: :parked do
     before_transition from: :parked, except_to: :parked, do: :put_on_seatbelt
-    after_transition to: :parked do |transition|
-      self.seatbelt = 'off' # self is the record
+    after_transition to: :parked do |vehicle, transition|
+      vehicle.seatbelt = 'off'
     end
 
     event :ignite do
