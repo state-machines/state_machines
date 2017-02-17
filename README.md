@@ -219,7 +219,7 @@ vehicle.fire_events(:shift_down, :enable_alarm) # => true
 vehicle.state_name                              # => :first_gear
 vehicle.alarm_state_name                        # => :active
 
-vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidTransition: Cannot run events in parallel: ignite, enable_alarm
+vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidParallelTransition: Cannot run events in parallel: ignite, enable_alarm
 
 # Human-friendly names can be accessed for states/events
 Vehicle.human_state_name(:first_gear)               # => "first gear"
