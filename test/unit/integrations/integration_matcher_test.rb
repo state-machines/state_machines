@@ -17,11 +17,13 @@ class IntegrationMatcherTest < StateMachinesTest
   end
 
   def test_should_return_nil_if_no_match_found_with_ancestors
-    assert_nil StateMachines::Integrations.match_ancestors(['Fake'])
+    fake = Class.new
+    assert_nil StateMachines::Integrations.match_ancestors([fake])
   end
 
   def test_should_return_integration_class_if_match_found_with_ancestors
+    fake = Class.new
     StateMachines::Integrations.register(VehicleIntegration)
-    assert_equal VehicleIntegration, StateMachines::Integrations.match_ancestors(['Fake', 'Vehicle'])
+    assert_equal VehicleIntegration, StateMachines::Integrations.match_ancestors([fake, Vehicle])
   end
 end
