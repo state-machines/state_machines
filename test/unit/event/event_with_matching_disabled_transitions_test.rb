@@ -72,7 +72,7 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     end
 
     machine = StateMachines::Machine.new(klass, integration: :custom, messages: { invalid_transition: 'cannot transition via "%s" from "%s"' })
-    parked, idling = machine.state :parked, :idling
+    parked, _idling = machine.state :parked, :idling
     parked.human_name = 'stopped'
 
     machine.events << event = StateMachines::Event.new(machine, :ignite)

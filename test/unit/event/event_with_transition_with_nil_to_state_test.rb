@@ -21,7 +21,7 @@ class EventWithTransitionWithNilToStateTest < StateMachinesTest
     transition = @event.transition_for(@object)
     refute_nil transition
     assert_equal 'idling', transition.from
-    assert_equal nil, transition.to
+    assert_nil transition.to
     assert_equal :park, transition.event
   end
 
@@ -31,6 +31,6 @@ class EventWithTransitionWithNilToStateTest < StateMachinesTest
 
   def test_should_not_change_the_current_state
     @event.fire(@object)
-    assert_equal nil, @object.state
+    assert_nil @object.state
   end
 end

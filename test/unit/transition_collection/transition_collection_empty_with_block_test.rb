@@ -18,6 +18,6 @@ class TransitionCollectionEmptyWithBlockTest < StateMachinesTest
   end
 
   def test_should_use_block_reslut_if_nil
-    assert_equal nil, @transitions.perform { nil }
+    assert_nil @transitions.perform { nil }
   end
 end

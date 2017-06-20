@@ -2,7 +2,7 @@ module StateMachines
   # A state defines a value that an attribute can be in after being transitioned
   # 0 or more times.  States can represent a value of any type in Ruby, though
   # the most common (and default) type is String.
-  # 
+  #
   # In addition to defining the machine's value, a state can also define a
   # behavioral context for an object when that object is in the state.  See
   # StateMachines::Machine#state for more information about how state-driven
@@ -38,7 +38,7 @@ module StateMachines
     attr_accessor :matcher
 
     # Creates a new state within the context of the given machine.
-    # 
+    #
     # Configuration options:
     # * <tt>:initial</tt> - Whether this state is the beginning state for the
     #   machine. Default is false.
@@ -112,15 +112,15 @@ module StateMachines
     end
 
     # Generates a human-readable description of this state's name / value:
-    # 
+    #
     # For example,
-    # 
+    #
     #   State.new(machine, :parked).description                               # => "parked"
     #   State.new(machine, :parked, :value => :parked).description            # => "parked"
     #   State.new(machine, :parked, :value => nil).description                # => "parked (nil)"
     #   State.new(machine, :parked, :value => 1).description                  # => "parked (1)"
     #   State.new(machine, :parked, :value => lambda {Time.now}).description  # => "parked (*)
-    # 
+    #
     # Configuration options:
     # * <tt>:human_name</tt> - Whether to use this state's human name in the
     #   description or just the internal name
@@ -134,9 +134,9 @@ module StateMachines
     # The value that represents this state.  This will optionally evaluate the
     # original block if it's a lambda block.  Otherwise, the static value is
     # returned.
-    # 
+    #
     # For example,
-    # 
+    #
     #   State.new(machine, :parked, :value => 1).value                        # => 1
     #   State.new(machine, :parked, :value => lambda {Time.now}).value        # => Tue Jan 01 00:00:00 UTC 2008
     #   State.new(machine, :parked, :value => lambda {Time.now}).value(false) # => <Proc:0xb6ea7ca0@...>
@@ -157,14 +157,14 @@ module StateMachines
     # Determines whether this state matches the given value.  If no matcher is
     # configured, then this will check whether the values are equivalent.
     # Otherwise, the matcher will determine the result.
-    # 
+    #
     # For example,
-    # 
+    #
     #   # Without a matcher
     #   state = State.new(machine, :parked, :value => 1)
     #   state.matches?(1)           # => true
     #   state.matches?(2)           # => false
-    #   
+    #
     #   # With a matcher
     #   state = State.new(machine, :parked, :value => lambda {Time.now}, :if => lambda {|value| !value.nil?})
     #   state.matches?(nil)         # => false
@@ -175,7 +175,7 @@ module StateMachines
 
     # Defines a context for the state which will be enabled on instances of
     # the owner class when the machine is in this state.
-    # 
+    #
     # This can be called multiple times.  Each time a new context is created,
     # a new module will be included in the owner class.
     def context(&block)
@@ -189,7 +189,7 @@ module StateMachines
       new_methods = context_methods.to_a.select { |(name, method)| old_methods[name] != method }
 
       # Alias new methods so that the only execute when the object is in this state
-      new_methods.each do |(method_name, method)|
+      new_methods.each do |(method_name, _method)|
         context_name = context_name_for(method_name)
         context.class_eval <<-end_eval, __FILE__, __LINE__ + 1
           alias_method :"#{context_name}", :#{method_name}
@@ -213,7 +213,7 @@ module StateMachines
 
     # Calls a method defined in this state's context on the given object.  All
     # arguments and any block will be passed into the method defined.
-    # 
+    #
     # If the method has never been defined for this state, then a NoMethodError
     # will be raised.
     def call(object, method, *args, &block)
@@ -244,9 +244,9 @@ module StateMachines
     end
 
     # Generates a nicely formatted description of this state's contents.
-    # 
+    #
     # For example,
-    # 
+    #
     #   state = StateMachines::State.new(machine, :parked, :value => 1, :initial => true)
     #   state   # => #<StateMachines::State name=:parked value=1 initial=true context=[]>
     def inspect
