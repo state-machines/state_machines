@@ -1,4 +1,10 @@
-*   Fixed inconsistent use of :use_transactions 
+## 0.5.0
+
+*   Fix states being evaluated with wrong `owner_class` context
+
+*   Fixed state machine false duplication
+
+*   Fixed inconsistent use of :use_transactions
 
 *   Namespaced integrations are not registered by default anymore
 
