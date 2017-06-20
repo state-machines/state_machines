@@ -12,9 +12,8 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/state-machines/state_machines'
   spec.license       = 'MIT'
 
-  spec.required_ruby_version     = '>= 1.9.3'
+  spec.required_ruby_version     = '>= 2.0.0'
   spec.files         = `git ls-files -z`.split("\x0")
-  spec.test_files    = spec.files.grep(/^test\//)
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '>= 1.7.6'
