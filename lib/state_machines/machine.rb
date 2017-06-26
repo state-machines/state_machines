@@ -2052,7 +2052,7 @@ module StateMachines
     def owner_class_ancestor_has_method?(scope, method)
       return false unless owner_class_has_method?(scope, method)
 
-      superclasses = owner_class.ancestors[1..-1].select { |ancestor| ancestor.is_a?(Class) }
+      superclasses = owner_class.ancestors.select { |ancestor| ancestor.is_a?(Class) }[1..-1]
 
       if scope == :class
         current = owner_class.singleton_class
