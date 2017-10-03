@@ -37,3 +37,4 @@
 - @nblumoe
 - @reiner
 - @sanemat
+- @jonathan-wheeler
