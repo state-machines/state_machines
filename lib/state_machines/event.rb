@@ -154,18 +154,20 @@ module StateMachines
       if transition = transition_for(object)
         transition.perform(*args)
       else
-        on_failure(object)
+        on_failure(object, *args)
         false
       end
     end
 
     # Marks the object as invalid and runs any failure callbacks associated with
     # this event.  This should get called anytime this event fails to transition.
-    def on_failure(object)
+    def on_failure(object, *args)
       state = machine.states.match!(object)
       machine.invalidate(object, :state, :invalid_transition, [[:event, human_name(object.class)], [:state, state.human_name(object.class)]])
 
-      Transition.new(object, machine, name, state.name, state.name).run_callbacks(:before => false)
+      transition = Transition.new(object, machine, name, state.name, state.name)
+      transition.args = args if args.any?
+      transition.run_callbacks(:before => false)
     end
 
     # Resets back to the initial state of the event, with no branches / known
