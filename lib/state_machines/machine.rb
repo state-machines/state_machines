@@ -2130,7 +2130,7 @@ module StateMachines
     # Generates the results for the given scope based on one or more states to
     # filter by
     def run_scope(scope, machine, klass, states)
-      values = states.flatten.map { |state| machine.states.fetch(state).value }
+      values = states.flatten.compact.map { |state| machine.states.fetch(state).value }
       scope.call(klass, values)
     end
 
