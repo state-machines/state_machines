@@ -563,7 +563,7 @@ end
 vehicle = Vehicle.new                   # => #<Vehicle:0xb708412c @state="parked" ...>
 vehicle.state                           # => "parked"
 vehicle.machine.ignite                  # => true
-vehicle.machine.state                   # => "idling
+vehicle.machine.state                   # => "idling"
 vehicle.state                           # => "idling"
 vehicle.machine.state_transitions       # => [#<StateMachines:Transition ...>]
 vehicle.machine.definition.states.keys  # => :first_gear, :second_gear, :parked, :idling
