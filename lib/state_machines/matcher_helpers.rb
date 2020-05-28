@@ -46,7 +46,7 @@ module StateMachines
     # In the above example, +same+ will match whichever the from state is.  In
     # the case of the +ignite+ event, it is essential the same as the following:
     # 
-    #   transition :parked => :parked, :first_gear => :first_gear
+    #   transition :idling => :idling, :first_gear => :first_gear
     def same
       LoopbackMatcher.instance
     end
