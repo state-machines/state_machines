@@ -237,6 +237,10 @@ vehicle.state_paths                                       # => [[#<StateMachines
 vehicle.state_paths.to_states                             # => [:parked, :idling, :first_gear, :stalled, :second_gear, :third_gear]
 vehicle.state_paths.events                                # => [:park, :ignite, :shift_up, :idle, :crash, :repair, :shift_down]
 
+# Possible states can be analyzed for a class
+Vehicle.state_machine.states.to_a                   # [#<StateMachines::State name=:parked value="parked" initial=true>, #<StateMachines::State name=:idling value="idling" initial=false>, ...]
+Vehicle.state_machines[:state].states.to_a          # [#<StateMachines::State name=:parked value="parked" initial=true>, #<StateMachines::State name=:idling value="idling" initial=false>, ...]
+
 # Find all paths that start and end on certain states
 vehicle.state_paths(:from => :parked, :to => :first_gear) # => [[
                                                           #       #<StateMachines:Transition attribute=:state event=:ignite from="parked" ...>,
