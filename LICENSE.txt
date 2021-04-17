@@ -1,5 +1,5 @@
 Copyright (c) 2006-2012 Aaron Pfeifer
-Copyright (c) 2014-2015 Abdelkader Boudih
+Copyright (c) 2014-2021 Abdelkader Boudih
 
 MIT License
 

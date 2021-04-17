@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/state-machines/state_machines.svg?branch=master)](https://travis-ci.org/state-machines/state_machines)
+![Build Status](https://github.com/state-machines/state_machines/actions/workflows/ruby.yml/badge.svg)
 [![Code Climate](https://codeclimate.com/github/state-machines/state_machines.svg)](https://codeclimate.com/github/state-machines/state_machines)
 # State Machines
 
@@ -581,7 +581,7 @@ transitions.
 
 Ruby versions officially supported and tested:
 
-* Ruby (MRI) 2.0.0+
+* Ruby (MRI) 2.6.0+
 * JRuby
 * Rubinius
 
