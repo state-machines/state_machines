@@ -16,36 +16,38 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     @transitions = StateMachines::TransitionCollection.new([
       @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
     ], after: false)
-    @result = @transitions.perform
   end
 
   def test_should_raise_exception
-    skip('Not supported') if StateMachines::Transition.pause_supported?
+    skip('test not supported in this Ruby Engine') if StateMachines::Transition.pause_supported?
     assert_raises(ArgumentError) { @transitions.perform }
   end
 
   def test_should_succeed
-    skip unless StateMachines::Transition.pause_supported?
-
-    assert_equal true, @result
+    skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
+    @transitions.perform
+    assert_equal true, @transitions.perform
   end
 
   def test_should_not_run_around_callbacks_after_yield
-    skip unless StateMachines::Transition.pause_supported?
+    skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
 
+    @transitions.perform
     refute @callbacks.include?(:around_after)
   end
 
   def test_should_run_around_callbacks_after_yield_on_subsequent_perform
-    skip unless StateMachines::Transition.pause_supported?
+    skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
 
+    @transitions.perform
     StateMachines::TransitionCollection.new([@transition]).perform
     assert @callbacks.include?(:around_after)
   end
 
   def test_should_not_rerun_around_callbacks_before_yield_on_subsequent_perform
-    skip unless StateMachines::Transition.pause_supported?
+    skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
 
+    @transitions.perform
     @callbacks = []
     StateMachines::TransitionCollection.new([@transition]).perform
     refute @callbacks.include?(:around_before)
