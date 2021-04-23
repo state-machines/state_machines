@@ -4,7 +4,7 @@ require_relative '../files/models/driver'
 class DriverNonstandardTest < MiniTest::Test
   def setup
     @driver = Driver.new
-    @events = Driver.state_machine.events
+    @events = Driver.state_machine(:status).events
   end
 
   def test_should_have
