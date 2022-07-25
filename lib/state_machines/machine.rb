@@ -1014,6 +1014,7 @@ module StateMachines
         # Add any states referenced in the matcher.  When matchers are used,
         # states are not allowed to be configured.
         raise ArgumentError, "Cannot configure states when using matchers (using #{options.inspect})" if options.any?
+
         states = add_states(names.first.values)
       else
         states = add_states(names)
@@ -1316,6 +1317,7 @@ module StateMachines
         # Add any events referenced in the matcher.  When matchers are used,
         # events are not allowed to be configured.
         raise ArgumentError, "Cannot configure events when using matchers (using #{options.inspect})" if options.any?
+
         events = add_events(names.first.values)
       else
         events = add_events(names)

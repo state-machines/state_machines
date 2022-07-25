@@ -136,6 +136,7 @@ module StateMachines
         elsif options.include?(blacklist_option)
           value = options[blacklist_option]
           raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if value.is_a?(Matcher)
+
           BlacklistMatcher.new(value)
         else
           AllMatcher.instance

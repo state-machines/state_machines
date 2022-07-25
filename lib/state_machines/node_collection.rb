@@ -167,6 +167,7 @@ module StateMachines
       # is raised.
     def index(name)
       fail ArgumentError, 'No indices configured' unless @indices.any?
+
       @indices[name] || fail(ArgumentError, "Invalid index: #{name.inspect}")
     end
 

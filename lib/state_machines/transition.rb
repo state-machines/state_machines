@@ -328,6 +328,7 @@ module StateMachines
           @resume_block = @paused_block = nil
 
           raise error if error
+
           !halted
         else
           true

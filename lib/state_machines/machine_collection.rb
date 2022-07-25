@@ -88,6 +88,7 @@ module StateMachines
       each_value do |machine|
         # Determine use_transactions setting for this set of transitions.  If from multiple state_machines, the settings must match.
         raise 'Encountered mismatched use_transactions configurations for multiple state_machines' if !use_transactions.nil? && use_transactions != machine.use_transactions
+
         use_transactions = machine.use_transactions
       end
       use_transactions
