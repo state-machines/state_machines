@@ -3,13 +3,13 @@ module StateMachines
   class MachineCollection < Hash
     # Initializes the state of each machine in the given object.  This can allow
     # states to be initialized in two groups: static and dynamic.  For example:
-    # 
+    #
     #   machines.initialize_states(object) do
     #     # After static state initialization, before dynamic state initialization
     #   end
-    # 
+    #
     # If no block is provided, then all states will still be initialized.
-    # 
+    #
     # Valid configuration options:
     # * <tt>:static</tt> - Whether to initialize static states. Unless set to
     #   false, the state will be initialized regardless of its current value.
@@ -71,7 +71,7 @@ module StateMachines
     # Builds the collection of transitions for all event attributes defined on
     # the given object.  This will only include events whose machine actions
     # match the one specified.
-    # 
+    #
     # These should only be fired as a result of the action being run.
     def transitions(object, action, options = {})
       transitions = map do |name, machine|

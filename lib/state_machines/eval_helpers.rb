@@ -7,46 +7,46 @@ module StateMachines
     # * Symbol
     # * Method / Proc
     # * String
-    # 
+    #
     # == Examples
-    # 
+    #
     # Below are examples of the various ways that a method can be evaluated
     # on an object:
-    # 
+    #
     #   class Person
     #     def initialize(name)
     #       @name = name
     #     end
-    #     
+    #
     #     def name
     #       @name
     #     end
     #   end
-    #   
+    #
     #   class PersonCallback
     #     def self.run(person)
     #       person.name
     #     end
     #   end
-    # 
+    #
     #   person = Person.new('John Smith')
-    #   
+    #
     #   evaluate_method(person, :name)                            # => "John Smith"
     #   evaluate_method(person, PersonCallback.method(:run))      # => "John Smith"
     #   evaluate_method(person, Proc.new {|person| person.name})  # => "John Smith"
     #   evaluate_method(person, lambda {|person| person.name})    # => "John Smith"
     #   evaluate_method(person, '@name')                          # => "John Smith"
-    # 
+    #
     # == Additional arguments
-    # 
+    #
     # Additional arguments can be passed to the methods being evaluated.  If
     # the method defines additional arguments other than the object context,
     # then all arguments are required.
-    # 
+    #
     # For example,
-    # 
+    #
     #   person = Person.new('John Smith')
-    #   
+    #
     #   evaluate_method(person, lambda {|person| person.name}, 21)                              # => "John Smith"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21)          # => "John Smith is 21"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21, 'male')  # => ArgumentError: wrong number of arguments (3 for 2)
@@ -59,7 +59,7 @@ module StateMachines
         when Proc, Method
           args.unshift(object)
           arity = method.arity
-          
+
           # Procs don't support blocks in < Ruby 1.9, so it's tacked on as an
           # argument for consistency across versions of Ruby
           if block_given? && Proc === method && arity != 0
@@ -75,7 +75,7 @@ module StateMachines
             # These method types are only called with 0, 1, or n arguments
             args = args[0, arity] if [0, 1].include?(arity)
           end
-          
+
           method.is_a?(Proc) ? method.call(*args) : method.call(*args, &block)
         when String
           eval(method, object.instance_eval {binding}, &block)

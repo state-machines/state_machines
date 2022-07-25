@@ -6,7 +6,7 @@ module StateMachines
       @machine = machine
       @kind = kind
     end
-    
+
     # Provides a human-readable description of the module
     def to_s
       owner_class = @machine.owner_class

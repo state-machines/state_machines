@@ -3,21 +3,21 @@ module StateMachines
   # requirements regarding what states to start and end on
   class PathCollection < Array
 
-    
+
     # The object whose state machine is being walked
     attr_reader :object
-    
+
     # The state machine these path are walking
     attr_reader :machine
-    
+
     # The initial state to start each path from
     attr_reader :from_name
-    
+
     # The target state for each path
     attr_reader :to_name
-    
+
     # Creates a new collection of paths with the given requirements.
-    # 
+    #
     # Configuration options:
     # * <tt>:from</tt> - The initial state to start from
     # * <tt>:to</tt> - The target end state
@@ -27,47 +27,47 @@ module StateMachines
     def initialize(object, machine, options = {})
       options = {:deep => false, :from => machine.states.match!(object).name}.merge(options)
       options.assert_valid_keys( :from, :to, :deep, :guard)
-      
+
       @object = object
       @machine = machine
       @from_name = machine.states.fetch(options[:from]).name
       @to_name = options[:to] && machine.states.fetch(options[:to]).name
       @guard = options[:guard]
       @deep = options[:deep]
-      
+
       initial_paths.each {|path| walk(path)}
     end
-    
+
     # Lists all of the states that can be transitioned from through the paths in
     # this collection.
-    # 
+    #
     # For example,
-    # 
+    #
     #   paths.from_states # => [:parked, :idling, :first_gear, ...]
     def from_states
       flat_map(&:from_states).uniq
     end
-    
+
     # Lists all of the states that can be transitioned to through the paths in
     # this collection.
-    # 
+    #
     # For example,
-    # 
+    #
     #   paths.to_states # => [:idling, :first_gear, :second_gear, ...]
     def to_states
       flat_map(&:to_states).uniq
     end
-    
+
     # Lists all of the events that can be fired through the paths in this
     # collection.
-    # 
+    #
     # For example,
-    # 
+    #
     #   paths.events  # => [:park, :ignite, :shift_up, ...]
     def events
       flat_map(&:events).uniq
     end
-    
+
     private
       # Gets the initial set of paths to walk
       def initial_paths
@@ -77,7 +77,7 @@ module StateMachines
           path
         end
       end
-      
+
       # Walks down the given path.  Each new path that matches the configured
       # requirements will be added to this collection.
       def walk(path)

@@ -12,7 +12,7 @@ module StateMachines
     # The name of the event
     attr_reader :name
 
-    # The fully-qualified name of the event, scoped by the machine's namespace 
+    # The fully-qualified name of the event, scoped by the machine's namespace
     attr_reader :qualified_name
 
     # The human-readable name for the event
@@ -27,7 +27,7 @@ module StateMachines
     attr_reader :known_states
 
     # Creates a new event within the context of the given machine
-    # 
+    #
     # Configuration options:
     # * <tt>:human_name</tt> - The human-readable version of this event's name
     def initialize(machine, name, options = {}) #:nodoc:
@@ -70,18 +70,18 @@ module StateMachines
 
     # Creates a new transition that determines what to change the current state
     # to when this event fires.
-    # 
+    #
     # Since this transition is being defined within an event context, you do
     # *not* need to specify the <tt>:on</tt> option for the transition.  For
     # example:
-    # 
+    #
     #  state_machine do
     #    event :ignite do
     #      transition :parked => :idling, :idling => same, :if => :seatbelt_on? # Transitions to :idling if seatbelt is on
     #      transition all => :parked, :unless => :seatbelt_on?                  # Transitions to :parked if seatbelt is off
     #    end
     #  end
-    # 
+    #
     # See StateMachines::Machine#transition for a description of the possible
     # configurations for defining transitions.
     def transition(options)
@@ -98,9 +98,9 @@ module StateMachines
 
     # Determines whether any transitions can be performed for this event based
     # on the current state of the given object.
-    # 
+    #
     # If the event can't be fired, then this will return false, otherwise true.
-    # 
+    #
     # *Note* that this will not take the object context into account.  Although
     # a transition may be possible based on the state machine definition,
     # object-specific behaviors (like validations) may prevent it from firing.
@@ -110,7 +110,7 @@ module StateMachines
 
     # Finds and builds the next transition that can be performed on the given
     # object.  If no transitions can be made, then this will return nil.
-    # 
+    #
     # Valid requirement options:
     # * <tt>:from</tt> - One or more states being transitioned from.  If none
     #   are specified, then this will be the object's current state.
@@ -145,7 +145,7 @@ module StateMachines
     # Attempts to perform the next available transition on the given object.
     # If no transitions can be made, then this will return false, otherwise
     # true.
-    # 
+    #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
     def fire(object, *args)
@@ -185,9 +185,9 @@ module StateMachines
     end
 
     # Generates a nicely formatted description of this event's contents.
-    # 
+    #
     # For example,
-    # 
+    #
     #   event = StateMachines::Event.new(machine, :park)
     #   event.transition all - :idling => :parked, :idling => same
     #   event   # => #<StateMachines::Event name=:park transitions=[all - :idling => :parked, :idling => same]>
