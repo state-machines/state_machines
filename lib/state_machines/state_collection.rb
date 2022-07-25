@@ -102,6 +102,7 @@ module StateMachines
     end
 
     private
+
     # Gets the value for the given attribute on the node
     def value(node, attribute)
       attribute == :value ? node.value(false) : super

@@ -1885,6 +1885,7 @@ module StateMachines
     end
 
     protected
+
     # Runs additional initialization hooks.  By default, this is a no-op.
     def after_initialize
     end

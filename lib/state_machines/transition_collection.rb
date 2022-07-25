@@ -74,9 +74,11 @@ module StateMachines
     end
 
     protected
+
       attr_reader :results #:nodoc:
 
     private
+
       # Is this a valid set of transitions?  If the collection was creating with
       # any +false+ values for transitions, then the the collection will be
       # marked as invalid.
@@ -196,6 +198,7 @@ module StateMachines
     end
 
     private
+
       # Hooks into running transition callbacks so that event / event transition
       # attributes can be properly updated
       def run_callbacks(index = 0)

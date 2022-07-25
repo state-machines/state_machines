@@ -164,6 +164,7 @@ module StateMachines
     end
 
     private
+
     # Runs all of the methods configured for this callback.
     #
     # When running +around+ callbacks, this will evaluate each method and

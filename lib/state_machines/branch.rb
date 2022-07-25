@@ -124,6 +124,7 @@ module StateMachines
     end
 
     protected
+
       # Builds a matcher strategy to use for the given options.  If neither a
       # whitelist nor a blacklist option is specified, then an AllMatcher is
       # built.

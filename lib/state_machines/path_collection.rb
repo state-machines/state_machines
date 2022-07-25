@@ -69,6 +69,7 @@ module StateMachines
     end
 
     private
+
       # Gets the initial set of paths to walk
       def initial_paths
         machine.events.transitions_for(object, :from => from_name, :guard => @guard).map do |transition|

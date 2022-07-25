@@ -202,6 +202,7 @@ module StateMachines
     end
 
     protected
+
     # Add the various instance methods that can transition the object using
     # the current event
     def add_actions

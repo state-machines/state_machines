@@ -87,6 +87,7 @@ module StateMachines
     end
 
     private
+
       # Calculates the number of times the given state has been walked to
       def times_walked_to(state)
         select {|transition| transition.to_name == state}.length

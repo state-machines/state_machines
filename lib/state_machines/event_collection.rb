@@ -132,6 +132,7 @@ module StateMachines
     end
 
     private
+
     def match(requirements) #:nodoc:
       requirements && requirements[:on] ? [fetch(requirements.delete(:on))] : self
     end

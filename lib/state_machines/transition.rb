@@ -281,6 +281,7 @@ module StateMachines
     end
 
     private
+
       # Runs a block that may get paused.  If the block doesn't pause, then
       # execution will continue as normal.  If the block gets paused, then it
       # will take care of switching the execution context when it's resumed.

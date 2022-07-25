@@ -163,6 +163,7 @@ module StateMachines
     end
 
     protected
+
       # Gets the given index.  If the index does not exist, then an ArgumentError
       # is raised.
     def index(name)
