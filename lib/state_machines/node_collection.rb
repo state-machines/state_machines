@@ -163,10 +163,12 @@ module StateMachines
     end
 
     protected
+
       # Gets the given index.  If the index does not exist, then an ArgumentError
       # is raised.
     def index(name)
       fail ArgumentError, 'No indices configured' unless @indices.any?
+
       @indices[name] || fail(ArgumentError, "Invalid index: #{name.inspect}")
     end
 

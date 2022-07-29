@@ -255,6 +255,7 @@ module StateMachines
     end
 
     private
+
     # Should the value be cached after it's evaluated for the first time?
     def cache_value?
       @cache

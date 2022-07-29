@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 gemspec
 
-platform :mri_20, :mri_21 do
+platform :mri do
   gem 'pry-byebug'
 end
 

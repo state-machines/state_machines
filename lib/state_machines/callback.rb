@@ -16,38 +16,38 @@ module StateMachines
       # the callback.  This can be configured on an application-wide basis by
       # setting this configuration to +true+ or +false+.  The default value
       # is +false+.
-      # 
+      #
       # *Note* that the DataMapper and Sequel integrations automatically
       # configure this value on a per-callback basis, so it does not have to
       # be enabled application-wide.
-      # 
+      #
       # == Examples
-      # 
+      #
       # When not bound to the object:
-      # 
+      #
       #   class Vehicle
       #     state_machine do
       #       before_transition do |vehicle|
       #         vehicle.set_alarm
       #       end
       #     end
-      #     
+      #
       #     def set_alarm
       #       ...
       #     end
       #   end
-      # 
+      #
       # When bound to the object:
-      # 
+      #
       #   StateMachines::Callback.bind_to_object = true
-      #   
+      #
       #   class Vehicle
       #     state_machine do
       #       before_transition do
       #         self.set_alarm
       #       end
       #     end
-      #     
+      #
       #     def set_alarm
       #       ...
       #     end
@@ -57,7 +57,7 @@ module StateMachines
       # The application-wide terminator to use for callbacks when not
       # explicitly defined.  Terminators determine whether to cancel a
       # callback chain based on the return value of the callback.
-      # 
+      #
       # See StateMachines::Callback#terminator for more information.
       attr_accessor :terminator
     end
@@ -75,11 +75,11 @@ module StateMachines
     # chain never cancels based on the return value (i.e. there is no implicit
     # terminator).  Certain integrations, such as ActiveRecord and Sequel,
     # change this default value.
-    # 
+    #
     # == Examples
-    # 
+    #
     # Canceling the callback chain without a terminator:
-    # 
+    #
     #   class Vehicle
     #     state_machine do
     #       before_transition do |vehicle|
@@ -87,9 +87,9 @@ module StateMachines
     #       end
     #     end
     #   end
-    # 
+    #
     # Canceling the callback chain with a terminator value of +false+:
-    # 
+    #
     #   class Vehicle
     #     state_machine do
     #       before_transition do |vehicle|
@@ -102,13 +102,13 @@ module StateMachines
     # The branch that determines whether or not this callback can be invoked
     # based on the context of the transition.  The event, from state, and
     # to state must all match in order for the branch to pass.
-    # 
+    #
     # See StateMachines::Branch for more information.
     attr_reader :branch
 
     # Creates a new callback that can get called based on the configured
     # options.
-    # 
+    #
     # In addition to the possible configuration options for branches, the
     # following options can be configured:
     # * <tt>:bind_to_object</tt> - Whether to bind the callback to the object involved.
@@ -117,7 +117,7 @@ module StateMachines
     # * <tt>:terminator</tt> - A block/proc that determines what callback
     #   results should cause the callback chain to halt (if not using the
     #   default <tt>throw :halt</tt> technique).
-    # 
+    #
     # More information about how those options affect the behavior of the
     # callback can be found in their attribute definitions.
     def initialize(type, *args, &block)
@@ -151,7 +151,7 @@ module StateMachines
     # Runs the callback as long as the transition context matches the branch
     # requirements configured for this callback.  If a block is provided, it
     # will be called when the last method has run.
-    # 
+    #
     # If a terminator has been configured and it matches the result from the
     # evaluated method, then the callback chain should be halted.
     def call(object, context = {}, *args, &block)
@@ -164,6 +164,7 @@ module StateMachines
     end
 
     private
+
     # Runs all of the methods configured for this callback.
     #
     # When running +around+ callbacks, this will evaluate each method and
