@@ -113,7 +113,7 @@ module StateMachines
   # For example,
   #
   #   class Vehicle
-  #     state_machine :initial => :parked do
+  #     state_machine initial: :parked do
   #       after_transition all => :parked do
   #         raise ArgumentError
   #       end
@@ -142,14 +142,14 @@ module StateMachines
   #   actually stored as nil):
   #
   #     class Vehicle
-  #        state_machine :initial => :pending
-  #         after_transition :pending => :parked, :do => :track_initial_transition
+  #        state_machine initial: :pending
+  #         after_transition pending: :parked, do: :track_initial_transition
   #
   #         event :park do
-  #           transition :pending => :parked
+  #           transition pending: :parked
   #         end
   #
-  #         state :pending, :value => nil
+  #         state :pending, value: nil
   #       end
   #     end
   #
@@ -161,14 +161,14 @@ module StateMachines
   #   actually stored as nil):
   #
   #     class Vehicle < ActiveRecord::Base
-  #       state_machine :initial => :pending
-  #         after_transition :pending => :parked, :do => :track_initial_transition
+  #       state_machine initial: :pending
+  #         after_transition pending: :parked, do: :track_initial_transition
   #
   #         event :park do
-  #           transition :pending => :parked
+  #           transition pending: :parked
   #         end
   #
-  #         state :pending, :value => nil
+  #         state :pending, value: nil
   #       end
   #
   #       def initialize(*)
@@ -224,7 +224,7 @@ module StateMachines
   #   class Vehicle
   #     state_machine do
   #       event :park do
-  #         transition :idling => :parked
+  #         transition idling: :parked
   #       end
   #       ...
   #     end
@@ -452,9 +452,9 @@ module StateMachines
       attr_accessor :ignore_method_conflicts
     end
     @default_messages = {
-        :invalid => 'is invalid',
-        :invalid_event => 'cannot transition when %s',
-        :invalid_transition => 'cannot transition via "%1$s"'
+        invalid: 'is invalid',
+        invalid_event: 'cannot transition when %s',
+        invalid_transition: 'cannot transition via "%1$s"'
     }
 
     # Whether to ignore any conflicts that are detected for helper methods that
@@ -517,14 +517,14 @@ module StateMachines
       end
 
       # Add machine-wide defaults
-      options = {:use_transactions => true, :initialize => true}.merge(options)
+      options = {use_transactions: true, initialize: true}.merge(options)
 
       # Set machine configuration
       @name = args.first || :state
       @attribute = options[:attribute] || @name
       @events = EventCollection.new(self)
       @states = StateCollection.new(self)
-      @callbacks = {:before => [], :after => [], :failure => []}
+      @callbacks = {before: [], after: [], failure: []}
       @namespace = options[:namespace]
       @messages = options[:messages] || {}
       @action = options[:action]
@@ -556,7 +556,7 @@ module StateMachines
       @events.machine = self
       @states = @states.dup
       @states.machine = self
-      @callbacks = {:before => @callbacks[:before].dup, :after => @callbacks[:after].dup, :failure => @callbacks[:failure].dup}
+      @callbacks = {before: @callbacks[:before].dup, after: @callbacks[:after].dup, failure: @callbacks[:failure].dup}
     end
 
     # Sets the class which is the owner of this state machine.  Any methods
@@ -566,7 +566,7 @@ module StateMachines
       @owner_class = klass
 
       # Create modules for extending the class with state/event-specific methods
-      @helper_modules = helper_modules = {:instance => HelperModule.new(self, :instance), :class => HelperModule.new(self, :class)}
+      @helper_modules = helper_modules = {instance: HelperModule.new(self, :instance), class: HelperModule.new(self, :class)}
       owner_class.class_eval do
         extend helper_modules[:class]
         include helper_modules[:instance]
@@ -665,7 +665,7 @@ module StateMachines
       if state && (options[:force] || initialize_state?(object))
         value = state.value
 
-        if hash = options[:to]
+        if (hash = options[:to])
           hash[attribute.to_s] = value
         else
           write(object, :state, value)
@@ -719,7 +719,7 @@ module StateMachines
       helper_module = @helper_modules.fetch(scope)
 
       if block_given?
-        if !self.class.ignore_method_conflicts && conflicting_ancestor = owner_class_ancestor_has_method?(scope, method)
+        if !self.class.ignore_method_conflicts && (conflicting_ancestor = owner_class_ancestor_has_method?(scope, method))
           ancestor_name = conflicting_ancestor.name && !conflicting_ancestor.name.empty? ? conflicting_ancestor.name : conflicting_ancestor.to_s
           warn "#{scope == :class ? 'Class' : 'Instance'} method \"#{method}\" is already defined in #{ancestor_name}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
         else
@@ -1884,7 +1884,7 @@ module StateMachines
       @action_hook_defined || !self_only && owner_class.state_machines.any? { |name, machine| machine.action == action && machine != self && machine.action_hook?(true) }
     end
 
-    protected
+  protected
 
     # Runs additional initialization hooks.  By default, this is a no-op.
     def after_initialize
@@ -2119,7 +2119,7 @@ module StateMachines
         [name, plural].map { |s| s.to_s }.uniq.each do |suffix|
           method = "#{kind}_#{suffix}"
 
-          if scope = send("create_#{kind}_scope", method)
+          if (scope = send("create_#{kind}_scope", method))
             # Converts state names to their corresponding values so that they
             # can be looked up properly
             define_helper(:class, method) do |machine, klass, *states|
@@ -2201,11 +2201,11 @@ module StateMachines
       new_states.map do |new_state|
         # Check for other states that use a different class type for their name.
         # This typically prevents string / symbol misuse.
-        if new_state && conflict = states.detect { |state| state.name && state.name.class != new_state.class }
+        if new_state && (conflict = states.detect { |state| state.name && state.name.class != new_state.class })
           raise ArgumentError, "#{new_state.inspect} state defined as #{new_state.class}, #{conflict.name.inspect} defined as #{conflict.name.class}; all states must be consistent"
         end
 
-        unless state = states[new_state]
+        unless (state = states[new_state])
           states << state = State.new(self, new_state)
 
           # Copy states over to sibling machines
@@ -2222,11 +2222,11 @@ module StateMachines
       new_events.map do |new_event|
         # Check for other states that use a different class type for their name.
         # This typically prevents string / symbol misuse.
-        if conflict = events.detect { |event| event.name.class != new_event.class }
+        if (conflict = events.detect { |event| event.name.class != new_event.class })
           raise ArgumentError, "#{new_event.inspect} event defined as #{new_event.class}, #{conflict.name.inspect} defined as #{conflict.name.class}; all events must be consistent"
         end
 
-        unless event = events[new_event]
+        unless (event = events[new_event])
           events << event = Event.new(self, new_event)
         end
 

@@ -100,7 +100,7 @@ module StateMachines
         integrations.detect { |integration| integration.integration_name == name } || raise(IntegrationNotFound.new(name))
       end
 
-      private
+    private
 
       def add(integration)
         if integration.respond_to?(:integration_name)

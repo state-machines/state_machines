@@ -57,7 +57,7 @@ module StateMachines
       @name = name
       @qualified_name = name && machine.namespace ? :"#{machine.namespace}_#{name}" : name
       @human_name = options[:human_name] || (@name ? @name.to_s.tr('_', ' ') : 'nil')
-      @value = options.include?(:value) ? options[:value] : name && name.to_s
+      @value = options.include?(:value) ? options[:value] : name&.to_s
       @cache = options[:cache]
       @matcher = options[:if]
       @initial = options[:initial] == true
@@ -68,8 +68,8 @@ module StateMachines
 
         # Output a warning if another machine has a conflicting qualified name
         # for a different attribute
-        if conflict = conflicting_machines.detect { |other_name, other_machine| other_machine.attribute != machine.attribute }
-          name, other_machine = conflict
+        if (conflict = conflicting_machines.detect { |_other_name, other_machine| other_machine.attribute != machine.attribute })
+          _name, other_machine = conflict
           warn "State #{qualified_name.inspect} for #{machine.name.inspect} is already defined in #{other_machine.name.inspect}"
         elsif conflicting_machines.empty?
           # Only bother adding predicates when another machine for the same
@@ -99,7 +99,7 @@ module StateMachines
       !machine.events.any? do |event|
         event.branches.any? do |branch|
           branch.state_requirements.any? do |requirement|
-            requirement[:from].matches?(name) && !requirement[:to].matches?(name, :from => name)
+            requirement[:from].matches?(name) && !requirement[:to].matches?(name, from: name)
           end
         end
       end
@@ -218,7 +218,7 @@ module StateMachines
     # will be raised.
     def call(object, method, *args, &block)
       options = args.last.is_a?(Hash) ? args.pop : {}
-      options = {:method_name => method}.merge(options)
+      options = {method_name: method}.merge(options)
       state = machine.states.match!(object)
 
       if state == self && object.respond_to?(method)
@@ -254,7 +254,7 @@ module StateMachines
       "#<#{self.class} #{attributes.map { |attr, value| "#{attr}=#{value.inspect}" } * ' '}>"
     end
 
-    private
+  private
 
     # Should the value be cached after it's evaluated for the first time?
     def cache_value?
