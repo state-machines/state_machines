@@ -1,6 +1,4 @@
 module StateMachines
-
-
   # Represents a module which will get evaluated within the context of a state.
   #
   # Class-level methods are proxied to the owner class, injecting a custom
@@ -68,7 +66,7 @@ module StateMachines
 
       state_name = state.name
       machine_name = machine.name
-      @condition = lambda {|object| object.class.state_machine(machine_name).states.matches?(object, state_name)}
+      @condition = lambda { |object| object.class.state_machine(machine_name).states.matches?(object, state_name) }
     end
 
     # Creates a new transition that determines what to change the current state
@@ -92,7 +90,7 @@ module StateMachines
       raise ArgumentError, 'Must specify :on event' unless options[:on]
       raise ArgumentError, 'Must specify either :to or :from state' unless !options[:to] ^ !options[:from]
 
-      machine.transition(options.merge(options[:to] ? {:from => state.name} : {:to => state.name}))
+      machine.transition(options.merge(options[:to] ? {from: state.name} : {to: state.name}))
     end
 
     # Hooks in condition-merging to methods that don't exist in this module
@@ -121,8 +119,8 @@ module StateMachines
         object = condition_args.first || self
 
         proxy.evaluate_method(object, proxy_condition) &&
-        Array(if_condition).all? {|condition| proxy.evaluate_method(object, condition)} &&
-        !Array(unless_condition).any? {|condition| proxy.evaluate_method(object, condition)}
+        Array(if_condition).all? { |condition| proxy.evaluate_method(object, condition) } &&
+        !Array(unless_condition).any? { |condition| proxy.evaluate_method(object, condition) }
       end
 
       # Evaluate the method on the owner class with the condition proxied

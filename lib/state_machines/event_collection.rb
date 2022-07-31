@@ -2,7 +2,7 @@ module StateMachines
   # Represents a collection of events in a state machine
   class EventCollection < NodeCollection
     def initialize(machine) #:nodoc:
-      super(machine, :index => [:name, :qualified_name])
+      super(machine, index: [:name, :qualified_name])
     end
 
     # Gets the list of events that can be fired on the given object.
@@ -118,7 +118,7 @@ module StateMachines
       machine.read(object, :event_transition) || if event_name = machine.read(object, :event)
                                                    if event = self[event_name.to_sym, :name]
                                                      event.transition_for(object) || begin
-                                                                                       # No valid transition: invalidate
+                                                       # No valid transition: invalidate
                                                        machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
                                                        false
                                                      end
@@ -131,7 +131,7 @@ module StateMachines
 
     end
 
-    private
+  private
 
     def match(requirements) #:nodoc:
       requirements && requirements[:on] ? [fetch(requirements.delete(:on))] : self

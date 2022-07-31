@@ -130,7 +130,7 @@ module StateMachines
       @methods << block if block_given?
       raise ArgumentError, 'Method(s) for callback must be specified' unless @methods.any?
 
-      options = {:bind_to_object => self.class.bind_to_object, :terminator => self.class.terminator}.merge(options)
+      options = {bind_to_object: self.class.bind_to_object, terminator: self.class.terminator}.merge(options)
 
       # Proxy lambda blocks so that they're bound to the object
       bind_to_object = options.delete(:bind_to_object)
@@ -163,7 +163,7 @@ module StateMachines
       end
     end
 
-    private
+  private
 
     # Runs all of the methods configured for this callback.
     #

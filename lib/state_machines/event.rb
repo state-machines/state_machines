@@ -91,7 +91,7 @@ module StateMachines
       # requirements
       options.assert_valid_keys(:from, :to, :except_from, :except_to, :if, :unless) if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on, :if, :unless]).empty?
 
-      branches << branch = Branch.new(options.merge(:on => name))
+      branches << branch = Branch.new(options.merge(on: name))
       @known_states |= branch.known_states
       branch
     end
@@ -120,10 +120,10 @@ module StateMachines
     #   conditionals defined for each one.  Default is true.
     def transition_for(object, requirements = {})
       requirements.assert_valid_keys(:from, :to, :guard)
-      requirements[:from] = machine.states.match!(object).name unless custom_from_state = requirements.include?(:from)
+      requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
-        if match = branch.match(object, requirements)
+        if (match = branch.match(object, requirements))
           # Branch allows for the transition to occur
           from = requirements[:from]
           to = if match[:to].is_a?(LoopbackMatcher)
@@ -151,7 +151,7 @@ module StateMachines
     def fire(object, *args)
       machine.reset(object)
 
-      if transition = transition_for(object)
+      if (transition = transition_for(object))
         transition.perform(*args)
       else
         on_failure(object, *args)
@@ -167,7 +167,7 @@ module StateMachines
 
       transition = Transition.new(object, machine, name, state.name, state.name)
       transition.args = args if args.any?
-      transition.run_callbacks(:before => false)
+      transition.run_callbacks(before: false)
     end
 
     # Resets back to the initial state of the event, with no branches / known
@@ -201,7 +201,7 @@ module StateMachines
       "#<#{self.class} name=#{name.inspect} transitions=[#{transitions * ', '}]>"
     end
 
-    protected
+  protected
 
     # Add the various instance methods that can transition the object using
     # the current event

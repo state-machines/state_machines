@@ -35,7 +35,7 @@ module StateMachines
 
     # The initial state name for this path
     def from_name
-      first && first.from_name
+      first&.from_name
     end
 
     # Lists all of the from states that can be reached through this path.
@@ -44,13 +44,13 @@ module StateMachines
     #
     #   path.to_states  # => [:parked, :idling, :first_gear, ...]
     def from_states
-      map {|transition| transition.from_name}.uniq
+      map { |transition| transition.from_name }.uniq
     end
 
     # The end state name for this path.  If a target state was specified for
     # the path, then that will be returned if the path is complete.
     def to_name
-      last && last.to_name
+      last&.to_name
     end
 
     # Lists all of the to states that can be reached through this path.
@@ -59,7 +59,7 @@ module StateMachines
     #
     #   path.to_states  # => [:parked, :idling, :first_gear, ...]
     def to_states
-      map {|transition| transition.to_name}.uniq
+      map { |transition| transition.to_name }.uniq
     end
 
     # Lists all of the events that can be fired through this path.
@@ -68,13 +68,13 @@ module StateMachines
     #
     #   path.events # => [:park, :ignite, :shift_up, ...]
     def events
-      map {|transition| transition.event}.uniq
+      map { |transition| transition.event }.uniq
     end
 
     # Walks down the next transitions at the end of this path.  This will only
     # walk down paths that are considered valid.
     def walk
-      transitions.each {|transition| yield dup.push(transition)}
+      transitions.each { |transition| yield dup.push(transition) }
     end
 
     # Determines whether or not this path has completed.  A path is considered
@@ -86,36 +86,36 @@ module StateMachines
       !empty? && (@target ? to_name == @target : transitions.empty?)
     end
 
-    private
+  private
 
-      # Calculates the number of times the given state has been walked to
-      def times_walked_to(state)
-        select {|transition| transition.to_name == state}.length
-      end
+    # Calculates the number of times the given state has been walked to
+    def times_walked_to(state)
+      select { |transition| transition.to_name == state }.length
+    end
 
-      # Determines whether the given transition has been recently walked down in
-      # this path.  If a target is configured for this path, then this will only
-      # look at transitions walked down since the target was last reached.
-      def recently_walked?(transition)
-        transitions = self
-        if @target && @target != to_name && target_transition = detect {|t| t.to_name == @target}
-          transitions = transitions[index(target_transition) + 1..-1]
-        end
-        transitions.include?(transition)
+    # Determines whether the given transition has been recently walked down in
+    # this path.  If a target is configured for this path, then this will only
+    # look at transitions walked down since the target was last reached.
+    def recently_walked?(transition)
+      transitions = self
+      if @target && @target != to_name && (target_transition = detect { |t| t.to_name == @target })
+        transitions = transitions[index(target_transition) + 1..-1]
       end
+      transitions.include?(transition)
+    end
 
-      # Determines whether it's possible to walk to the given transition from
-      # the current path.  A transition can be walked to if:
-      # * It has not been recently walked and
-      # * If a target is specified, it has not been walked to twice yet
-      def can_walk_to?(transition)
-        !recently_walked?(transition) && (!@target || times_walked_to(@target) < 2)
-      end
+    # Determines whether it's possible to walk to the given transition from
+    # the current path.  A transition can be walked to if:
+    # * It has not been recently walked and
+    # * If a target is specified, it has not been walked to twice yet
+    def can_walk_to?(transition)
+      !recently_walked?(transition) && (!@target || times_walked_to(@target) < 2)
+    end
 
-      # Get the next set of transitions that can be walked to starting from the
-      # end of this path
-      def transitions
-        @transitions ||= empty? ? [] : machine.events.transitions_for(object, :from => to_name, :guard => @guard).select {|transition| can_walk_to?(transition)}
-      end
+    # Get the next set of transitions that can be walked to starting from the
+    # end of this path
+    def transitions
+      @transitions ||= empty? ? [] : machine.events.transitions_for(object, from: to_name, guard: @guard).select { |transition| can_walk_to?(transition) }
+    end
   end
 end

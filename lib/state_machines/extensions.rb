@@ -139,7 +139,7 @@ module StateMachines
       fire_events(*(events + [run_action])) || fail(StateMachines::InvalidParallelTransition.new(self, events))
     end
 
-    protected
+  protected
 
     def initialize_state_machines(options = {}, &block) #:nodoc:
       self.class.state_machines.initialize_states(self, options, &block)

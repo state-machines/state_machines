@@ -1,3 +1,7 @@
+## 0.6.0
+
+* Drop support to EOL rubies.
+
 ## 0.5.0
 
 *   Fix states being evaluated with wrong `owner_class` context

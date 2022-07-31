@@ -37,7 +37,7 @@ module StateMachines
 
       if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on]).empty?
         # Explicit from/to requirements specified
-        @state_requirements = [{:from => build_matcher(options, :from, :except_from), :to => build_matcher(options, :to, :except_to)}]
+        @state_requirements = [{from: build_matcher(options, :from, :except_from), to: build_matcher(options, :to, :except_to)}]
       else
         # Separate out the event requirement
         options.delete(:on)
@@ -47,7 +47,7 @@ module StateMachines
         @state_requirements = options.collect do |from, to|
           from = WhitelistMatcher.new(from) unless from.is_a?(Matcher)
           to = WhitelistMatcher.new(to) unless to.is_a?(Matcher)
-          {:from => from, :to => to}
+          {from: from, to: to}
         end
       end
 
@@ -55,7 +55,7 @@ module StateMachines
       # on the priority in which tracked states should be added.
       @known_states = []
       @state_requirements.each do |state_requirement|
-        [:from, :to].each {|option| @known_states |= state_requirement[option].values}
+        [:from, :to].each { |option| @known_states |= state_requirement[option].values }
       end
     end
 
@@ -123,63 +123,63 @@ module StateMachines
      fail NotImplementedError
     end
 
-    protected
+  protected
 
-      # Builds a matcher strategy to use for the given options.  If neither a
-      # whitelist nor a blacklist option is specified, then an AllMatcher is
-      # built.
-      def build_matcher(options, whitelist_option, blacklist_option)
-        options.assert_exclusive_keys(whitelist_option, blacklist_option)
+    # Builds a matcher strategy to use for the given options.  If neither a
+    # whitelist nor a blacklist option is specified, then an AllMatcher is
+    # built.
+    def build_matcher(options, whitelist_option, blacklist_option)
+      options.assert_exclusive_keys(whitelist_option, blacklist_option)
 
-        if options.include?(whitelist_option)
-          value = options[whitelist_option]
-          value.is_a?(Matcher) ? value : WhitelistMatcher.new(options[whitelist_option])
-        elsif options.include?(blacklist_option)
-          value = options[blacklist_option]
-          raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if value.is_a?(Matcher)
+      if options.include?(whitelist_option)
+        value = options[whitelist_option]
+        value.is_a?(Matcher) ? value : WhitelistMatcher.new(options[whitelist_option])
+      elsif options.include?(blacklist_option)
+        value = options[blacklist_option]
+        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if value.is_a?(Matcher)
 
-          BlacklistMatcher.new(value)
-        else
-          AllMatcher.instance
-        end
+        BlacklistMatcher.new(value)
+      else
+        AllMatcher.instance
       end
+    end
 
-      # Verifies that all configured requirements (event and state) match the
-      # given query.  If a match is found, then a hash containing the
-      # event/state requirements that passed will be returned; otherwise, nil.
-      def match_query(query)
-        query ||= {}
+    # Verifies that all configured requirements (event and state) match the
+    # given query.  If a match is found, then a hash containing the
+    # event/state requirements that passed will be returned; otherwise, nil.
+    def match_query(query)
+      query ||= {}
 
-        if match_event(query) && (state_requirement = match_states(query))
-          state_requirement.merge(:on => event_requirement)
-        end
+      if match_event(query) && (state_requirement = match_states(query))
+        state_requirement.merge(on: event_requirement)
       end
+    end
 
-      # Verifies that the event requirement matches the given query
-      def match_event(query)
-        matches_requirement?(query, :on, event_requirement)
-      end
+    # Verifies that the event requirement matches the given query
+    def match_event(query)
+      matches_requirement?(query, :on, event_requirement)
+    end
 
-      # Verifies that the state requirements match the given query.  If a
-      # matching requirement is found, then it is returned.
-      def match_states(query)
-        state_requirements.detect do |state_requirement|
-          [:from, :to].all? {|option| matches_requirement?(query, option, state_requirement[option])}
-        end
+    # Verifies that the state requirements match the given query.  If a
+    # matching requirement is found, then it is returned.
+    def match_states(query)
+      state_requirements.detect do |state_requirement|
+        [:from, :to].all? { |option| matches_requirement?(query, option, state_requirement[option]) }
       end
+    end
 
-      # Verifies that an option in the given query matches the values required
-      # for that option
-      def matches_requirement?(query, option, requirement)
-        !query.include?(option) || requirement.matches?(query[option], query)
-      end
+    # Verifies that an option in the given query matches the values required
+    # for that option
+    def matches_requirement?(query, option, requirement)
+      !query.include?(option) || requirement.matches?(query[option], query)
+    end
 
-      # Verifies that the conditionals for this branch evaluate to true for the
-      # given object
-      def matches_conditions?(object, query)
-        query[:guard] == false ||
-        Array(if_condition).all? {|condition| evaluate_method(object, condition)} &&
-        !Array(unless_condition).any? {|condition| evaluate_method(object, condition)}
-      end
+    # Verifies that the conditionals for this branch evaluate to true for the
+    # given object
+    def matches_conditions?(object, query)
+      query[:guard] == false ||
+      Array(if_condition).all? { |condition| evaluate_method(object, condition) } &&
+      !Array(unless_condition).any? { |condition| evaluate_method(object, condition) }
+    end
   end
 end

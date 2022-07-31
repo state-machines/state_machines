@@ -3,7 +3,6 @@ module StateMachines
   # requirements regarding what states to start and end on
   class PathCollection < Array
 
-
     # The object whose state machine is being walked
     attr_reader :object
 
@@ -25,7 +24,7 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one
     def initialize(object, machine, options = {})
-      options = {:deep => false, :from => machine.states.match!(object).name}.merge(options)
+      options = {deep: false, from: machine.states.match!(object).name}.merge(options)
       options.assert_valid_keys( :from, :to, :deep, :guard)
 
       @object = object
@@ -35,7 +34,7 @@ module StateMachines
       @guard = options[:guard]
       @deep = options[:deep]
 
-      initial_paths.each {|path| walk(path)}
+      initial_paths.each { |path| walk(path) }
     end
 
     # Lists all of the states that can be transitioned from through the paths in
@@ -68,22 +67,22 @@ module StateMachines
       flat_map(&:events).uniq
     end
 
-    private
+  private
 
-      # Gets the initial set of paths to walk
-      def initial_paths
-        machine.events.transitions_for(object, :from => from_name, :guard => @guard).map do |transition|
-          path = Path.new(object, machine, :target => to_name, :guard => @guard)
-          path << transition
-          path
-        end
+    # Gets the initial set of paths to walk
+    def initial_paths
+      machine.events.transitions_for(object, from: from_name, guard: @guard).map do |transition|
+        path = Path.new(object, machine, target: to_name, guard: @guard)
+        path << transition
+        path
       end
+    end
 
-      # Walks down the given path.  Each new path that matches the configured
-      # requirements will be added to this collection.
-      def walk(path)
-        self << path if path.complete?
-        path.walk {|next_path| walk(next_path)} unless to_name && path.complete? && !@deep
-      end
+    # Walks down the given path.  Each new path that matches the configured
+    # requirements will be added to this collection.
+    def walk(path)
+      self << path if path.complete?
+      path.walk { |next_path| walk(next_path) } unless to_name && path.complete? && !@deep
+    end
   end
 end

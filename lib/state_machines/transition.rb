@@ -134,7 +134,7 @@ module StateMachines
     #   transition = StateMachines::Transition.new(Vehicle.new, machine, :ignite, :parked, :idling)
     #   transition.attributes   # => {:object => #<Vehicle:0xb7d60ea4>, :attribute => :state, :event => :ignite, :from => 'parked', :to => 'idling'}
     def attributes
-      @attributes ||= {:object => object, :attribute => attribute, :event => event, :from => from, :to => to}
+      @attributes ||= {object: object, attribute: attribute, event: event, from: from, to: to}
     end
 
     # Runs the actual transition and any before/after callbacks associated
@@ -184,7 +184,7 @@ module StateMachines
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
     def run_callbacks(options = {}, &block)
-      options = {:before => true, :after => true}.merge(options)
+      options = {before: true, after: true}.merge(options)
       @success = false
 
       halted = pausable { before(options[:after], &block) } if options[:before]
@@ -277,140 +277,140 @@ module StateMachines
     #   transition = StateMachines::Transition.new(object, machine, :ignite, :parked, :idling)
     #   transition   # => #<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>
     def inspect
-      "#<#{self.class} #{%w(attribute event from from_name to to_name).map {|attr| "#{attr}=#{send(attr).inspect}"} * ' '}>"
+      "#<#{self.class} #{%w(attribute event from from_name to to_name).map { |attr| "#{attr}=#{send(attr).inspect}" } * ' '}>"
     end
 
-    private
+  private
 
-      # Runs a block that may get paused.  If the block doesn't pause, then
-      # execution will continue as normal.  If the block gets paused, then it
-      # will take care of switching the execution context when it's resumed.
-      #
-      # This will return true if the given block halts for a reason other than
-      # getting paused.
-      def pausable
-        begin
-          halted = !catch(:halt) { yield; true }
-        rescue => error
-          raise unless @resume_block
-        end
-
-        if @resume_block
-          @resume_block.call(halted, error)
-        else
-          halted
-        end
+    # Runs a block that may get paused.  If the block doesn't pause, then
+    # execution will continue as normal.  If the block gets paused, then it
+    # will take care of switching the execution context when it's resumed.
+    #
+    # This will return true if the given block halts for a reason other than
+    # getting paused.
+    def pausable
+      begin
+        halted = !catch(:halt) { yield; true }
+      rescue => error
+        raise unless @resume_block
       end
 
-      # Pauses the current callback execution.  This should only occur within
-      # around callbacks when the remainder of the callback will be executed at
-      # a later point in time.
-      def pause
-        raise ArgumentError, 'around_transition callbacks cannot be called in multiple execution contexts in java implementations of Ruby. Use before/after_transitions instead.' unless self.class.pause_supported?
+      if @resume_block
+        @resume_block.call(halted, error)
+      else
+        halted
+      end
+    end
 
-        unless @resume_block
-          require 'continuation' unless defined?(callcc)
-          callcc do |block|
-            @paused_block = block
-            throw :halt, true
-          end
+    # Pauses the current callback execution.  This should only occur within
+    # around callbacks when the remainder of the callback will be executed at
+    # a later point in time.
+    def pause
+      raise ArgumentError, 'around_transition callbacks cannot be called in multiple execution contexts in java implementations of Ruby. Use before/after_transitions instead.' unless self.class.pause_supported?
+
+      unless @resume_block
+        require 'continuation' unless defined?(callcc)
+        callcc do |block|
+          @paused_block = block
+          throw :halt, true
         end
       end
+    end
 
-      # Resumes the execution of a previously paused callback execution.  Once
-      # the paused callbacks complete, the current execution will continue.
-      def resume
-        if @paused_block
-          halted, error = callcc do |block|
-            @resume_block = block
-            @paused_block.call
-          end
-
-          @resume_block = @paused_block = nil
-
-          raise error if error
-
-          !halted
-        else
-          true
+    # Resumes the execution of a previously paused callback execution.  Once
+    # the paused callbacks complete, the current execution will continue.
+    def resume
+      if @paused_block
+        halted, error = callcc do |block|
+          @resume_block = block
+          @paused_block.call
         end
+
+        @resume_block = @paused_block = nil
+
+        raise error if error
+
+        !halted
+      else
+        true
       end
+    end
 
-      # Runs the machine's +before+ callbacks for this transition.  Only
-      # callbacks that are configured to match the event, from state, and to
-      # state will be invoked.
-      #
-      # Once the callbacks are run, they cannot be run again until this transition
-      # is reset.
-      def before(complete = true, index = 0, &block)
-        unless @before_run
-          while callback = machine.callbacks[:before][index]
-            index += 1
+    # Runs the machine's +before+ callbacks for this transition.  Only
+    # callbacks that are configured to match the event, from state, and to
+    # state will be invoked.
+    #
+    # Once the callbacks are run, they cannot be run again until this transition
+    # is reset.
+    def before(complete = true, index = 0, &block)
+      unless @before_run
+        while callback = machine.callbacks[:before][index]
+          index += 1
 
-            if callback.type == :around
-              # Around callback: need to handle recursively.  Execution only gets
-              # paused if:
-              # * The block fails and the callback doesn't run on failures OR
-              # * The block succeeds, but after callbacks are disabled (in which
-              #   case a continuation is stored for later execution)
-              return if catch(:cancel) do
-                callback.call(object, context, self) do
-                  before(complete, index, &block)
+          if callback.type == :around
+            # Around callback: need to handle recursively.  Execution only gets
+            # paused if:
+            # * The block fails and the callback doesn't run on failures OR
+            # * The block succeeds, but after callbacks are disabled (in which
+            #   case a continuation is stored for later execution)
+            return if catch(:cancel) do
+              callback.call(object, context, self) do
+                before(complete, index, &block)
 
-                  pause if @success && !complete
-                  throw :cancel, true unless @success
-                end
+                pause if @success && !complete
+                throw :cancel, true unless @success
               end
-            else
-              # Normal before callback
-              callback.call(object, context, self)
             end
+          else
+            # Normal before callback
+            callback.call(object, context, self)
           end
-
-          @before_run = true
         end
 
-        action = {:success => true}.merge(block_given? ? yield : {})
-        @result, @success = action[:result], action[:success]
+        @before_run = true
       end
 
-      # Runs the machine's +after+ callbacks for this transition.  Only
-      # callbacks that are configured to match the event, from state, and to
-      # state will be invoked.
-      #
-      # Once the callbacks are run, they cannot be run again until this transition
-      # is reset.
-      #
-      # == Halting
-      #
-      # If any callback throws a <tt>:halt</tt> exception, it will be caught
-      # and the callback chain will be automatically stopped.  However, this
-      # exception will not bubble up to the caller since +after+ callbacks
-      # should never halt the execution of a +perform+.
-      def after
-        unless @after_run
-          # First resume previously paused callbacks
-          if resume
-            catch(:halt) do
-              type = @success ? :after : :failure
-              machine.callbacks[type].each {|callback| callback.call(object, context, self)}
-            end
+      action = {success: true}.merge(block_given? ? yield : {})
+      @result, @success = action[:result], action[:success]
+    end
+
+    # Runs the machine's +after+ callbacks for this transition.  Only
+    # callbacks that are configured to match the event, from state, and to
+    # state will be invoked.
+    #
+    # Once the callbacks are run, they cannot be run again until this transition
+    # is reset.
+    #
+    # == Halting
+    #
+    # If any callback throws a <tt>:halt</tt> exception, it will be caught
+    # and the callback chain will be automatically stopped.  However, this
+    # exception will not bubble up to the caller since +after+ callbacks
+    # should never halt the execution of a +perform+.
+    def after
+      unless @after_run
+        # First resume previously paused callbacks
+        if resume
+          catch(:halt) do
+            type = @success ? :after : :failure
+            machine.callbacks[type].each { |callback| callback.call(object, context, self) }
           end
-
-          @after_run = true
         end
-      end
 
-      # Gets a hash of the context defining this unique transition (including
-      # event, from state, and to state).
-      #
-      # == Example
-      #
-      #   machine = StateMachine.new(Vehicle)
-      #   transition = StateMachines::Transition.new(Vehicle.new, machine, :ignite, :parked, :idling)
-      #   transition.context    # => {:on => :ignite, :from => :parked, :to => :idling}
-      def context
-        @context ||= {:on => event, :from => from_name, :to => to_name}
+        @after_run = true
       end
+    end
+
+    # Gets a hash of the context defining this unique transition (including
+    # event, from state, and to state).
+    #
+    # == Example
+    #
+    #   machine = StateMachine.new(Vehicle)
+    #   transition = StateMachines::Transition.new(Vehicle.new, machine, :ignite, :parked, :idling)
+    #   transition.context    # => {:on => :ignite, :from => :parked, :to => :idling}
+    def context
+      @context ||= {on: event, from: from_name, to: to_name}
+    end
   end
 end

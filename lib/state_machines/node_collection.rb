@@ -162,39 +162,39 @@ module StateMachines
       self[key, index_name] || fail(IndexError, "#{key.inspect} is an invalid #{index_name}")
     end
 
-    protected
+  protected
 
-      # Gets the given index.  If the index does not exist, then an ArgumentError
-      # is raised.
+    # Gets the given index.  If the index does not exist, then an ArgumentError
+    # is raised.
     def index(name)
       fail ArgumentError, 'No indices configured' unless @indices.any?
 
       @indices[name] || fail(ArgumentError, "Invalid index: #{name.inspect}")
     end
 
-      # Gets the value for the given attribute on the node
+    # Gets the value for the given attribute on the node
     def value(node, attribute)
       node.send(attribute)
     end
 
-      # Adds the given key / node combination to an index, including the string
-      # and symbol versions of the index
+    # Adds the given key / node combination to an index, including the string
+    # and symbol versions of the index
     def add_to_index(name, key, node)
       index(name)[key] = node
       index(:"#{name}_to_s")[key.to_s] = node
       index(:"#{name}_to_sym")[:"#{key}"] = node if to_sym?(key)
     end
 
-      # Removes the given key from an index, including the string and symbol
-      # versions of the index
+    # Removes the given key from an index, including the string and symbol
+    # versions of the index
     def remove_from_index(name, key)
       index(name).delete(key)
       index(:"#{name}_to_s").delete(key.to_s)
       index(:"#{name}_to_sym").delete(:"#{key}") if to_sym?(key)
     end
 
-      # Updates the node for the given index, including the string and symbol
-      # versions of the index
+    # Updates the node for the given index, including the string and symbol
+    # versions of the index
     def update_index(name, node)
       index = self.index(name)
       old_key = index.key(node)
@@ -207,13 +207,13 @@ module StateMachines
       end
     end
 
-      # Determines whether the given value can be converted to a symbol
+    # Determines whether the given value can be converted to a symbol
     def to_sym?(value)
       "#{value}" != ''
     end
 
-      # Evaluates the given context for a particular node.  This will only
-      # evaluate the context if the node matches.
+    # Evaluates the given context for a particular node.  This will only
+    # evaluate the context if the node matches.
     def eval_context(context, node)
       node.context(&context[:block]) if context[:nodes].matches?(node.name)
     end

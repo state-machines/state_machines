@@ -78,7 +78,7 @@ module StateMachines
 
           method.is_a?(Proc) ? method.call(*args) : method.call(*args, &block)
         when String
-          eval(method, object.instance_eval {binding}, &block)
+          eval(method, object.instance_eval { binding }, &block)
         else
           raise ArgumentError, 'Methods must be a symbol denoting the method to call, a block to be invoked, or a string to be evaluated'
       end
