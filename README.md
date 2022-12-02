@@ -469,7 +469,6 @@ class Vehicle
     transition parked: :idling, :on => [:ignite, :shift_up]
     transition first_gear: :second_gear, second_gear: :third_gear, on: :shift_up
     transition [:idling, :first_gear] => :parked, on: :park
-    transition [:idling, :first_gear] => :parked, on: :park
     transition all - [:parked, :stalled]: :stalled, unless: :auto_shop_busy?
   end
 end
