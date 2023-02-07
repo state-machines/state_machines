@@ -28,6 +28,9 @@ module StateMachines
     # Whether the transition is only existing temporarily for the object
     attr_writer :transient
 
+    # Debug information about where the transition was defined.
+    attr_reader :defined_in
+
     # Determines whether the current ruby implementation supports pausing and
     # resuming transitions
     def self.pause_supported?
@@ -35,7 +38,7 @@ module StateMachines
     end
 
     # Creates a new, specific transition
-    def initialize(object, machine, event, from_name, to_name, read_state = true) #:nodoc:
+    def initialize(object, machine, event, from_name, to_name, read_state = true, defined_in = nil) #:nodoc:
       @object = object
       @machine = machine
       @args = []
@@ -47,6 +50,8 @@ module StateMachines
       @from = read_state ? machine.read(object, :state) : @from_state.value
       @to_state = machine.states.fetch(to_name)
       @to = @to_state.value
+
+      @defined_in = defined_in
 
       reset
     end

@@ -91,6 +91,9 @@ module StateMachines
       # requirements
       options.assert_valid_keys(:from, :to, :except_from, :except_to, :if, :unless) if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on, :if, :unless]).empty?
 
+      # Inject useful debug information to be used in runtime
+      options[:defined_in] = caller[0]
+
       branches << branch = Branch.new(options.merge(on: name))
       @known_states |= branch.known_states
       branch
@@ -134,7 +137,7 @@ module StateMachines
                  match[:to].filter(values).first
                end
 
-          return Transition.new(object, machine, name, from, to, !custom_from_state)
+          return Transition.new(object, machine, name, from, to, !custom_from_state, branch.defined_in)
         end
       end
 

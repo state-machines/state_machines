@@ -54,6 +54,11 @@ class EventTransitionsTest < StateMachinesTest
     assert @event.transition(parked: [:parked, :idling])
   end
 
+  def test_should_have_a_backtrace_defined
+    branch = @event.transition(to: :idling)
+    assert_instance_of(String, branch.defined_in)
+  end
+
   def test_should_have_transitions
     branch = @event.transition(to: :idling)
     assert_equal [branch], @event.branches

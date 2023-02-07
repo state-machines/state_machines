@@ -26,11 +26,17 @@ module StateMachines
     # * +to+ / +except_to+
     attr_reader :known_states
 
+    # Debug information about where the branch was defined.
+    attr_reader :defined_in
+
     # Creates a new branch
     def initialize(options = {}) #:nodoc:
       # Build conditionals
       @if_condition = options.delete(:if)
       @unless_condition = options.delete(:unless)
+
+      # Build debug information
+      @defined_in = options.delete(:defined_in)
 
       # Build event requirement
       @event_requirement = build_matcher(options, :on, :except_on)
