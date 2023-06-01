@@ -224,7 +224,15 @@ module StateMachines
 
       # Fires the event, raising an exception if it fails
       machine.define_helper(:instance, "#{qualified_name}!") do |machine, object, *args|
-        object.send(qualified_name, *args) || raise(StateMachines::InvalidTransition.new(object, machine, name))
+        kwargs = {}
+        pargs = []
+
+        if args.any?
+          kwargs, pargs = args.partition { _1.is_a?(Hash) }
+          kwargs = kwargs.any? ? kwargs.inject(:merge) : {}
+        end
+
+        object.send(qualified_name, *pargs, **kwargs) || raise(StateMachines::InvalidTransition.new(object, machine, name))
       end
     end
   end
