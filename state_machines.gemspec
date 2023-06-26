@@ -1,5 +1,3 @@
-lib = File.expand_path('../lib', __FILE__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require_relative 'lib/state_machines/version'
 
 Gem::Specification.new do |spec|
@@ -12,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/state-machines/state_machines'
   spec.license       = 'MIT'
 
-  spec.required_ruby_version     = '>= 2.6.8'
-  spec.files         = `git ls-files -z`.split("\x0")
+  spec.required_ruby_version     = '>= 3.0.0'
+  spec.files         = Dir.glob('{lib}/**/*') + %w(LICENSE.txt README.md)
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '>= 1.7.6'
