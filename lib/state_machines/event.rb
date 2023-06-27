@@ -40,7 +40,7 @@ module StateMachines
       reset
 
       # Output a warning if another event has a conflicting qualified name
-      if conflict = machine.owner_class.state_machines.detect { |_other_name, other_machine| other_machine != @machine && other_machine.events[qualified_name, :qualified_name] }
+      if (conflict = machine.owner_class.state_machines.detect { |_other_name, other_machine| other_machine != @machine && other_machine.events[qualified_name, :qualified_name] })
         _name, other_machine = conflict
         warn "Event #{qualified_name.inspect} for #{machine.name.inspect} is already defined in #{other_machine.name.inspect}"
       else
@@ -207,24 +207,24 @@ module StateMachines
     # the current event
     def add_actions
       # Checks whether the event can be fired on the current object
-      machine.define_helper(:instance, "can_#{qualified_name}?") do |machine, object, *args|
-        machine.event(name).can_fire?(object, *args)
+      machine.define_helper(:instance, "can_#{qualified_name}?") do |machine, object, *args, **kwargs|
+        machine.event(name).can_fire?(object, *args, **kwargs)
       end
 
       # Gets the next transition that would be performed if the event were
       # fired now
-      machine.define_helper(:instance, "#{qualified_name}_transition") do |machine, object, *args|
-        machine.event(name).transition_for(object, *args)
+      machine.define_helper(:instance, "#{qualified_name}_transition") do |machine, object, *args, **kwargs|
+        machine.event(name).transition_for(object, *args, **kwargs)
       end
 
       # Fires the event
-      machine.define_helper(:instance, qualified_name) do |machine, object, *args|
-        machine.event(name).fire(object, *args)
+      machine.define_helper(:instance, qualified_name) do |machine, object, *args, **kwargs|
+        machine.event(name).fire(object, *args, **kwargs)
       end
 
       # Fires the event, raising an exception if it fails
-      machine.define_helper(:instance, "#{qualified_name}!") do |machine, object, *args|
-        object.send(qualified_name, *args) || raise(StateMachines::InvalidTransition.new(object, machine, name))
+      machine.define_helper(:instance, "#{qualified_name}!") do |machine, object, *args, **kwargs|
+        object.send(qualified_name, *args, **kwargs) || raise(StateMachines::InvalidTransition.new(object, machine, name))
       end
     end
   end
