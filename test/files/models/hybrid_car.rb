@@ -1,7 +1,8 @@
-require_relative '../../files/models/vehicle'
+require_relative 'vehicle'
 
 class HybridCar < Vehicle
   attr_accessor :propulsion_mode, :driving_profile, :target_year
+  attr_accessor :energy_source, :universe, :destination
 
   state_machine :propulsion_mode, initial: :gas do
     event :go_green do
@@ -21,6 +22,12 @@ class HybridCar < Vehicle
       transition flux_capacitor: :flux_capacitor
       transition gas: :flux_capacitor
     end
+
+    event :teleport do
+      transition electric: :teleported
+      transition flux_capacitor: :teleported
+      transition gas: :teleported
+    end
   end
 
   def go_green(driving_profile = nil)
@@ -35,10 +42,16 @@ class HybridCar < Vehicle
     super()
   end
 
-  def go_back_in_time(target_year, driving_profile:)
+  def go_back_in_time(target_year, flux_capacitor_setting={}, driving_profile:)
     self.target_year = target_year
     self.driving_profile = driving_profile
 
+    super()
+  end
+  def teleport(destination, energy_settings, universe_settings)
+    self.destination = destination
+    self.energy_source = energy_settings
+    self.universe = universe_settings
     super()
   end
 end

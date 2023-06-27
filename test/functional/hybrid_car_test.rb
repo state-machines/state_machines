@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../files/models/hybrid_car'
+require 'test_helper'
+require 'files/models/hybrid_car'
 
 class HybridCarTest < MiniTest::Test
   def setup
@@ -48,5 +48,15 @@ class HybridCarTest < MiniTest::Test
     assert_equal @hybrid_car.target_year, 1995
     assert_equal @hybrid_car.propulsion_mode, 'flux_capacitor'
     assert_equal @hybrid_car.driving_profile, '1.21 gigawatts'
+  end
+
+  def test_should_accept_hashes_as_option
+    assert @hybrid_car.teleport('wakanda',
+                                { engine: :nuclear } ,
+                                { world: :parallel }
+    )
+    assert_equal @hybrid_car.destination, 'wakanda'
+    assert_equal({ engine: :nuclear }, @hybrid_car.energy_source)
+    assert_equal({ world: :parallel }, @hybrid_car.universe)
   end
 end

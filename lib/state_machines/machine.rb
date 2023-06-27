@@ -715,7 +715,7 @@ module StateMachines
     #       "State"
     #     end
     #   end_eval
-    def define_helper(scope, method, *args, &block)
+    def define_helper(scope, method, *args, **kwargs, &block)
       helper_module = @helper_modules.fetch(scope)
 
       if block_given?
@@ -725,13 +725,13 @@ module StateMachines
         else
           name = self.name
           helper_module.class_eval do
-            define_method(method) do |*block_args|
-              block.call((scope == :instance ? self.class : self).state_machine(name), self, *block_args)
+            define_method(method) do |*block_args, **block_kwargs|
+              block.call((scope == :instance ? self.class : self).state_machine(name), self, *block_args, **block_kwargs)
             end
           end
         end
       else
-        helper_module.class_eval(method, *args)
+        helper_module.class_eval(method, *args, **kwargs)
       end
     end
 
