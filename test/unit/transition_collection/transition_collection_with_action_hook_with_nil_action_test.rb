@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 require_relative 'transition_collection_with_action_hook_base_test.rb'
 
 class TransitionCollectionWithActionHookWithNilActionTest < TransitionCollectionWithActionHookBaseTest

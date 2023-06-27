@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 
 class BranchWithExceptOnMatcherRequirementTest < StateMachinesTest
   def test_should_raise_an_exception

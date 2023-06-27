@@ -1,6 +1,6 @@
-require_relative '../../test_helper'
-require_relative '../../files/models/vehicle'
-require_relative '../../files/integrations/vehicle'
+require 'test_helper'
+require 'files/models/vehicle'
+require 'files/integrations/vehicle'
 
 class IntegrationMatcherTest < StateMachinesTest
   def setup

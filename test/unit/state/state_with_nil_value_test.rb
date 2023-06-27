@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 
 class StateWithNilValueTest < StateMachinesTest
   def setup

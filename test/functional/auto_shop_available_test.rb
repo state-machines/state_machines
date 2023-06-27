@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../files/models/auto_shop'
+require 'test_helper'
+require 'files/models/auto_shop'
 
 class AutoShopAvailableTest < MiniTest::Test
   def setup

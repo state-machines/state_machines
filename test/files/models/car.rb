@@ -1,4 +1,4 @@
-require_relative '../../files/models/vehicle'
+require 'files/models/vehicle'
 
 class Car < Vehicle
   state_machine do

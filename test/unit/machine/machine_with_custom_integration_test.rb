@@ -1,5 +1,5 @@
-require_relative '../../test_helper'
-require_relative '../../../test/files/models/vehicle'
+require 'test_helper'
+require 'files/models/vehicle'
 
 class MachineWithCustomIntegrationTest < StateMachinesTest
   module Custom

@@ -1,4 +1,4 @@
-require_relative '../../files/models/vehicle'
+require 'files/models/vehicle'
 
 class Motorcycle < Vehicle
   def self.example_class_method(args={})
