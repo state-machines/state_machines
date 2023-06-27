@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 
 class MachineTest < StateMachinesTest
   def test_should_raise_exception_if_invalid_option_specified

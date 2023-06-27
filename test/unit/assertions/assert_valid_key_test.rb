@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 
 class AssertValidKeysTest < StateMachinesTest
   def test_should_not_raise_exception_if_key_is_valid

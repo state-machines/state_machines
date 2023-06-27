@@ -1,5 +1,5 @@
-require_relative '../../test_helper'
-require_relative '../../files/integrations/event_on_failure_integration'
+require 'test_helper'
+require 'files/integrations/event_on_failure_integration'
 
 class EventOnFailureTest < StateMachinesTest
   def setup

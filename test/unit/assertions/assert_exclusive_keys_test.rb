@@ -1,4 +1,4 @@
-require_relative '../../test_helper'
+require 'test_helper'
 
 class AssertExclusiveKeysTest < StateMachinesTest
   def test_should_not_raise_exception_if_no_keys_found

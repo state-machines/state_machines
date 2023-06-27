@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../files/models/traffic_light'
+require 'test_helper'
+require 'files/models/traffic_light'
 
 class TrafficLightCautionTest < MiniTest::Test
   def setup

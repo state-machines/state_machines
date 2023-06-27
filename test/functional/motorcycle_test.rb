@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../files/models/motorcycle'
+require 'test_helper'
+require 'files/models/motorcycle'
 
 class MotorcycleTest < MiniTest::Test
   def setup

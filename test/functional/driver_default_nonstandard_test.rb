@@ -1,5 +1,5 @@
-require_relative '../test_helper'
-require_relative '../files/models/driver'
+require 'test_helper'
+require 'files/models/driver'
 
 class DriverNonstandardTest < MiniTest::Test
   def setup

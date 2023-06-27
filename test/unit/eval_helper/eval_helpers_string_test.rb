@@ -1,5 +1,5 @@
-require_relative '../../test_helper'
-require_relative '../../unit/eval_helper/eval_helpers_base_test.rb'
+require 'test_helper'
+require 'unit/eval_helper/eval_helpers_base_test.rb'
 
 class EvalHelpersStringTest < EvalHelpersBaseTest
   def setup

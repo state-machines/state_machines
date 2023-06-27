@@ -1,5 +1,5 @@
-require_relative '../../test_helper'
-require_relative '../../files/node'
+require 'test_helper'
+require 'files/node'
 
 class NodeCollectionByDefaultTest < StateMachinesTest
   def setup
