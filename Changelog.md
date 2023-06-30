@@ -1,6 +1,7 @@
 ## 0.6.0
 
 * Drop support to EOL rubies.
+* Support kwargs for ruby 3.0+.
 
 ## 0.5.0
 
