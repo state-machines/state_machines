@@ -22,7 +22,7 @@ class BranchTest < StateMachinesTest
   end
 
   def test_should_raise_an_exception_if_invalid_match_option_specified
-    exception = assert_raises(ArgumentError) { @branch.match(Object.new, invalid: true) }
+    exception = assert_raises(ArgumentError) { @branch.match(Object.new, {invalid: true}) }
     assert_equal 'Unknown key: :invalid. Valid keys are: :from, :to, :on, :guard', exception.message
   end
 end

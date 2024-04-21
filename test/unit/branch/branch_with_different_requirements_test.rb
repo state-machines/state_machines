@@ -27,7 +27,7 @@ class BranchWithDifferentRequirementsTest < StateMachinesTest
   end
 
   def test_should_be_nil_if_unmatched
-    assert_nil @branch.match(@object, from: :parked, to: :idling, on: :park)
+    assert_nil @branch.match(@object, {from: :parked, to: :idling, on: :park})
   end
 
   def test_should_include_all_known_states

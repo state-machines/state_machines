@@ -43,12 +43,12 @@ class EventOnFailureTest < StateMachinesTest
     callback_args = nil
     @machine.after_failure { |*args| callback_args = args }
 
-    @event.fire(@object, foo: 'bar')
+    @event.fire(@object, {foo: 'bar'})
 
     object, transition = callback_args
     assert_equal @object, object
     refute_nil transition
-    assert_equal [{foo: 'bar'}], transition.args  
+    assert_equal [{foo: 'bar'}], transition.args
   end
 
   def teardown
