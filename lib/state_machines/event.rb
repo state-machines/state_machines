@@ -26,6 +26,9 @@ module StateMachines
     # branches/transitions as the source
     attr_reader :known_states
 
+    # Key-value args for event
+    attr_reader :kwargs
+
     # Creates a new event within the context of the given machine
     #
     # Configuration options:
@@ -37,6 +40,7 @@ module StateMachines
       @name = name
       @qualified_name = machine.namespace ? :"#{name}_#{machine.namespace}" : name
       @human_name = options[:human_name] || @name.to_s.tr('_', ' ')
+      @kwargs = {}
       reset
 
       # Output a warning if another event has a conflicting qualified name
@@ -123,7 +127,7 @@ module StateMachines
       requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
-        if (match = branch.match(object, requirements))
+        if (match = branch.match(object, requirements, **kwargs))
           # Branch allows for the transition to occur
           from = requirements[:from]
           to = if match[:to].is_a?(LoopbackMatcher)
@@ -148,8 +152,9 @@ module StateMachines
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
-    def fire(object, *args)
+    def fire(object, *args, **kwargs)
       machine.reset(object)
+      @kwargs = kwargs
 
       if (transition = transition_for(object))
         transition.perform(*args)

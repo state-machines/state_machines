@@ -111,10 +111,10 @@ module StateMachines
     #
     #   branch.match(object, :on => :ignite)  # => {:to => ..., :from => ..., :on => ...}
     #   branch.match(object, :on => :park)    # => nil
-    def match(object, query = {})
+    def match(object, query = {}, **kwargs)
       query.assert_valid_keys(:from, :to, :on, :guard)
 
-      if (match = match_query(query)) && matches_conditions?(object, query)
+      if (match = match_query(query)) && matches_conditions?(object, query, **kwargs)
         match
       end
     end
@@ -176,9 +176,9 @@ module StateMachines
 
     # Verifies that the conditionals for this branch evaluate to true for the
     # given object
-    def matches_conditions?(object, query)
+    def matches_conditions?(object, query, **kwargs)
       query[:guard] == false ||
-      Array(if_condition).all? { |condition| evaluate_method(object, condition) } &&
+      Array(if_condition).all? { |condition| evaluate_method(object, condition, **kwargs) } &&
       !Array(unless_condition).any? { |condition| evaluate_method(object, condition) }
     end
   end
