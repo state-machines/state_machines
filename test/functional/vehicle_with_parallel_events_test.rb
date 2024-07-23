@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleWithParallelEventsTest < MiniTest::Test
+class VehicleWithParallelEventsTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
   end

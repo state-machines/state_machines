@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/driver'
 
-class DriverNonstandardTest < MiniTest::Test
+class DriverNonstandardTest < Minitest::Test
   def setup
     @driver = Driver.new
     @events = Driver.state_machine.events

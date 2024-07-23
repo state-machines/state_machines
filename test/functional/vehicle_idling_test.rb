@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleIdlingTest < MiniTest::Test
+class VehicleIdlingTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
     @vehicle.ignite

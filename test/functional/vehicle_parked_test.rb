@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleParkedTest < MiniTest::Test
+class VehicleParkedTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
   end

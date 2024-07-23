@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleLockedTest < MiniTest::Test
+class VehicleLockedTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
     @vehicle.state = 'locked'

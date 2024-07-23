@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleWithEventAttributesTest < MiniTest::Test
+class VehicleWithEventAttributesTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
     @vehicle.state_event = 'ignite'

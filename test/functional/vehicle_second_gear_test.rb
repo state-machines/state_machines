@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleSecondGearTest < MiniTest::Test
+class VehicleSecondGearTest < Minitest::Test
   def setup
     @vehicle = Vehicle.new
     @vehicle.ignite
