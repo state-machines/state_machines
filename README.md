@@ -580,22 +580,19 @@ transitions.
 
 Ruby versions officially supported and tested:
 
-* Ruby (MRI) 2.6.0+
-* JRuby
-* Rubinius
+* Ruby (MRI) 3.0.0+
 
 For graphing state machine:
 
-* [state_machines-graphviz](http://github.com/state-machines/state_machines-graphviz)
+* [state_machines-graphviz](https://github.com/state-machines/state_machines-graphviz)
 
 For documenting state machines:
 
-* [state_machines-yard](http://github.com/state-machines/state_machines-yard)
+* [state_machines-yard](https://github.com/state-machines/state_machines-yard)
 
+For RSpec testing, use the custom RSpec matchers:
 
-## TODO
-
-* Add matchers/assertions for rspec and minitest
+* [state_machines-rspec](https://github.com/state-machines/state_machines-rspec)
 
 ## Contributing
 
