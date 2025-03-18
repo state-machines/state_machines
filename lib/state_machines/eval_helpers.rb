@@ -54,7 +54,7 @@ module StateMachines
       case method
         when Symbol
           klass = (class << object; self; end)
-          args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity == 0
+          args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity.zero?
           object.send(method, *args, &block)
         when Proc, Method
           args.unshift(object)
@@ -78,7 +78,19 @@ module StateMachines
 
           method.is_a?(Proc) ? method.call(*args) : method.call(*args, &block)
         when String
-          eval(method, object.instance_eval { binding }, &block)
+          if block_given?
+            eigen = class << object; self; end
+            eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+              def __temp_eval_method__(*args, &b)
+                #{method}
+              end
+            RUBY
+            result = object.__temp_eval_method__(*args, &block)
+            eigen.send(:remove_method, :__temp_eval_method__)
+            result
+          else
+            eval(method, object.instance_eval { binding })
+          end
         else
           raise ArgumentError, 'Methods must be a symbol denoting the method to call, a block to be invoked, or a string to be evaluated'
       end
