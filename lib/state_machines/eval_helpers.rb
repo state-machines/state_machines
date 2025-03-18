@@ -50,19 +50,17 @@ module StateMachines
     #   evaluate_method(person, lambda {|person| person.name}, 21)                              # => "John Smith"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21)          # => "John Smith is 21"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21, 'male')  # => ArgumentError: wrong number of arguments (3 for 2)
-    def evaluate_method(object, method, *args, &block)
+    def evaluate_method(object, method, *args, **kwargs, &block)
       case method
         when Symbol
           klass = (class << object; self; end)
-          args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity.zero?
-          object.send(method, *args, &block)
-        when Proc, Method
+          args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity == 0
+          object.send(method, *args, **kwargs, &block)
+        when Proc
           args.unshift(object)
           arity = method.arity
-
-          # Procs don't support blocks in < Ruby 1.9, so it's tacked on as an
-          # argument for consistency across versions of Ruby
-          if block_given? && Proc === method && arity != 0
+          # Handle blocks for Procs
+          if block_given? && arity != 0
             if [1, 2].include?(arity)
               # Force the block to be either the only argument or the 2nd one
               # after the object (may mean additional arguments get discarded)
@@ -76,18 +74,35 @@ module StateMachines
             args = args[0, arity] if [0, 1].include?(arity)
           end
 
-          method.is_a?(Proc) ? method.call(*args) : method.call(*args, &block)
+        # Call the Proc with the arguments
+        method.call(*args, **kwargs)
+
+        when Method
+          args.unshift(object)
+          arity = method.arity
+
+          # Methods handle blocks via &block, not as arguments
+          # Only limit arguments if necessary based on arity
+          args = args[0, arity] if [0, 1].include?(arity)
+
+          # Call the Method with the arguments and pass the block
+          method.call(*args, **kwargs, &block)
         when String
           if block_given?
-            eigen = class << object; self; end
-            eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-              def __temp_eval_method__(*args, &b)
-                #{method}
-              end
-            RUBY
-            result = object.__temp_eval_method__(*args, &block)
-            eigen.send(:remove_method, :__temp_eval_method__)
-            result
+            if StateMachines::Transition.pause_supported?
+              eval(method, object.instance_eval { binding }, &block)
+            else
+              # Support for JRuby and Truffle Ruby, which don't support binding blocks
+              eigen = class << object; self; end
+              eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+                  def __temp_eval_method__(*args, &b)
+                    #{method}
+                  end
+                RUBY
+              result = object.__temp_eval_method__(*args, &block)
+              eigen.send(:remove_method, :__temp_eval_method__)
+              result
+            end
           else
             eval(method, object.instance_eval { binding })
           end
