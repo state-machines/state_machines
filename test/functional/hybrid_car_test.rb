@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/hybrid_car'
 
-class HybridCarTest < MiniTest::Test
+class HybridCarTest < Minitest::Test
   def setup
     @hybrid_car = HybridCar.new
   end

@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/auto_shop'
 
-class AutoShopBusyTest < MiniTest::Test
+class AutoShopBusyTest < Minitest::Test
   def setup
     @auto_shop = AutoShop.new
     @auto_shop.tow_vehicle

@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/motorcycle'
 
-class MotorcycleTest < MiniTest::Test
+class MotorcycleTest < Minitest::Test
   def setup
     @motorcycle = Motorcycle.new
   end

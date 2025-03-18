@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/traffic_light'
 
-class TrafficLightProceedTest < MiniTest::Test
+class TrafficLightProceedTest < Minitest::Test
   def setup
     @light = TrafficLight.new
     @light.state = 'proceed'

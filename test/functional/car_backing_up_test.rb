@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'files/models/car'
 
-class CarBackingUpTest < MiniTest::Test
+class CarBackingUpTest < Minitest::Test
   def setup
     @car = Car.new
     @car.reverse
