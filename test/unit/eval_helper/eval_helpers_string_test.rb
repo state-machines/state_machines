@@ -11,7 +11,7 @@ class EvalHelpersStringTest < EvalHelpersBaseTest
   end
 
   def test_should_evaluate_string_within_object_context
-    @object.instance_variable_set('@value', 1)
+    @object.instance_variable_set(:'@value', 1)
     assert_equal 1, evaluate_method(@object, '@value')
   end
 
