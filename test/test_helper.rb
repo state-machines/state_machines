@@ -1,7 +1,7 @@
 require 'state_machines'
 require 'minitest/autorun'
 begin
-  require 'pry-byebug'
+  require 'debug'
 rescue LoadError
 end
 require 'minitest/reporters'

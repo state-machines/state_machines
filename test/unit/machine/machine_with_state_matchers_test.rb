@@ -15,8 +15,12 @@ class MachineWithStateMatchersTest < StateMachinesTest
   end
 
   def test_should_not_allow_configurations
-    exception = assert_raises(ArgumentError) { @machine.state(StateMachines::BlacklistMatcher.new([:parked]), human_name: 'Parked') }
-    assert_equal 'Cannot configure states when using matchers (using {:human_name=>"Parked"})', exception.message
+    expected_hash = { human_name: 'Parked' }
+    expected_message = "Cannot configure states when using matchers (using #{expected_hash.inspect})"
+    exception = assert_raises(ArgumentError) do
+      @machine.state(StateMachines::BlacklistMatcher.new([:parked]), human_name: 'Parked')
+    end
+    assert_equal expected_message, exception.message
   end
 
   def test_should_track_referenced_states
