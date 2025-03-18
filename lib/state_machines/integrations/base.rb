@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   module Integrations
     # Provides a set of base helpers for managing individual integrations

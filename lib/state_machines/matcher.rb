@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Provides a general strategy pattern for determining whether a match is found
   # for a value.  The algorithm that actually determines the match depends on

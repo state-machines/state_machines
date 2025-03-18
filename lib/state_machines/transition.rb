@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # A transition represents a state change for a specific attribute.
   #

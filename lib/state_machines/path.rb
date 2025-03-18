@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # A path represents a sequence of transitions that can be run for a particular
   # object.  Paths can walk to new transitions, revealing all of the possible

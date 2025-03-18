@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 
 class StateWithoutCachedLambdaValueTest < StateMachinesTest
   def setup
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass)
-    @dynamic_value = -> { 'value' }
+    @dynamic_value = -> { 'value'.dup }
     @machine.states << @state = StateMachines::State.new(@machine, :parked, value: @dynamic_value)
   end
 
@@ -13,8 +15,9 @@ class StateWithoutCachedLambdaValueTest < StateMachinesTest
   end
 
   def test_should_evaluate_value_each_time
-    value = @state.value
-    refute_same value, @state.value
+    value1 = @state.value
+    value2 = @state.value
+    refute_same value1, value2
   end
 
   def test_should_not_update_value_index_for_state_collection

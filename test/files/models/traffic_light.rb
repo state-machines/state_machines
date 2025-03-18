@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TrafficLight
   state_machine initial: :stop do
     event :cycle do
@@ -6,7 +8,7 @@ class TrafficLight
 
     state :stop do
       def color(transform)
-        value = 'red'
+        value = +'red'
 
         if block_given?
           yield value

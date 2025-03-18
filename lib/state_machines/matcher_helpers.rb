@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Provides a set of helper methods for generating matchers
   module MatcherHelpers
