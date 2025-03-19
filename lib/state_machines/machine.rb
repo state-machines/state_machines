@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a state machine for a particular attribute.  State machines
   # consist of states, events and a set of transitions that define how the

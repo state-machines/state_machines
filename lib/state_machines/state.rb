@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # A state defines a value that an attribute can be in after being transitioned
   # 0 or more times.  States can represent a value of any type in Ruby, though
@@ -126,7 +128,7 @@ module StateMachines
     #   description or just the internal name
     def description(options = {})
       label = options[:human_name] ? human_name : name
-      description = label ? label.to_s : label.inspect
+      description = +(label ? label.to_s : label.inspect)
       description << " (#{@value.is_a?(Proc) ? '*' : @value.inspect})" unless name.to_s == @value.to_s
       description
     end

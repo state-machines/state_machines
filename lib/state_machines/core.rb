@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Load all of the core implementation required to use state_machine.  This
 # includes:
 # * StateMachines::MacroMethods which adds the state_machine DSL to your class

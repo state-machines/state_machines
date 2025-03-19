@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'state_machines/branch'
 require 'state_machines/eval_helpers'
 

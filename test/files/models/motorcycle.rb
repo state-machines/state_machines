@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'files/models/vehicle'
 
 class Motorcycle < Vehicle

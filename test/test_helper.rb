@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'state_machines'
 require 'minitest/autorun'
 require 'debug' if RUBY_ENGINE == 'ruby'

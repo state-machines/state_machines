@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a collection of transitions in a state machine
   class TransitionCollection < Array

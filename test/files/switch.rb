@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Switch
   def self.name
     @name ||= "Switch_#{rand(1_000_000)}"

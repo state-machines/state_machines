@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a collection of state machines for a class
   class MachineCollection < Hash

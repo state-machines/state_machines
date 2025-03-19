@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AutoShop
   attr_accessor :num_customers
 

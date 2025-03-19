@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Hash
   # Provides a set of helper methods for making assertions about the content
   # of various objects

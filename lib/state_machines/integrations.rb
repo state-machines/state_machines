@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Integrations allow state machines to take advantage of features within the
   # context of a particular library.  This is currently most useful with

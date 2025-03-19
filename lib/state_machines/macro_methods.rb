@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A state machine is a model of behavior composed of states, events, and
 # transitions.  This helper adds support for defining this type of
 # functionality on any Ruby class.

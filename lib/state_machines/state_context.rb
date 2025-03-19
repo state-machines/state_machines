@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a module which will get evaluated within the context of a state.
   #

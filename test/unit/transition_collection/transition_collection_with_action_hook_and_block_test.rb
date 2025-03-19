@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 require_relative 'transition_collection_with_action_hook_base_test'
 
