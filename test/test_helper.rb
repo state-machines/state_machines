@@ -1,9 +1,6 @@
 require 'state_machines'
 require 'minitest/autorun'
-begin
-  require 'debug'
-rescue LoadError
-end
+require 'debug' if RUBY_ENGINE == 'ruby'
 require 'minitest/reporters'
 Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
 

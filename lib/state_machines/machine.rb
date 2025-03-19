@@ -644,12 +644,12 @@ module StateMachines
     #   vehicle.force_idle = false
     #   Vehicle.state_machine.initial_state(vehicle)  # => #<StateMachines::State name=:parked value="parked" initial=false>
     def initial_state(object)
-      states.fetch(dynamic_initial_state? ? evaluate_method(object, @initial_state) : @initial_state) if instance_variable_defined?('@initial_state')
+      states.fetch(dynamic_initial_state? ? evaluate_method(object, @initial_state) : @initial_state) if instance_variable_defined?(:@initial_state)
     end
 
     # Whether a dynamic initial state is being used in the machine
     def dynamic_initial_state?
-      instance_variable_defined?('@initial_state') && @initial_state.is_a?(Proc)
+      instance_variable_defined?(:@initial_state) && @initial_state.is_a?(Proc)
     end
 
     # Initializes the state on the given object.  Initial values are only set if
@@ -1053,7 +1053,7 @@ module StateMachines
     def read(object, attribute, ivar = false)
       attribute = self.attribute(attribute)
       if ivar
-        object.instance_variable_defined?("@#{attribute}") ? object.instance_variable_get("@#{attribute}") : nil
+        object.instance_variable_defined?(:"@#{attribute}") ? object.instance_variable_get("@#{attribute}") : nil
       else
         object.send(attribute)
       end
@@ -1076,7 +1076,7 @@ module StateMachines
     #   vehicle.event                                           # => "park"
     def write(object, attribute, value, ivar = false)
       attribute = self.attribute(attribute)
-      ivar ? object.instance_variable_set("@#{attribute}", value) : object.send("#{attribute}=", value)
+      ivar ? object.instance_variable_set(:"@#{attribute}", value) : object.send("#{attribute}=", value)
     end
 
     # Defines one or more events for the machine and the transitions that can
@@ -1884,7 +1884,7 @@ module StateMachines
       @action_hook_defined || !self_only && owner_class.state_machines.any? { |name, machine| machine.action == action && machine != self && machine.action_hook?(true) }
     end
 
-  protected
+    protected
 
     # Runs additional initialization hooks.  By default, this is a no-op.
     def after_initialize
