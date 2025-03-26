@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a collection of paths that are generated based on a set of
   # requirements regarding what states to start and end on

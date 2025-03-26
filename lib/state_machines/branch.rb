@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a set of requirements that must be met in order for a transition
   # or callback to occur.  Branches verify that the event, from state, and to

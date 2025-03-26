@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # An event defines an action that transitions an attribute from one state to
   # another.  The state that an attribute is transitioned to depends on the

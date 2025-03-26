@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'model_base'
 require_relative 'auto_shop'
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a collection of nodes in a state machine, be it events or states.
   # Nodes will not differentiate between the String and Symbol versions of the

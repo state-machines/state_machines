@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a collection of states in a state machine
   class StateCollection < NodeCollection

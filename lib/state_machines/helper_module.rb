@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # Represents a type of module that defines instance / class methods for a
   # state machine

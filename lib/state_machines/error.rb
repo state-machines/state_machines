@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   # An error occurred during a state machine invocation
   class Error < StandardError

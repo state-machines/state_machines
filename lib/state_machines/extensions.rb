@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module StateMachines
   module ClassMethods
     def self.extended(base) #:nodoc:
