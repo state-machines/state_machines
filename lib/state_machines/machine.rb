@@ -421,10 +421,8 @@ module StateMachines
         name = args.first || :state
 
         # Find an existing machine
-        machine = owner_class.respond_to?(:state_machines) &&
-          (args.first && owner_class.state_machines[name] || !args.first &&
-          owner_class.state_machines.values.first) || nil
-
+        machine = owner_class.respond_to?(:state_machines) && owner_class.state_machines[name]
+        
         if machine
           # Only create a new copy if changes are being made to the machine in
           # a subclass
