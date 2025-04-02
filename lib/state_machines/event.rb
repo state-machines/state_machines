@@ -182,8 +182,8 @@ module StateMachines
     end
 
 
-    def draw(graph, options = {})
-      fail NotImplementedError
+    def draw(graph, options = {}, io = $stdout)
+      machine.renderer.draw_event(self, graph, options, io)
     end
 
     # Generates a nicely formatted description of this event's contents.

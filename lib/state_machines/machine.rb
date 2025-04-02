@@ -452,6 +452,12 @@ module StateMachines
       # Default messages to use for validation errors in ORM integrations
       attr_accessor :default_messages
       attr_accessor :ignore_method_conflicts
+      attr_writer :renderer
+
+      def renderer
+        return @renderer if @renderer
+        STDIORenderer
+      end
     end
     @default_messages = {
         invalid: 'is invalid',
@@ -1876,8 +1882,12 @@ module StateMachines
     end
 
 
-    def draw(*)
-      fail NotImplementedError
+    def renderer
+      self.class.renderer
+    end
+
+    def draw(**options)
+      renderer.draw_machine(self, **options)
     end
 
     # Determines whether an action hook was defined for firing attribute-based
