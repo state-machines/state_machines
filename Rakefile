@@ -13,4 +13,5 @@ Rake::TestTask.new(:unit) do |t|
 end
 
 desc 'Default: run all tests.'
-task default: [:unit, :functional]
+task test: [:unit, :functional]
+task default: :test
