@@ -12,6 +12,10 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/state-machines/state_machines'
   spec.license       = 'MIT'
 
+  spec.metadata["changelog_uri"] = 'https://github.com/state-machines/state_machines/blob/master/CHANGELOG.md'
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = spec.homepage
+
   spec.required_ruby_version     = '>= 3.0.0'
   spec.files         = Dir.glob('{lib}/**/*') + %w(LICENSE.txt README.md)
   spec.require_paths = ['lib']
