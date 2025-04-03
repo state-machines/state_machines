@@ -458,12 +458,25 @@ module StateMachines
         return @renderer if @renderer
         STDIORenderer
       end
+
+      def default_messages
+        @default_messages ||= {
+          invalid: 'is invalid',
+          invalid_event: 'cannot transition when %s',
+          invalid_transition: 'cannot transition via "%1$s"'
+        }
+      end
+      
+      def default_messages=(messages)
+        @default_messages = messages
+      end
+  
+      def replace_messages(message_hash)
+        message_hash.each do |key, value|
+          default_messages[key] = value
+        end
+      end
     end
-    @default_messages = {
-        invalid: 'is invalid',
-        invalid_event: 'cannot transition when %s',
-        invalid_transition: 'cannot transition via "%1$s"'
-    }
 
     # Whether to ignore any conflicts that are detected for helper methods that
     # get generated for a machine's owner class.  Default is false.
