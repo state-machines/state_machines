@@ -241,8 +241,8 @@ module StateMachines
       end
     end
 
-    def draw(graph, options = {})
-      fail NotImplementedError
+    def draw(graph, options = {}, io = $stdout)
+      machine.renderer.draw_state(self, graph, options, io)
     end
 
     # Generates a nicely formatted description of this state's contents.

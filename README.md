@@ -497,6 +497,24 @@ class Vehicle
     end
 
     ...
+
+    ### Default STDIORenderer
+
+    State Machines now includes a default STDIORenderer for debugging state machines without external dependencies. This renderer can be used to visualize the state machine in the console.
+
+    To use the renderer, simply call the `draw` method on the state machine:
+
+    ```ruby
+    vehicle = Vehicle.new
+    Vehicle.state_machine.draw # Outputs the state machine diagram to the console
+    ```
+
+    You can customize the output by passing in options to the `draw` method, such as the output stream:
+
+    ```ruby
+    vehicle = Vehicle.new
+    Vehicle.state_machine.draw(io: $stderr) # Outputs the state machine diagram to stderr
+    ```
   end
 end
 ```

@@ -121,8 +121,8 @@ module StateMachines
       end
     end
 
-    def draw(graph, event, valid_states)
-     fail NotImplementedError
+    def draw(graph, event, valid_states, io = $stdout)
+      machine.renderer.draw_branch(self, graph, event, valid_states, io)
     end
 
   protected
