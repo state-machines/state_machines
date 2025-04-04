@@ -8,3 +8,8 @@ platform :mri do
 end
 
 gem 'minitest-reporters'
+gem 'rubocop', require: false
+gem 'rubocop-rails', require: false
+gem 'rubocop-minitest', require: false
+
+gem 'rubocop-rake', require: false
