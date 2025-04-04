@@ -3,21 +3,26 @@
 require 'test_helper'
 
 class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
-  def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
-
-    @klass = Class.new do
-      def parked?
-        0
-      end
+  class SuperKlass
+    def parked?
+      false
     end
+  end
+
+  def setup
+    @original_stderr = $stderr
+    $stderr = StringIO.new
+
+    @klass = Class.new(SuperKlass)
+
     @machine = StateMachines::Machine.new(@klass)
-    @machine.state :parked
+
+    @output = capture_io { @machine.state :parked }.join
     @object = @klass.new
   end
 
   def test_should_not_override_state_predicate
-    assert_equal 0, @object.parked?
+    assert_equal false, @object.parked?
   end
 
   def test_should_still_allow_super_chaining
@@ -26,12 +31,11 @@ class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
         super
       end
     end
-
     assert_equal false, @object.parked?
   end
 
-  def test_should_not_output_warning
-    assert_equal '', $stderr.string
+  def test_should_output_warning
+    assert_match(/Instance method "parked\?" is already defined/, @output)
   end
 
   def teardown

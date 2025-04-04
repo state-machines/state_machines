@@ -10,7 +10,6 @@ module StateMachines
   # StateMachines::Machine#state for more information about how state-driven
   # behavior can be utilized.
   class State
-
     # The state machine for which this state is defined
     attr_reader :machine
 
@@ -33,7 +32,7 @@ module StateMachines
 
     # Whether or not this state is the initial state to use for new objects
     attr_accessor :initial
-    alias_method :initial?, :initial
+    alias initial? initial
 
     # A custom lambda block for determining whether a given value matches this
     # state
@@ -52,7 +51,7 @@ module StateMachines
     #   (e.g. :value => lambda {Time.now}, :if => lambda {|state| !state.nil?}).
     #   By default, the configured value is matched.
     # * <tt>:human_name</tt> - The human-readable version of this state's name
-    def initialize(machine, name, options = {}) #:nodoc:
+    def initialize(machine, name, options = {}) # :nodoc:
       options.assert_valid_keys(:initial, :value, :cache, :if, :human_name)
 
       @machine = machine
@@ -65,25 +64,29 @@ module StateMachines
       @initial = options[:initial] == true
       @context = StateContext.new(self)
 
-      if name
-        conflicting_machines = machine.owner_class.state_machines.select { |other_name, other_machine| other_machine != machine && other_machine.states[qualified_name, :qualified_name] }
+      return unless name
 
-        # Output a warning if another machine has a conflicting qualified name
-        # for a different attribute
-        if (conflict = conflicting_machines.detect { |_other_name, other_machine| other_machine.attribute != machine.attribute })
-          _name, other_machine = conflict
-          warn "State #{qualified_name.inspect} for #{machine.name.inspect} is already defined in #{other_machine.name.inspect}"
-        elsif conflicting_machines.empty?
-          # Only bother adding predicates when another machine for the same
-          # attribute hasn't already done so
-          add_predicate
-        end
+      conflicting_machines = machine.owner_class.state_machines.select do |_other_name, other_machine|
+        other_machine != machine && other_machine.states[qualified_name, :qualified_name]
+      end
+
+      # Output a warning if another machine has a conflicting qualified name
+      # for a different attribute
+      if (conflict = conflicting_machines.detect do |_other_name, other_machine|
+        other_machine.attribute != machine.attribute
+      end)
+        _name, other_machine = conflict
+        warn "State #{qualified_name.inspect} for #{machine.name.inspect} is already defined in #{other_machine.name.inspect}"
+      elsif conflicting_machines.empty?
+        # Only bother adding predicates when another machine for the same
+        # attribute hasn't already done so
+        add_predicate
       end
     end
 
     # Creates a copy of this state, excluding the context to prevent conflicts
     # across different machines.
-    def initialize_copy(orig) #:nodoc:
+    def initialize_copy(orig) # :nodoc:
       super
       @context = StateContext.new(self)
     end
@@ -98,7 +101,7 @@ module StateMachines
     # Any objects in a final state will remain so forever given the current
     # machine's definition.
     def final?
-      !machine.events.any? do |event|
+      machine.events.none? do |event|
         event.branches.any? do |branch|
           branch.state_requirements.any? do |requirement|
             requirement[:from].matches?(name) && !requirement[:to].matches?(name, from: name)
@@ -188,19 +191,19 @@ module StateMachines
       # Evaluate the method definitions and track which ones were added
       old_methods = context_methods
       context.class_eval(&block)
-      new_methods = context_methods.to_a.select { |(name, method)| old_methods[name] != method }
+      new_methods = context_methods.to_a.reject { |(name, method)| old_methods[name] == method }
 
       # Alias new methods so that the only execute when the object is in this state
       new_methods.each do |(method_name, _method)|
         context_name = context_name_for(method_name)
-        context.class_eval <<-end_eval, __FILE__, __LINE__ + 1
+        context.class_eval <<-END_EVAL, __FILE__, __LINE__ + 1
           alias_method :"#{context_name}", :#{method_name}
           def #{method_name}(*args, &block)
             state = self.class.state_machine(#{machine.name.inspect}).states.fetch(#{name.inspect})
             options = {:method_missing => lambda {super(*args, &block)}, :method_name => #{method_name.inspect}}
             state.call(self, :"#{context_name}", *(args + [options]), &block)
           end
-        end_eval
+        END_EVAL
       end
 
       true
@@ -220,23 +223,22 @@ module StateMachines
     # will be raised.
     def call(object, method, *args, &block)
       options = args.last.is_a?(Hash) ? args.pop : {}
-      options = {method_name: method}.merge(options)
+      options = { method_name: method }.merge(options)
       state = machine.states.match!(object)
 
       if state == self && object.respond_to?(method)
         object.send(method, *args, &block)
-      elsif method_missing = options[:method_missing]
+      elsif (method_missing = options[:method_missing])
         # Dispatch to the superclass since the object either isn't in this state
         # or this state doesn't handle the method
         begin
           method_missing.call
-        rescue NoMethodError => ex
-          if ex.name.to_s == options[:method_name].to_s && ex.args == args
-            # No valid context for this method
-            raise InvalidContext.new(object, "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{options[:method_name]}")
-          else
-            raise
-          end
+        rescue NoMethodError => e
+          raise unless e.name.to_s == options[:method_name].to_s && e.args == args
+
+          # No valid context for this method
+          raise InvalidContext.new(object,
+                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{options[:method_name]}")
         end
       end
     end
@@ -256,7 +258,7 @@ module StateMachines
       "#<#{self.class} #{attributes.map { |attr, value| "#{attr}=#{value.inspect}" } * ' '}>"
     end
 
-  private
+    private
 
     # Should the value be cached after it's evaluated for the first time?
     def cache_value?
@@ -266,9 +268,16 @@ module StateMachines
     # Adds a predicate method to the owner class so long as a name has
     # actually been configured for the state
     def add_predicate
-      # Checks whether the current value matches this state
-      machine.define_helper(:instance, "#{qualified_name}?") do |machine, object|
-        machine.states.matches?(object, name)
+      method = "#{qualified_name}?"
+
+      if machine.send(:owner_class_ancestor_has_method?, :instance, method)
+        warn "Instance method #{method.inspect} is already defined in #{machine.owner_class.ancestors.first}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+      elsif machine.send(:owner_class_has_method?, :instance, method)
+        warn "Instance method #{method.inspect} is already defined in #{machine.owner_class}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+      else
+        machine.define_helper(:instance, method) do |machine, object|
+          machine.states.matches?(object, name)
+        end
       end
     end
 
