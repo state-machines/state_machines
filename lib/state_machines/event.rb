@@ -32,13 +32,12 @@ module StateMachines
     #
     # Configuration options:
     # * <tt>:human_name</tt> - The human-readable version of this event's name
-    def initialize(machine, name, options = {}) #:nodoc:
-      options.assert_valid_keys(:human_name)
+    def initialize(machine, name, human_name: nil) #:nodoc:
 
       @machine = machine
       @name = name
       @qualified_name = machine.namespace ? :"#{name}_#{machine.namespace}" : name
-      @human_name = options[:human_name] || @name.to_s.tr('_', ' ')
+      @human_name = human_name || @name.to_s.tr('_', ' ')
       reset
 
       # Output a warning if another event has a conflicting qualified name
@@ -125,7 +124,7 @@ module StateMachines
       requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
-        if (match = branch.match(object, requirements))
+        if (match = branch.match(object, **requirements))
           # Branch allows for the transition to occur
           from = requirements[:from]
           to = if match[:to].is_a?(LoopbackMatcher)

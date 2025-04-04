@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'machine/class_methods' 
+require_relative 'machine/class_methods'
 
 module StateMachines
   # Represents a state machine for a particular attribute.  State machines
@@ -1254,17 +1254,15 @@ module StateMachines
     #       end
     #     end
     #   end
-    def event(*names, &block)
-      options = names.last.is_a?(Hash) ? names.pop : {}
-      options.assert_valid_keys(:human_name)
-
+    def event(*names, human_name: nil, &block)
       # Store the context so that it can be used for / matched against any event
       # that gets added
       @events.context(names, &block) if block_given?
 
       if names.first.is_a?(Matcher)
-        # Add any events referenced in the matcher.  When matchers are used,
+        # Add any events referenced in the matcher. When matchers are used,
         # events are not allowed to be configured.
+        options = {human_name: human_name}.compact
         raise ArgumentError, "Cannot configure events when using matchers (using #{options.inspect})" if options.any?
 
         events = add_events(names.first.values)
@@ -1273,7 +1271,7 @@ module StateMachines
 
         # Update the configuration for the event(s)
         events.each do |event|
-          event.human_name = options[:human_name] if options.include?(:human_name)
+          event.human_name = human_name if human_name
 
           # Add any states that may have been referenced within the event
           add_states(event.known_states)
@@ -1695,12 +1693,17 @@ module StateMachines
     #       ...
     #     end
     #   end
-    def after_failure(*args, &block)
-      options = (args.last.is_a?(Hash) ? args.pop : {})
-      options[:do] = args if args.any?
-      options.assert_valid_keys(:on, :do, :if, :unless)
+    def after_failure(*args, on: nil, if: nil, unless: nil, do: nil, &block)
+      # If args provided, they become the :do option
+      do_args = args.any? ? args : binding.local_variable_get(:do)
 
-      add_callback(:failure, options, &block)
+      # Add the callback with the explicit parameters
+      add_callback(:failure, {
+        on: on,
+        do: do_args,
+        if: binding.local_variable_get(:if),  # Need to use this approach because 'if' is a reserved keyword
+        unless: binding.local_variable_get(:unless)  # Same for 'unless'
+      }.compact, &block)
     end
 
     # Generates a list of the possible transition sequences that can be run on
@@ -1779,8 +1782,7 @@ module StateMachines
     # Marks the given object as invalid with the given message.
     #
     # By default, this is a no-op.
-    def invalidate(_object, _attribute, _message, _values = [])
-    end
+    def invalidate(_object, _attribute, _message, _values = []); end
 
     # Gets a description of the errors for the given object.  This is used to
     # provide more detailed information when an InvalidTransition exception is
@@ -1792,8 +1794,7 @@ module StateMachines
     # Resets any errors previously added when invalidating the given object.
     #
     # By default, this is a no-op.
-    def reset(_object)
-    end
+    def reset(_object); end
 
     # Generates the message to use when invalidating the given object after
     # failing to transition on a specific event
@@ -1840,8 +1841,7 @@ module StateMachines
     protected
 
     # Runs additional initialization hooks.  By default, this is a no-op.
-    def after_initialize
-    end
+    def after_initialize; end
 
     # Looks up other machines that have been defined in the owner class and
     # are targeting the same attribute as this machine.  When accessing
@@ -2105,18 +2105,16 @@ module StateMachines
     # for the attribute.
     #
     # By default, this is a no-op.
-    def create_with_scope(name)
-    end
+    def create_with_scope(name); end
 
     # Creates a scope for finding objects *without* a particular value or
     # values for the attribute.
     #
     # By default, this is a no-op.
-    def create_without_scope(name)
-    end
+    def create_without_scope(name); end
 
     # Always yields
-    def transaction(object)
+    def transaction(_object)
       yield
     end
 

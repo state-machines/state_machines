@@ -20,7 +20,7 @@ module StateMachines
     # * <tt>:actions</tt> - Whether to run the action configured for each transition
     # * <tt>:after</tt> - Whether to run after callbacks
     # * <tt>:transaction</tt> - Whether to wrap transitions within a transaction
-    def initialize(transitions = [], options = {})
+    def initialize(transitions = [], actions: true, after: true, use_transactions: true)
       super(transitions)
 
       # Determine the validity of the transitions as a whole
@@ -30,11 +30,9 @@ module StateMachines
       attributes = map { |transition| transition.attribute }.uniq
       fail ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
-      options.assert_valid_keys(:actions, :after, :use_transactions)
-      options = {actions: true, after: true, use_transactions: true}.merge(options)
-      @skip_actions = !options[:actions]
-      @skip_after = !options[:after]
-      @use_transactions = options[:use_transactions]
+      @skip_actions = !actions
+      @skip_after = !after
+      @use_transactions = use_transactions
     end
 
     # Runs each of the collection's transitions in parallel.
@@ -194,8 +192,10 @@ module StateMachines
   # Represents a collection of transitions that were generated from attribute-
   # based events
   class AttributeTransitionCollection < TransitionCollection
-    def initialize(transitions = [], options = {}) #:nodoc:
-      super(transitions, {use_transactions: false, actions: false}.merge(options))
+    def initialize(transitions = [], **options) #:nodoc:
+      default_options = {use_transactions: false, actions: false}
+      merged_options = default_options.merge(options)
+      super(transitions, **merged_options)
     end
 
   private

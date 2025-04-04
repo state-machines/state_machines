@@ -58,9 +58,9 @@ class AttributeTransitionCollectionMarshallingTest < StateMachinesTest
   end
 
   private
-  def transitions(options = {})
+  def transitions(**options)
     StateMachines::AttributeTransitionCollection.new([
       StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], options)
+    ], **options)
   end
 end

@@ -17,20 +17,17 @@ module StateMachines
     # * <tt>:index</tt> - One or more attributes to automatically generate
     #   hashed indices for in order to perform quick lookups.  Default is to
     #   index by the :name attribute
-    def initialize(machine, options = {})
-      options.assert_valid_keys(:index)
-      options = { index: :name }.merge(options)
-
+    def initialize(machine, index: :name)
       @machine = machine
       @nodes = []
-      @index_names = Array(options[:index])
+      @index_names = Array(index)
       @indices = @index_names.reduce({}) do |indices, name|
         indices[name] = {}
         indices[:"#{name}_to_s"] = {}
         indices[:"#{name}_to_sym"] = {}
         indices
       end
-      @default_index = Array(options[:index]).first
+      @default_index = Array(index).first
       @contexts = []
     end
 

@@ -157,7 +157,7 @@ module StateMachines
     # If a terminator has been configured and it matches the result from the
     # evaluated method, then the callback chain should be halted.
     def call(object, context = {}, *args, &block)
-      if @branch.matches?(object, context)
+      if @branch.matches?(object, **context)
         run_methods(object, context, 0, *args, &block)
         true
       else

@@ -21,13 +21,11 @@ module StateMachines
     # * <tt>:target</tt> - The target state to end the path on
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one
-    def initialize(object, machine, options = {})
-      options.assert_valid_keys(:target, :guard)
-
+    def initialize(object, machine, target: nil, guard: nil)
       @object = object
       @machine = machine
-      @target = options[:target]
-      @guard = options[:guard]
+      @target = target
+      @guard = guard
     end
 
     def initialize_copy(orig) #:nodoc:

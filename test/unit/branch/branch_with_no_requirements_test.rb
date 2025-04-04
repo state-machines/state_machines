@@ -21,7 +21,7 @@ class BranchWithNoRequirementsTest < StateMachinesTest
   end
 
   def test_should_match_empty_query
-    assert @branch.matches?(@object, {})
+    assert @branch.matches?(@object, **{})
   end
 
   def test_should_match_non_empty_query
@@ -29,7 +29,7 @@ class BranchWithNoRequirementsTest < StateMachinesTest
   end
 
   def test_should_include_all_requirements_in_match
-    match = @branch.match(@object, {})
+    match = @branch.match(@object, **{})
 
     assert_equal @branch.state_requirements.first[:from], match[:from]
     assert_equal @branch.state_requirements.first[:to], match[:to]

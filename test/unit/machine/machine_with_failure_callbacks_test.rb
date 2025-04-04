@@ -15,11 +15,6 @@ class MachineWithFailureCallbacksTest < StateMachinesTest
     @object.callbacks = []
   end
 
-  def test_should_raise_exception_if_implicit_option_specified
-    exception = assert_raises(ArgumentError) { @machine.after_failure invalid: :valid, do: lambda {} }
-    assert_equal 'Unknown key: :invalid. Valid keys are: :on, :do, :if, :unless', exception.message
-  end
-
   def test_should_raise_exception_if_method_not_specified
     exception = assert_raises(ArgumentError) { @machine.after_failure on: :ignite }
     assert_equal 'Method(s) for callback must be specified', exception.message

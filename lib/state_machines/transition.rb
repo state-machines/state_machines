@@ -162,7 +162,7 @@ module StateMachines
       self.args = args
 
       # Run the transition
-      !!TransitionCollection.new([self], {use_transactions: machine.use_transactions, actions: run_action}).perform
+      !!TransitionCollection.new([self], use_transactions: machine.use_transactions, actions: run_action).perform
     end
 
     # Runs a block within a transaction for the object being transitioned.
