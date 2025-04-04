@@ -268,14 +268,14 @@ module StateMachines
     # Adds a predicate method to the owner class so long as a name has
     # actually been configured for the state
     def add_predicate
-      method = "#{qualified_name}?"
+      predicate_method = "#{qualified_name}?"
 
-      if machine.send(:owner_class_ancestor_has_method?, :instance, method)
-        warn "Instance method #{method.inspect} is already defined in #{machine.owner_class.ancestors.first}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
-      elsif machine.send(:owner_class_has_method?, :instance, method)
-        warn "Instance method #{method.inspect} is already defined in #{machine.owner_class}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+      if machine.send(:owner_class_ancestor_has_method?, :instance, predicate_method)
+        warn "Instance method #{predicate_method.inspect} is already defined in #{machine.owner_class.ancestors.first.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+      elsif machine.send(:owner_class_has_method?, :instance, predicate_method)
+        warn "Instance method #{predicate_method.inspect} is already defined in #{machine.owner_class.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
       else
-        machine.define_helper(:instance, method) do |machine, object|
+        machine.define_helper(:instance, predicate_method) do |machine, object|
           machine.states.matches?(object, name)
         end
       end
