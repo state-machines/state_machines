@@ -428,7 +428,7 @@ easily migrate from a different library, you can do so as shown below:
 ```ruby
 class Vehicle
   state_machine initial: :parked do
-    ...
+    # ...
 
     state :parked do
       transition to: :idling, :on => [:ignite, :shift_up], if: :seatbelt_on?
@@ -464,7 +464,7 @@ example below:
 ```ruby
 class Vehicle
   state_machine initial: :parked do
-    ...
+    # ...
 
     transition parked: :idling, :on => [:ignite, :shift_up]
     transition first_gear: :second_gear, second_gear: :third_gear, on: :shift_up
@@ -496,30 +496,31 @@ class Vehicle
       transition [:idling, :first_gear] => :parked
     end
 
-    ...
-
-    ### Default STDIORenderer
-
-    State Machines now includes a default STDIORenderer for debugging state machines without external dependencies. This renderer can be used to visualize the state machine in the console.
-
-    To use the renderer, simply call the `draw` method on the state machine:
-
-    ```ruby
-    vehicle = Vehicle.new
-    Vehicle.state_machine.draw # Outputs the state machine diagram to the console
-    ```
-
-    You can customize the output by passing in options to the `draw` method, such as the output stream:
-
-    ```ruby
-    vehicle = Vehicle.new
-    Vehicle.state_machine.draw(io: $stderr) # Outputs the state machine diagram to stderr
-    ```
+    # ...
   end
 end
 ```
 
-However, there may be cases where the definition of a state machine is **dynamic**.
+#### Draw state machines
+
+State machines includes a default STDIORenderer for debugging state machines without external dependencies.
+This renderer can be used to visualize the state machine in the console.
+
+To use the renderer, simply call the `draw` method on the state machine:
+
+```ruby
+Vehicle.state_machine.draw # Outputs the state machine diagram to the console
+```
+
+You can customize the output by passing in options to the `draw` method, such as the output stream:
+
+```ruby
+Vehicle.state_machine.draw(io: $stderr) # Outputs the state machine diagram to stderr
+```
+
+#### Dynamic definitions
+
+There may be cases where the definition of a state machine is **dynamic**.
 This means that you don't know the possible states or events for a machine until
 runtime.  For example, you may allow users in your application to manage the
 state machine of a project or task in your system.  This means that the list of
