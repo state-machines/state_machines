@@ -34,7 +34,7 @@ module StateMachines
     end
 
     module_function def draw_state(state, graph, options: {}, io: $stdout)
-      io =  io || options[:io] || $stdout
+      io = io || options[:io] || $stdout
       io.puts "  State: #{state.name}"
     end
 
@@ -47,10 +47,27 @@ module StateMachines
           io.puts "    - #{event.name}"
           event.branches.each do |branch|
             branch.state_requirements.each do |requirement|
-              io.puts "      - #{requirement[:from].values.join(', ')} => #{requirement[:to].values.join(', ')}"
+              out = +"      - "
+              out << "#{draw_requirement(requirement[:from])} => #{draw_requirement(requirement[:to])}"
+              out << " IF #{branch.if_condition}" if branch.if_condition
+              out << " UNLESS #{branch.unless_condition}" if branch.unless_condition
+              io.puts out
             end
           end
         end
+      end
+    end
+
+    module_function def draw_requirement(requirement)
+      case requirement
+        when StateMachines::BlacklistMatcher
+          "ALL EXCEPT #{requirement.values.join(', ')}"
+        when StateMachines::AllMatcher
+          "ALL"
+        when StateMachines::LoopbackMatcher
+          "SAME"
+        else
+          requirement.values.join(', ')
       end
     end
   end
