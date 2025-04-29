@@ -1921,8 +1921,8 @@ module StateMachines
       end
 
       # Fire an arbitrary event for this machine
-      define_helper(:instance, "fire_#{attribute(:event)}") do |machine, object, event, *args|
-        machine.events.fetch(event).fire(object, *args)
+      define_helper(:instance, "fire_#{attribute(:event)}") do |machine, object, event, *args, **kwargs|
+        machine.events.fetch(event).fire(object, *args, **kwargs)
       end
 
       # Add helpers for tracking the event / transition to invoke when the
