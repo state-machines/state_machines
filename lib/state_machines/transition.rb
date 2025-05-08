@@ -24,6 +24,10 @@ module StateMachines
     # (does not include the +run_action+ boolean argument if specified)
     attr_accessor :args
 
+    # The keyword arguments passed in to the event that triggered the transition
+    # (does not include the +run_action+ argument if specified)
+    attr_accessor :kwargs
+
     # The result of invoking the action associated with the machine
     attr_reader :result
 
@@ -41,6 +45,7 @@ module StateMachines
       @object = object
       @machine = machine
       @args = []
+      @kwargs = {}
       @transient = false
       @resume_block = nil
 
@@ -157,9 +162,17 @@ module StateMachines
     #   transition.perform(false)           # => Only sets the state attribute
     #   transition.perform(Time.now)        # => Passes in additional arguments and runs the +save+ action
     #   transition.perform(Time.now, false) # => Passes in additional arguments and only sets the state attribute
-    def perform(*args)
-      run_action = [true, false].include?(args.last) ? args.pop : true
+    def perform(*args, **kwargs)
+      run_action = true
+
+      if [true, false].include?(args.last)
+        run_action = args.pop
+      elsif kwargs.key?(:run_action)
+        run_action = kwargs.delete(:run_action)
+      end
+
       self.args = args
+      self.kwargs = kwargs
 
       # Run the transition
       !!TransitionCollection.new([self], {use_transactions: machine.use_transactions, actions: run_action}).perform
