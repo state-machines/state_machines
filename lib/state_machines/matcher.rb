@@ -35,6 +35,7 @@ module StateMachines
     def -(blacklist)
       BlacklistMatcher.new(blacklist)
     end
+    alias_method :except, :-
 
     # Always returns true
     def matches?(value, context = {})
