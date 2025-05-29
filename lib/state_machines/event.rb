@@ -150,25 +150,26 @@ module StateMachines
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
-    def fire(object, *args)
+    def fire(object, *args, **kwargs)
       machine.reset(object)
 
       if (transition = transition_for(object))
-        transition.perform(*args)
+        transition.perform(*args, **kwargs)
       else
-        on_failure(object, *args)
+        on_failure(object, *args, **kwargs)
         false
       end
     end
 
     # Marks the object as invalid and runs any failure callbacks associated with
     # this event.  This should get called anytime this event fails to transition.
-    def on_failure(object, *args)
+    def on_failure(object, *args, **kwargs)
       state = machine.states.match!(object)
       machine.invalidate(object, :state, :invalid_transition, [[:event, human_name(object.class)], [:state, state.human_name(object.class)]])
 
       transition = Transition.new(object, machine, name, state.name, state.name)
       transition.args = args if args.any?
+      transition.kwargs = kwargs if kwargs.any?
       transition.run_callbacks(before: false)
     end
 
