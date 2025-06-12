@@ -1,5 +1,4 @@
 ![Build Status](https://github.com/state-machines/state_machines/actions/workflows/ruby.yml/badge.svg)
-[![Code Climate](https://codeclimate.com/github/state-machines/state_machines.svg)](https://codeclimate.com/github/state-machines/state_machines)
 # State Machines
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
