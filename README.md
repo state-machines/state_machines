@@ -254,6 +254,71 @@ vehicle.state_name              # => :parked
 # vehicle.state = :parked
 ```
 
+## Testing
+
+State Machines provides a `TestHelper` module with assertion methods to make testing state machines easier and more expressive.
+
+### Setup
+
+Include the test helper in your test class:
+
+```ruby
+# For Minitest
+class VehicleTest < Minitest::Test
+  include StateMachines::TestHelper
+  
+  def test_initial_state
+    vehicle = Vehicle.new
+    assert_state vehicle, :state, :parked
+  end
+end
+
+# For RSpec  
+RSpec.describe Vehicle do
+  include StateMachines::TestHelper
+  
+  it "starts in parked state" do
+    vehicle = Vehicle.new
+    assert_state vehicle, :state, :parked
+  end
+end
+```
+
+### Available Assertions
+
+The TestHelper provides both basic assertions and comprehensive state machine-specific assertions with `sm_` prefixes:
+
+#### Basic Assertions
+
+```ruby
+vehicle = Vehicle.new
+assert_state vehicle, :state, :parked
+assert_can_transition vehicle, :ignite
+assert_cannot_transition vehicle, :shift_up
+assert_transition vehicle, :ignite, :state, :idling
+```
+
+#### Extended State Machine Assertions
+
+```ruby
+machine = Vehicle.state_machine(:state)
+vehicle = Vehicle.new
+
+# State configuration
+assert_sm_states_list machine, [:parked, :idling, :stalled]
+assert_sm_initial_state machine, :parked
+
+# Event behavior  
+assert_sm_event_triggers vehicle, :ignite
+refute_sm_event_triggers vehicle, :shift_up
+assert_sm_event_raises_error vehicle, :invalid_event, StateMachines::InvalidTransition
+
+# Persistence (with ActiveRecord integration)
+assert_sm_state_persisted record, expected: :active
+```
+
+The test helper works with both Minitest and RSpec, automatically detecting your testing framework.
+
 ## Additional Topics
 
 ### Explicit vs. Implicit Event Transitions
