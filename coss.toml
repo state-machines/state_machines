@@ -1,0 +1,142 @@
+# COSS Metadata Template v0.0.2
+# This is the official COSS (Contriboss Open Source Standard) specification template
+# Copy this file to your project root as coss.toml and customize for your project
+
+##########################################################
+# 1. Basic Project Information
+name = "state_machines"
+version = "0.10.0"
+description = "Adds support for creating state machines for attributes on any Ruby class"
+licenses = ["MIT"]
+ai_contributions = true  # AI was used to enhance testing framework
+coss_compliant = true
+homepage = "https://github.com/state-machines/state_machines"
+keywords = ["ruby", "state-machine", "workflow", "finite-state-machine", "transitions"]
+
+##########################################################
+# 2. Repository and Issue Tracking
+repository = "https://github.com/state-machines/state_machines"
+issue_tracker = "https://github.com/state-machines/state_machines/issues"
+documentation = "https://github.com/state-machines/state_machines/blob/master/README.md"
+security_policy = ""
+
+##########################################################
+# 3. Languages, Frameworks, and Platforms
+languages = ["ruby"]
+
+[frameworks]
+# Pure Ruby library - no specific framework dependencies
+
+supported_platforms = ["linux", "darwin", "windows"]
+
+##########################################################
+# 4. Dependency Lock Files
+[dependency_locks]
+ruby = "Gemfile.lock"
+
+[packaging]
+ruby = "gem build state_machines.gemspec"
+
+##########################################################
+# 5. Maintainers and Governance
+maintainers = ["state-machines-maintainers@example.com"]
+governance = { type = "informal" }
+
+##########################################################
+# 6. Linting, Formatting, and Static Analysis
+lint = "bundle exec rubocop"
+format = "bundle exec rubocop -a"
+static_analysis = ["bundle exec rubocop"]
+
+##########################################################
+# 7. CI and Build Commands
+build = "bundle install"
+test = "rake test"
+coverage = ""
+
+##########################################################
+# 8. Tests and Quality Metrics
+[test_frameworks]
+ruby = "minitest"
+
+test_report_format = "minitest"
+coverage_threshold = 0
+
+##########################################################
+# 9. Commit Guidelines and Formats
+commit_message_format = ""
+
+##########################################################
+# 10. Release and Changelog
+changelog = "CHANGELOG.md"
+release_tag_pattern = "v{version}"
+
+##########################################################
+# 11. Badges and Integrations (Optional)
+[badges]
+ci = "https://github.com/state-machines/state_machines/actions/workflows/ruby.yml/badge.svg"
+coverage = ""
+license_badge = ""
+
+##########################################################
+# 12. Optional Miscellaneous Fields
+chat = ""
+support = { type = "github", contact = "https://github.com/state-machines/state_machines/issues" }
+apidocs = ""
+
+##########################################################
+# 13. Environment and Runtime Info
+[environments]
+ruby = "3.0+"
+
+##########################################################
+# 14. Data Schemas and Contracts
+[data_contracts]
+openapi = ""
+graphql = ""
+avro = ""
+
+##########################################################
+# 15. Project Classification
+project_type = "library"
+maturity = "stable"
+audience = ["developers", "ruby-developers"]
+
+##########################################################
+# 16. Localization / Internationalization
+[i18n]
+default_locale = "en"
+supported_locales = ["en"]
+translation_files = ""
+
+##########################################################
+# 17. Contribution Automation
+[contribution_tooling]
+dependabot = false
+precommit_hooks = false
+ai_review = "disabled"
+codeowners = ""
+
+##########################################################
+# 18. Security Scanning and SBOM
+[security]
+sbom = ""
+vulnerability_scanner = ""
+license_compliance_tool = ""
+
+##########################################################
+# 19. Documentation Quality Flags
+[docs]
+coverage = 0
+style = ""
+ai_summary_enabled = false
+
+##########################################################
+# 20. Submodules and Component References
+[submodules]
+# References to integration gems in the state_machines ecosystem
+state_machines-activemodel = "https://github.com/state-machines/state_machines-activemodel"
+state_machines-activerecord = "https://github.com/state-machines/state_machines-activerecord"
+state_machines-audit_trail = "https://github.com/state-machines/state_machines-audit_trail"
+state_machines-graphviz = "https://github.com/state-machines/state_machines-graphviz"
+state_machines-yard = "https://github.com/state-machines/state_machines-yard"

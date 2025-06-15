@@ -38,5 +38,13 @@ class StateCollectionWithInitialStateTest < StateMachinesTest
     @machine.before_transition from: :idling, do: lambda {}
     assert_equal [@parked, @idling], @states.by_priority
   end
+
+  def test_should_have_correct_states
+    assert_sm_states_list(@machine, [:parked, :idling])
+  end
+
+  def test_should_have_correct_initial_state
+    assert_sm_initial_state(@machine, :parked)
+  end
 end
 
