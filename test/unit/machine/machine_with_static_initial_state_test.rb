@@ -31,6 +31,10 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
     assert_equal 'parked', @klass.new.state
   end
 
+  def test_should_have_correct_initial_state
+    assert_sm_initial_state(@machine, :parked)
+  end
+
   def test_should_not_initial_state_prior_to_initialization
     base = Class.new do
       attr_accessor :state_on_init
@@ -46,6 +50,6 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
   end
 
   def test_should_be_included_in_known_states
-    assert_equal [:parked], @machine.states.keys
+    assert_sm_states_list(@machine, [:parked])
   end
 end

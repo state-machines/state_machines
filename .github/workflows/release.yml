@@ -16,3 +16,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
+      
+      - name: Checkout
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v4
+      
+      - name: Update COSS version
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          VERSION=$(grep "VERSION = " lib/state_machines/version.rb | sed "s/.*'\(.*\)'.*/\1/")
+          sed -i "s/^version = .*/version = \"$VERSION\"/" coss.toml
+          
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add coss.toml
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update COSS version to $VERSION"
+            git push
+          fi

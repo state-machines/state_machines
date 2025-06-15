@@ -15,3 +15,8 @@ end
 desc 'Default: run all tests.'
 task test: [:unit, :functional]
 task default: :test
+
+desc 'Update COSS version to match current gem version'
+task :update_coss_version do
+  sh 'scripts/update_coss_version.sh'
+end
