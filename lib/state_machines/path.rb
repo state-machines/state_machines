@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # A path represents a sequence of transitions that can be run for a particular
   # object.  Paths can walk to new transitions, revealing all of the possible
@@ -22,7 +24,7 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one
     def initialize(object, machine, options = {})
-      options.assert_valid_keys(:target, :guard)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :target, :guard)
 
       @object = object
       @machine = machine

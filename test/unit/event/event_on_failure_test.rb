@@ -50,7 +50,7 @@ class EventOnFailureTest < StateMachinesTest
     object, transition = callback_args
     assert_equal @object, object
     refute_nil transition
-    assert_equal [{foo: 'bar'}], transition.args  
+    assert_equal [{foo: 'bar'}], transition.args
   end
 
   def teardown

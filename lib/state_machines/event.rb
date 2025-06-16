@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # An event defines an action that transitions an attribute from one state to
   # another.  The state that an attribute is transitioned to depends on the
@@ -32,13 +34,22 @@ module StateMachines
     #
     # Configuration options:
     # * <tt>:human_name</tt> - The human-readable version of this event's name
-    def initialize(machine, name, options = {}) #:nodoc:
-      options.assert_valid_keys(:human_name)
+    def initialize(machine, name, options = nil, human_name: nil, **extra_options) #:nodoc:
+      # Handle both old hash style and new kwargs style for backward compatibility
+      if options.is_a?(Hash)
+        # Old style: initialize(machine, name, {human_name: 'Custom Name'})
+        StateMachines::OptionsValidator.assert_valid_keys!(options, :human_name)
+        human_name = options[:human_name]
+      else
+        # New style: initialize(machine, name, human_name: 'Custom Name')
+        raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
+        StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :human_name) unless extra_options.empty?
+      end
 
       @machine = machine
       @name = name
       @qualified_name = machine.namespace ? :"#{name}_#{machine.namespace}" : name
-      @human_name = options[:human_name] || @name.to_s.tr('_', ' ')
+      @human_name = human_name || @name.to_s.tr('_', ' ')
       reset
 
       # Output a warning if another event has a conflicting qualified name
@@ -91,7 +102,9 @@ module StateMachines
 
       # Only a certain subset of explicit options are allowed for transition
       # requirements
-      options.assert_valid_keys(:from, :to, :except_from, :except_to, :if, :unless) if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on, :if, :unless]).empty?
+      if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on, :if, :unless]).empty?
+        StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless)
+      end
 
       branches << branch = Branch.new(options.merge(on: name))
       @known_states |= branch.known_states
@@ -121,7 +134,7 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one.  Default is true.
     def transition_for(object, requirements = {})
-      requirements.assert_valid_keys(:from, :to, :guard)
+      StateMachines::OptionsValidator.assert_valid_keys!(requirements, :from, :to, :guard)
       requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
