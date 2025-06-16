@@ -3,6 +3,14 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.10.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.10.0...state_machines/v0.10.1) (2025-06-15)
+
+
+### Features
+
+* expose test helper ([74d2f5b](https://github.com/state-machines/state_machines/commit/74d2f5bb9b4718c1acfc9d11fc4bdf9a2d713622))
+* expose test helper ([170f277](https://github.com/state-machines/state_machines/commit/170f27708ab324c0622db462e76db79a181dafd4))
+
 ## [0.10.0](https://github.com/state-machines/state_machines/compare/state_machines-v0.6.0...state_machines/v0.10.0) (2025-05-28)
 
 
