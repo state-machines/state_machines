@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a set of requirements that must be met in order for a transition
   # or callback to occur.  Branches verify that the event, from state, and to
@@ -114,7 +116,7 @@ module StateMachines
     #   branch.match(object, :on => :ignite)  # => {:to => ..., :from => ..., :on => ...}
     #   branch.match(object, :on => :park)    # => nil
     def match(object, query = {})
-      query.assert_valid_keys(:from, :to, :on, :guard)
+      StateMachines::OptionsValidator.assert_valid_keys!(query, :from, :to, :on, :guard)
 
       if (match = match_query(query)) && matches_conditions?(object, query)
         match
@@ -131,7 +133,7 @@ module StateMachines
     # whitelist nor a blacklist option is specified, then an AllMatcher is
     # built.
     def build_matcher(options, whitelist_option, blacklist_option)
-      options.assert_exclusive_keys(whitelist_option, blacklist_option)
+      StateMachines::OptionsValidator.assert_exclusive_keys!(options, whitelist_option, blacklist_option)
 
       if options.include?(whitelist_option)
         value = options[whitelist_option]

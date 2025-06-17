@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a collection of paths that are generated based on a set of
   # requirements regarding what states to start and end on
@@ -27,7 +29,7 @@ module StateMachines
     #   conditionals defined for each one
     def initialize(object, machine, options = {})
       options = {deep: false, from: machine.states.match!(object).name}.merge(options)
-      options.assert_valid_keys( :from, :to, :deep, :guard)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :deep, :guard)
 
       @object = object
       @machine = machine

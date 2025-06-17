@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # A state defines a value that an attribute can be in after being transitioned
   # 0 or more times.  States can represent a value of any type in Ruby, though
@@ -51,17 +53,32 @@ module StateMachines
     #   (e.g. :value => lambda {Time.now}, :if => lambda {|state| !state.nil?}).
     #   By default, the configured value is matched.
     # * <tt>:human_name</tt> - The human-readable version of this state's name
-    def initialize(machine, name, options = {}) # :nodoc:
-      options.assert_valid_keys(:initial, :value, :cache, :if, :human_name)
+    def initialize(machine, name, options = nil, initial: false, value: :__not_provided__, cache: nil, if: nil, human_name: nil, **extra_options) # :nodoc:
+      # Handle both old hash style and new kwargs style for backward compatibility
+      if options.is_a?(Hash)
+        # Old style: initialize(machine, name, {initial: true, value: 'foo'})
+        StateMachines::OptionsValidator.assert_valid_keys!(options, :initial, :value, :cache, :if, :human_name)
+        initial = options.fetch(:initial, false)
+        value = options.include?(:value) ? options[:value] : :__not_provided__
+        cache = options[:cache]
+        if_condition = options[:if]
+        human_name = options[:human_name]
+      else
+        # New style: initialize(machine, name, initial: true, value: 'foo')
+        # options parameter should be nil in this case
+        raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
+        StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :initial, :value, :cache, :if, :human_name) unless extra_options.empty?
+        if_condition = binding.local_variable_get(:if)  # 'if' is a keyword, need special handling
+      end
 
       @machine = machine
       @name = name
       @qualified_name = name && machine.namespace ? :"#{machine.namespace}_#{name}" : name
-      @human_name = options[:human_name] || (@name ? @name.to_s.tr('_', ' ') : 'nil')
-      @value = options.include?(:value) ? options[:value] : name&.to_s
-      @cache = options[:cache]
-      @matcher = options[:if]
-      @initial = options[:initial] == true
+      @human_name = human_name || (@name ? @name.to_s.tr('_', ' ') : 'nil')
+      @value = value == :__not_provided__ ? name&.to_s : value
+      @cache = cache
+      @matcher = if_condition
+      @initial = initial == true
       @context = StateContext.new(self)
 
       return unless name

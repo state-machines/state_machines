@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'machine/class_methods' 
+require_relative 'options_validator'
+require_relative 'machine/class_methods'
 
 module StateMachines
   # Represents a state machine for a particular attribute.  State machines
@@ -451,7 +452,7 @@ module StateMachines
     # Creates a new state machine for the given attribute
     def initialize(owner_class, *args, &block)
       options = args.last.is_a?(Hash) ? args.pop : {}
-      options.assert_valid_keys(:attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions)
 
       # Find an integration that matches this machine's owner class
       if options.include?(:integration)
@@ -953,7 +954,7 @@ module StateMachines
     # options hash which contains at least <tt>:if</tt> condition support.
     def state(*names, &block)
       options = names.last.is_a?(Hash) ? names.pop : {}
-      options.assert_valid_keys(:value, :cache, :if, :human_name)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :value, :cache, :if, :human_name)
 
       # Store the context so that it can be used for / matched against any state
       # that gets added
@@ -1256,7 +1257,7 @@ module StateMachines
     #   end
     def event(*names, &block)
       options = names.last.is_a?(Hash) ? names.pop : {}
-      options.assert_valid_keys(:human_name)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :human_name)
 
       # Store the context so that it can be used for / matched against any event
       # that gets added
@@ -1698,7 +1699,7 @@ module StateMachines
     def after_failure(*args, &block)
       options = (args.last.is_a?(Hash) ? args.pop : {})
       options[:do] = args if args.any?
-      options.assert_valid_keys(:on, :do, :if, :unless)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :on, :do, :if, :unless)
 
       add_callback(:failure, options, &block)
     end

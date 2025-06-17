@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a collection of state machines for a class
   class MachineCollection < Hash
@@ -22,7 +24,7 @@ module StateMachines
     # * <tt>:to</tt> - A hash to write the initialized state to instead of
     #   writing to the object.  Default is to write directly to the object.
     def initialize_states(object, options = {}, attributes = {})
-      options.assert_valid_keys( :static, :dynamic, :to)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :static, :dynamic, :to)
       options = {static: true, dynamic: true}.merge(options)
 
       result = yield if block_given?

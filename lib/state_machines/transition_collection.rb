@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a collection of transitions in a state machine
   class TransitionCollection < Array
@@ -30,7 +32,7 @@ module StateMachines
       attributes = map { |transition| transition.attribute }.uniq
       fail ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
-      options.assert_valid_keys(:actions, :after, :use_transactions)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions)
       options = {actions: true, after: true, use_transactions: true}.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a collection of nodes in a state machine, be it events or states.
   # Nodes will not differentiate between the String and Symbol versions of the
@@ -18,7 +20,7 @@ module StateMachines
     #   hashed indices for in order to perform quick lookups.  Default is to
     #   index by the :name attribute
     def initialize(machine, options = {})
-      options.assert_valid_keys(:index)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :index)
       options = { index: :name }.merge(options)
 
       @machine = machine

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'options_validator'
+
 module StateMachines
   # Represents a module which will get evaluated within the context of a state.
   #
@@ -88,7 +90,7 @@ module StateMachines
     # See StateMachines::Machine#transition for a description of the possible
     # configurations for defining transitions.
     def transition(options)
-      options.assert_valid_keys(:from, :to, :on, :if, :unless)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :on, :if, :unless)
       raise ArgumentError, 'Must specify :on event' unless options[:on]
       raise ArgumentError, 'Must specify either :to or :from state' unless !options[:to] ^ !options[:from]
 
