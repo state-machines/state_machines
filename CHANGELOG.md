@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.20.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.10.1...state_machines/v0.20.0) (2025-06-17)
+
+
+### Features
+
+* remove Hash hack that haunted me for years ([#122](https://github.com/state-machines/state_machines/issues/122)) ([8e5de38](https://github.com/state-machines/state_machines/commit/8e5de3867aed2599d4ada6f32ced2bf95c328f9f))
+
 ## [0.10.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.10.0...state_machines/v0.10.1) (2025-06-15)
 
 
