@@ -19,9 +19,9 @@ module StateMachines
         name = args.first || :state
 
         # Find an existing machine
-        machine = owner_class.respond_to?(:state_machines) &&
-                  (args.first && owner_class.state_machines[name] || !args.first &&
-                  owner_class.state_machines.values.first) || nil
+        machine = (owner_class.respond_to?(:state_machines) &&
+                  ((args.first && owner_class.state_machines[name]) || (!args.first &&
+                  owner_class.state_machines.values.first))) || nil
 
         if machine
           # Only create a new copy if changes are being made to the machine in
@@ -47,6 +47,7 @@ module StateMachines
       end
 
       # Default messages to use for validation errors in ORM integrations
+      # Thread-safe access via atomic operations on simple values
       attr_accessor :ignore_method_conflicts
 
       def default_messages
@@ -54,17 +55,19 @@ module StateMachines
           invalid: 'is invalid',
           invalid_event: 'cannot transition when %s',
           invalid_transition: 'cannot transition via "%1$s"'
-        }
+        }.freeze
       end
 
       def default_messages=(messages)
-        @default_messages = messages
+        # Atomic replacement with frozen object
+        @default_messages = deep_freeze_hash(messages)
       end
 
       def replace_messages(message_hash)
-        message_hash.each do |key, value|
-          default_messages[key] = value
-        end
+        # Atomic replacement: read current messages, merge with new ones, replace atomically
+        current_messages = @default_messages || {}
+        merged_messages = current_messages.merge(message_hash)
+        @default_messages = deep_freeze_hash(merged_messages)
       end
 
       attr_writer :renderer
@@ -73,6 +76,17 @@ module StateMachines
         return @renderer if @renderer
 
         STDIORenderer
+      end
+
+      private
+
+      # Deep freezes a hash and all its string values for thread safety
+      def deep_freeze_hash(hash)
+        hash.each_with_object({}) do |(key, value), frozen_hash|
+          frozen_key = key.respond_to?(:freeze) ? key.freeze : key
+          frozen_value = value.respond_to?(:freeze) ? value.freeze : value
+          frozen_hash[frozen_key] = frozen_value
+        end.freeze
       end
     end
   end

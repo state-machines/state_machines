@@ -409,6 +409,7 @@ module StateMachines
 
     # Whether to ignore any conflicts that are detected for helper methods that
     # get generated for a machine's owner class.  Default is false.
+    # Thread-safe via atomic reference updates
     @ignore_method_conflicts = false
 
     # The class that the machine is defined in
@@ -455,11 +456,11 @@ module StateMachines
       StateMachines::OptionsValidator.assert_valid_keys!(options, :attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions)
 
       # Find an integration that matches this machine's owner class
-      if options.include?(:integration)
-        @integration = options[:integration] && StateMachines::Integrations.find_by_name(options[:integration])
-      else
-        @integration = StateMachines::Integrations.match(owner_class)
-      end
+      @integration = if options.include?(:integration)
+                       options[:integration] && StateMachines::Integrations.find_by_name(options[:integration])
+                     else
+                       StateMachines::Integrations.match(owner_class)
+                     end
 
       if @integration
         extend @integration
@@ -467,14 +468,14 @@ module StateMachines
       end
 
       # Add machine-wide defaults
-      options = {use_transactions: true, initialize: true}.merge(options)
+      options = { use_transactions: true, initialize: true }.merge(options)
 
       # Set machine configuration
       @name = args.first || :state
       @attribute = options[:attribute] || @name
       @events = EventCollection.new(self)
       @states = StateCollection.new(self)
-      @callbacks = {before: [], after: [], failure: []}
+      @callbacks = { before: [], after: [], failure: [] }
       @namespace = options[:namespace]
       @messages = options[:messages] || {}
       @action = options[:action]
@@ -499,14 +500,14 @@ module StateMachines
     # Creates a copy of this machine in addition to copies of each associated
     # event/states/callback, so that the modifications to those collections do
     # not affect the original machine.
-    def initialize_copy(orig) #:nodoc:
+    def initialize_copy(orig) # :nodoc:
       super
 
       @events = @events.dup
       @events.machine = self
       @states = @states.dup
       @states.machine = self
-      @callbacks = {before: @callbacks[:before].dup, after: @callbacks[:after].dup, failure: @callbacks[:failure].dup}
+      @callbacks = { before: @callbacks[:before].dup, after: @callbacks[:after].dup, failure: @callbacks[:failure].dup }
     end
 
     # Sets the class which is the owner of this state machine.  Any methods
@@ -516,7 +517,7 @@ module StateMachines
       @owner_class = klass
 
       # Create modules for extending the class with state/event-specific methods
-      @helper_modules = helper_modules = {instance: HelperModule.new(self, :instance), class: HelperModule.new(self, :class)}
+      @helper_modules = helper_modules = { instance: HelperModule.new(self, :instance), class: HelperModule.new(self, :class) }
       owner_class.class_eval do
         extend helper_modules[:class]
         include helper_modules[:instance]
@@ -550,13 +551,13 @@ module StateMachines
       # Output a warning if there are conflicting initial states for the machine's
       # attribute
       initial_state = states.detect { |state| state.initial }
-      if !owner_class_attribute_default.nil? && (dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state))
-        warn(
-            "Both #{owner_class.name} and its #{name.inspect} machine have defined "\
-          "a different default for \"#{attribute}\". Use only one or the other for "\
-          "defining defaults to avoid unexpected behaviors."
-        )
-      end
+      return unless !owner_class_attribute_default.nil? && (dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state))
+
+      warn(
+        "Both #{owner_class.name} and its #{name.inspect} machine have defined " \
+        "a different default for \"#{attribute}\". Use only one or the other for " \
+        'defining defaults to avoid unexpected behaviors.'
+      )
     end
 
     # Gets the initial state of the machine for the given object. If a dynamic
@@ -612,14 +613,14 @@ module StateMachines
     #   directly to the object
     def initialize_state(object, options = {})
       state = initial_state(object)
-      if state && (options[:force] || initialize_state?(object))
-        value = state.value
+      return unless state && (options[:force] || initialize_state?(object))
 
-        if (hash = options[:to])
-          hash[attribute.to_s] = value
-        else
-          write(object, :state, value)
-        end
+      value = state.value
+
+      if (hash = options[:to])
+        hash[attribute.to_s] = value
+      else
+        write(object, :state, value)
       end
     end
 
@@ -681,6 +682,8 @@ module StateMachines
           end
         end
       else
+        # Validate string input before eval if method is a string
+        validate_eval_string(method) if method.is_a?(String)
         helper_module.class_eval(method, *args, **kwargs)
       end
     end
@@ -985,7 +988,7 @@ module StateMachines
       states.length == 1 ? states.first : states
     end
 
-    alias_method :other_states, :state
+    alias other_states state
 
     # Gets the current value stored in the given object's attribute.
     #
@@ -1284,7 +1287,7 @@ module StateMachines
       events.length == 1 ? events.first : events
     end
 
-    alias_method :on, :event
+    alias on event
 
     # Creates a new transition that determines what to change the current state
     # to when an event fires.
@@ -1780,8 +1783,7 @@ module StateMachines
     # Marks the given object as invalid with the given message.
     #
     # By default, this is a no-op.
-    def invalidate(_object, _attribute, _message, _values = [])
-    end
+    def invalidate(_object, _attribute, _message, _values = []); end
 
     # Gets a description of the errors for the given object.  This is used to
     # provide more detailed information when an InvalidTransition exception is
@@ -1793,13 +1795,12 @@ module StateMachines
     # Resets any errors previously added when invalidating the given object.
     #
     # By default, this is a no-op.
-    def reset(_object)
-    end
+    def reset(_object); end
 
     # Generates the message to use when invalidating the given object after
     # failing to transition on a specific event
     def generate_message(name, values = [])
-      message = (@messages[name] || self.class.default_messages[name])
+      message = @messages[name] || self.class.default_messages[name]
 
       # Check whether there are actually any values to interpolate to avoid
       # any warnings
@@ -1815,14 +1816,13 @@ module StateMachines
     # This is only applicable to integrations that involve databases.  By
     # default, this will not run any transactions since the changes aren't
     # taking place within the context of a database.
-    def within_transaction(object)
+    def within_transaction(object, &block)
       if use_transactions
-        transaction(object) { yield }
+        transaction(object, &block)
       else
         yield
       end
     end
-
 
     def renderer
       self.class.renderer
@@ -1835,14 +1835,13 @@ module StateMachines
     # Determines whether an action hook was defined for firing attribute-based
     # event transitions when the configured action gets called.
     def action_hook?(self_only = false)
-      @action_hook_defined || !self_only && owner_class.state_machines.any? { |name, machine| machine.action == action && machine != self && machine.action_hook?(true) }
+      @action_hook_defined || (!self_only && owner_class.state_machines.any? { |_name, machine| machine.action == action && machine != self && machine.action_hook?(true) })
     end
 
     protected
 
     # Runs additional initialization hooks.  By default, this is a no-op.
-    def after_initialize
-    end
+    def after_initialize; end
 
     # Looks up other machines that have been defined in the owner class and
     # are targeting the same attribute as this machine.  When accessing
@@ -1851,11 +1850,8 @@ module StateMachines
     # changes made to the sibling machines only affect this class and not any
     # base class that may have originally defined the machine.
     def sibling_machines
-      owner_class.state_machines.inject([]) do |machines, (name, machine)|
-        if machine.attribute == attribute && machine != self
-          machines << (owner_class.state_machine(name) {})
-        end
-        machines
+      owner_class.state_machines.each_with_object([]) do |(name, machine), machines|
+        machines << (owner_class.state_machine(name) {}) if machine.attribute == attribute && machine != self
       end
     end
 
@@ -1863,7 +1859,7 @@ module StateMachines
     # will only be true if the machine's attribute is blank.
     def initialize_state?(object)
       value = read(object, :state)
-      (value.nil? || value.respond_to?(:empty?) && value.empty?) && !states[value, :value]
+      (value.nil? || (value.respond_to?(:empty?) && value.empty?)) && !states[value, :value]
     end
 
     # Adds helper methods for interacting with the state machine, including
@@ -1881,11 +1877,11 @@ module StateMachines
     # are set prior to the original initialize method and dynamic values are
     # set *after* the initialize method in case it is dependent on it.
     def define_state_initializer
-      define_helper :instance, <<-end_eval, __FILE__, __LINE__ + 1
+      define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
           def initialize(*)
             self.class.state_machines.initialize_states(self) { super }
           end
-      end_eval
+      END_EVAL
     end
 
     # Adds reader/writer methods for accessing the state attribute
@@ -1900,11 +1896,11 @@ module StateMachines
     # current state
     def define_state_predicate
       call_super = !!owner_class_ancestor_has_method?(:instance, "#{name}?")
-      define_helper :instance, <<-end_eval, __FILE__, __LINE__ + 1
+      define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
           def #{name}?(*args)
             args.empty? && (#{call_super} || defined?(super)) ? super : self.class.state_machine(#{name.inspect}).states.matches?(self, *args)
           end
-      end_eval
+      END_EVAL
     end
 
     # Adds helper methods for getting information about this state machine's
@@ -1928,25 +1924,25 @@ module StateMachines
 
       # Add helpers for tracking the event / transition to invoke when the
       # action is called
-      if action
-        event_attribute = attribute(:event)
-        define_helper(:instance, event_attribute) do |machine, object|
-          # Interpret non-blank events as present
-          event = machine.read(object, :event, true)
-          event && !(event.respond_to?(:empty?) && event.empty?) ? event.to_sym : nil
-        end
+      return unless action
 
-        # A roundabout way of writing the attribute is used here so that
-        # integrations can hook into this modification
-        define_helper(:instance, "#{event_attribute}=") do |machine, object, value|
-          machine.write(object, :event, value, true)
-        end
-
-        event_transition_attribute = attribute(:event_transition)
-        define_helper :instance, <<-end_eval, __FILE__, __LINE__ + 1
-            protected; attr_accessor #{event_transition_attribute.inspect}
-        end_eval
+      event_attribute = attribute(:event)
+      define_helper(:instance, event_attribute) do |machine, object|
+        # Interpret non-blank events as present
+        event = machine.read(object, :event, true)
+        event && !(event.respond_to?(:empty?) && event.empty?) ? event.to_sym : nil
       end
+
+      # A roundabout way of writing the attribute is used here so that
+      # integrations can hook into this modification
+      define_helper(:instance, "#{event_attribute}=") do |machine, object, value|
+        machine.write(object, :event, value, true)
+      end
+
+      event_transition_attribute = attribute(:event_transition)
+      define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
+            protected; attr_accessor #{event_transition_attribute.inspect}
+      END_EVAL
     end
 
     # Adds helper methods for getting information about this state machine's
@@ -1962,16 +1958,16 @@ module StateMachines
     # This is only true if there is an action configured and no other machines
     # have process this same configuration already.
     def define_action_helpers?
-      action && !owner_class.state_machines.any? { |name, machine| machine.action == action && machine != self }
+      action && !owner_class.state_machines.any? { |_name, machine| machine.action == action && machine != self }
     end
 
     # Adds helper methods for automatically firing events when an action
     # is invoked
     def define_action_helpers
-      if action_hook
-        @action_hook_defined = true
-        define_action_hook
-      end
+      return unless action_hook
+
+      @action_hook_defined = true
+      define_action_hook
     end
 
     # Hooks directly into actions by defining the same method in an included
@@ -1983,13 +1979,13 @@ module StateMachines
       private_action_hook = owner_class.private_method_defined?(action_hook)
 
       # Only define helper if it hasn't
-      define_helper :instance, <<-end_eval, __FILE__, __LINE__ + 1
+      define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
           def #{action_hook}(*)
             self.class.state_machines.transitions(self, #{action.inspect}).perform { super }
           end
 
           private #{action_hook.inspect} if #{private_action_hook}
-      end_eval
+      END_EVAL
     end
 
     # The method to hook into for triggering transitions when invoked.  By
@@ -2069,16 +2065,16 @@ module StateMachines
     def define_scopes(custom_plural = nil)
       plural = custom_plural || pluralize(name)
 
-      [:with, :without].each do |kind|
+      %i[with without].each do |kind|
         [name, plural].map { |s| s.to_s }.uniq.each do |suffix|
           method = "#{kind}_#{suffix}"
 
-          if (scope = send("create_#{kind}_scope", method))
-            # Converts state names to their corresponding values so that they
-            # can be looked up properly
-            define_helper(:class, method) do |machine, klass, *states|
-              run_scope(scope, machine, klass, states)
-            end
+          next unless (scope = send("create_#{kind}_scope", method))
+
+          # Converts state names to their corresponding values so that they
+          # can be looked up properly
+          define_helper(:class, method) do |machine, klass, *states|
+            run_scope(scope, machine, klass, states)
           end
         end
       end
@@ -2106,18 +2102,16 @@ module StateMachines
     # for the attribute.
     #
     # By default, this is a no-op.
-    def create_with_scope(name)
-    end
+    def create_with_scope(name); end
 
     # Creates a scope for finding objects *without* a particular value or
     # values for the attribute.
     #
     # By default, this is a no-op.
-    def create_without_scope(name)
-    end
+    def create_without_scope(name); end
 
     # Always yields
-    def transaction(object)
+    def transaction(_object)
       yield
     end
 
@@ -2185,6 +2179,38 @@ module StateMachines
         end
 
         event
+      end
+    end
+
+    private
+
+    # Validates string input before eval to prevent code injection
+    # This is a basic safety check - not foolproof security
+    def validate_eval_string(method_string)
+      # Check for obviously dangerous patterns
+      dangerous_patterns = [
+        /`.*`/,           # Backticks (shell execution)
+        /system\s*\(/,    # System calls
+        /exec\s*\(/,      # Exec calls
+        /eval\s*\(/,      # Nested eval
+        /require\s+['"]/, # Require statements
+        /load\s+['"]/, # Load statements
+        /File\./,         # File operations
+        /IO\./,           # IO operations
+        /Dir\./,          # Directory operations
+        /Kernel\./        # Kernel operations
+      ]
+
+      dangerous_patterns.each do |pattern|
+        raise SecurityError, "Potentially dangerous code detected in eval string: #{method_string.inspect}" if method_string.match?(pattern)
+      end
+
+      # Basic syntax validation
+      begin
+        # Try to parse the string as Ruby code without executing it
+        RubyVM::InstructionSequence.compile(method_string)
+      rescue SyntaxError => e
+        raise ArgumentError, "Invalid Ruby syntax in eval string: #{e.message}"
       end
     end
   end

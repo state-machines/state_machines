@@ -24,7 +24,6 @@ require 'state_machines/transition_collection'
 require 'state_machines/branch'
 
 require 'state_machines/helper_module'
-require 'state_machines/state'
 require 'state_machines/callback'
 require 'state_machines/node_collection'
 
