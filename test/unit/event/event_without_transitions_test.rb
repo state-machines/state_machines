@@ -24,7 +24,7 @@ class EventWithoutTransitionsTest < StateMachinesTest
 
   def test_should_not_change_the_current_state
     @event.fire(@object)
+
     assert_nil @object.state
   end
 end
-

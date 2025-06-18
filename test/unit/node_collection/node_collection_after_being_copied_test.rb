@@ -33,16 +33,18 @@ class NodeCollectionAfterBeingCopiedTest < StateMachinesTest
   end
 
   def test_should_not_run_contexts
-    assert_equal [], @contexts_run
+    assert_empty @contexts_run
   end
 
   def test_should_not_modify_contexts
     @collection << Node.new(:first_gear)
-    assert_equal [], @contexts_run
+
+    assert_empty @contexts_run
   end
 
   def test_should_copy_contexts
     @copied_collection << Node.new(:parked)
+
     refute @contexts_run.empty?
   end
 end

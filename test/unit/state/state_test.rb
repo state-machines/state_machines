@@ -16,27 +16,32 @@ class StateTest < StateMachinesTest
   def test_should_allow_changing_machine
     new_machine = StateMachines::Machine.new(Class.new)
     @state.machine = new_machine
+
     assert_equal new_machine, @state.machine
   end
 
   def test_should_allow_changing_value
     @state.value = 1
+
     assert_equal 1, @state.value
   end
 
   def test_should_allow_changing_initial
     @state.initial = true
+
     assert @state.initial
   end
 
   def test_should_allow_changing_matcher
-    matcher = lambda {}
+    matcher = -> {}
     @state.matcher = matcher
+
     assert_equal matcher, @state.matcher
   end
 
   def test_should_allow_changing_human_name
     @state.human_name = 'stopped'
+
     assert_equal 'stopped', @state.human_name
   end
 

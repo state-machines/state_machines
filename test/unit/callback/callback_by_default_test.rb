@@ -22,6 +22,6 @@ class CallbackByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_have_any_known_states
-    assert_equal [], @callback.known_states
+    assert_empty @callback.known_states
   end
 end

@@ -14,7 +14,7 @@ module StateMachines
       # If a machine of the given name already exists in one of the class's
       # superclasses, then a copy of that machine will be created and stored
       # in the new owner class (the original will remain unchanged).
-      def find_or_create(owner_class, *args, &block)
+      def find_or_create(owner_class, *args, &)
         options = args.last.is_a?(Hash) ? args.pop : {}
         name = args.first || :state
 
@@ -33,10 +33,10 @@ module StateMachines
           end
 
           # Evaluate DSL
-          machine.instance_eval(&block) if block_given?
+          machine.instance_eval(&) if block_given?
         else
           # No existing machine: create a new one
-          machine = new(owner_class, name, options, &block)
+          machine = new(owner_class, name, options, &)
         end
 
         machine

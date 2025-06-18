@@ -17,7 +17,6 @@ class StateCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_be_empty_by_priority
-    assert_equal [], @states.by_priority
+    assert_empty @states.by_priority
   end
 end
-

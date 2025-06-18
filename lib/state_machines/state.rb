@@ -67,8 +67,9 @@ module StateMachines
         # New style: initialize(machine, name, initial: true, value: 'foo')
         # options parameter should be nil in this case
         raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
+
         StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :initial, :value, :cache, :if, :human_name) unless extra_options.empty?
-        if_condition = binding.local_variable_get(:if)  # 'if' is a keyword, need special handling
+        if_condition = binding.local_variable_get(:if) # 'if' is a keyword, need special handling
       end
 
       @machine = machine
@@ -200,14 +201,14 @@ module StateMachines
     #
     # This can be called multiple times.  Each time a new context is created,
     # a new module will be included in the owner class.
-    def context(&block)
+    def context(&)
       # Include the context
       context = @context
       machine.owner_class.class_eval { include context }
 
       # Evaluate the method definitions and track which ones were added
       old_methods = context_methods
-      context.class_eval(&block)
+      context.class_eval(&)
       new_methods = context_methods.to_a.reject { |(name, method)| old_methods[name] == method }
 
       # Alias new methods so that the only execute when the object is in this state
@@ -238,13 +239,13 @@ module StateMachines
     #
     # If the method has never been defined for this state, then a NoMethodError
     # will be raised.
-    def call(object, method, *args, &block)
+    def call(object, method, *args, &)
       options = args.last.is_a?(Hash) ? args.pop : {}
       options = { method_name: method }.merge(options)
       state = machine.states.match!(object)
 
       if state == self && object.respond_to?(method)
-        object.send(method, *args, &block)
+        object.send(method, *args, &)
       elsif (method_missing = options[:method_missing])
         # Dispatch to the superclass since the object either isn't in this state
         # or this state doesn't handle the method

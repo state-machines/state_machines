@@ -12,6 +12,7 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerClassTest < StateMachi
 
   def test_should_track_each_state_machine
     expected = { state: @machine, public_state: @second_machine }
+
     assert_equal expected, @klass.state_machines
   end
 
@@ -36,6 +37,7 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerClassTest < StateMachi
   def test_should_not_allow_second_machine_to_initialize_state
     @object.state = nil
     @second_machine.initialize_state(@object)
+
     assert_nil @object.state
   end
 
@@ -49,17 +51,21 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerClassTest < StateMachi
     end
 
     @object.ignite
+
     assert_equal 'idling', @object.state
 
     @object.park
+
     assert_equal 'parked', @object.state
   end
 
   def test_should_copy_new_states_to_sibling_machines
     @first_gear = @machine.state :first_gear
+
     assert_equal @first_gear, @second_machine.state(:first_gear)
 
     @second_gear = @second_machine.state :second_gear
+
     assert_equal @second_gear, @machine.state(:second_gear)
   end
 
@@ -70,4 +76,3 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerClassTest < StateMachi
     assert_equal @machine.state(:idling), third_machine.state(:idling)
   end
 end
-

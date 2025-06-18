@@ -22,7 +22,7 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_be_parked
-    assert @vehicle.parked?
+    assert_predicate @vehicle, :parked?
     assert @vehicle.state?(:parked)
     assert_equal :parked, @vehicle.state_name
     assert_equal 'parked', @vehicle.human_state_name
@@ -57,11 +57,12 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_be_able_to_ignite
-    assert @vehicle.can_ignite?
+    assert_predicate @vehicle, :can_ignite?
   end
 
   def test_should_have_a_transition_for_ignite
     transition = @vehicle.ignite_transition
+
     refute_nil transition
     assert_equal 'parked', transition.from
     assert_equal 'idling', transition.to
@@ -75,7 +76,7 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_have_a_list_of_possible_transitions
-    assert_equal [{ object: @vehicle, attribute: :state, event: :ignite, from: 'parked', to: 'idling' }], @vehicle.state_transitions.map { |transition| transition.attributes }
+    assert_equal([{ object: @vehicle, attribute: :state, event: :ignite, from: 'parked', to: 'idling' }], @vehicle.state_transitions.map { |transition| transition.attributes })
   end
 
   def test_should_have_a_list_of_possible_paths
@@ -92,11 +93,13 @@ class VehicleUnsavedTest < Minitest::Test
 
   def test_should_pass_arguments_through_to_generic_event_runner
     @vehicle.fire_state_event(:ignite, 1, 2, 3)
+
     assert_equal [1, 2, 3], @vehicle.last_transition_args
   end
 
   def test_should_allow_skipping_action_through_generic_event_runner
     @vehicle.fire_state_event(:ignite, false)
+
     assert_equal false, @vehicle.saved
   end
 
@@ -111,7 +114,7 @@ class VehicleUnsavedTest < Minitest::Test
 
   def test_should_allow_ignite_with_skipped_action
     assert @vehicle.ignite(false)
-    assert @vehicle.new_record?
+    assert_predicate @vehicle, :new_record?
   end
 
   def test_should_allow_ignite_bang
@@ -120,11 +123,12 @@ class VehicleUnsavedTest < Minitest::Test
 
   def test_should_allow_ignite_bang_with_skipped_action
     assert @vehicle.ignite!(false)
-    assert @vehicle.new_record?
+    assert_predicate @vehicle, :new_record?
   end
 
   def test_should_be_saved_after_successful_event
     @vehicle.ignite
+
     refute @vehicle.new_record?
   end
 
@@ -149,11 +153,11 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_be_insurance_inactive
-    assert @vehicle.insurance_inactive?
+    assert_predicate @vehicle, :insurance_inactive?
   end
 
   def test_should_be_able_to_buy
-    assert @vehicle.can_buy_insurance?
+    assert_predicate @vehicle, :can_buy_insurance?
   end
 
   def test_should_allow_buying_insurance
@@ -166,7 +170,7 @@ class VehicleUnsavedTest < Minitest::Test
 
   def test_should_allow_ignite_buying_insurance_with_skipped_action
     assert @vehicle.buy_insurance!(false)
-    assert @vehicle.new_record?
+    assert_predicate @vehicle, :new_record?
   end
 
   def test_should_not_be_insurance_active

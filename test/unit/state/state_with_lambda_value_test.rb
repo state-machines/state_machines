@@ -7,7 +7,10 @@ class StateWithLambdaValueTest < StateMachinesTest
     @klass = Class.new
     @args = nil
     @machine = StateMachines::Machine.new(@klass)
-    @value = ->(*args) { @args = args; :parked }
+    @value = lambda { |*args|
+      @args = args
+      :parked
+    }
     @machine.states << @state = StateMachines::State.new(@machine, :parked, value: @value)
   end
 
@@ -25,12 +28,14 @@ class StateWithLambdaValueTest < StateMachinesTest
 
   def test_should_not_pass_in_any_arguments
     @state.value
-    assert_equal [], @args
+
+    assert_empty @args
   end
 
   def test_should_define_predicate
     object = @klass.new
-    assert object.respond_to?(:parked?)
+
+    assert_respond_to object, :parked?
   end
 
   def test_should_match_evaluated_value

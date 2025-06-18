@@ -5,8 +5,7 @@ require 'test_helper'
 class EventCollectionWithCustomMachineAttributeTest < StateMachinesTest
   def setup
     @klass = Class.new do
-      def save
-      end
+      def save; end
     end
 
     @machine = StateMachines::Machine.new(@klass, :state, attribute: :state_id, initial: :parked, action: :save)
@@ -21,6 +20,7 @@ class EventCollectionWithCustomMachineAttributeTest < StateMachinesTest
 
   def test_should_not_have_transition_if_nil
     @object.state_event = nil
+
     assert_nil @events.attribute_transition_for(@object)
   end
 

@@ -26,11 +26,10 @@ module StateMachines
       @machine = machine
       @nodes = []
       @index_names = Array(options[:index])
-      @indices = @index_names.reduce({}) do |indices, name|
+      @indices = @index_names.each_with_object({}) do |name, indices|
         indices[name] = {}
         indices[:"#{name}_to_s"] = {}
         indices[:"#{name}_to_sym"] = {}
-        indices
       end
       @default_index = Array(options[:index]).first
       @contexts = []
@@ -38,14 +37,16 @@ module StateMachines
 
     # Creates a copy of this collection such that modifications don't affect
     # the original collection
-    def initialize_copy(orig) #:nodoc:
+    def initialize_copy(orig) # :nodoc:
       super
 
       nodes = @nodes
       contexts = @contexts
       @nodes = []
       @contexts = []
-      @indices = @indices.reduce({}) { |indices, (name, *)| indices[name] = {}; indices }
+      @indices = @indices.each_with_object({}) do |(name, *), indices|
+        indices[name] = {}
+      end
 
       # Add nodes *prior* to copying over the contexts so that they don't get
       # evaluated multiple times
@@ -116,8 +117,8 @@ module StateMachines
     # ...produces:
     #
     #   parked -- idling --
-    def each
-      @nodes.each { |node| yield node }
+    def each(&)
+      @nodes.each(&)
       self
     end
 
@@ -145,9 +146,9 @@ module StateMachines
     # If the key cannot be found, then nil will be returned.
     def [](key, index_name = @default_index)
       index(index_name)[key] ||
-      index(:"#{index_name}_to_s")[key.to_s] ||
-      to_sym?(key) && index(:"#{index_name}_to_sym")[:"#{key}"] ||
-      nil
+        index(:"#{index_name}_to_s")[key.to_s] ||
+        (to_sym?(key) && index(:"#{index_name}_to_sym")[:"#{key}"]) ||
+        nil
     end
 
     # Gets the node indexed by the given key.  By default, this will look up the
@@ -163,17 +164,17 @@ module StateMachines
     #
     #   collection['invalid', :value]   # => IndexError: "invalid" is an invalid value
     def fetch(key, index_name = @default_index)
-      self[key, index_name] || fail(IndexError, "#{key.inspect} is an invalid #{index_name}")
+      self[key, index_name] || raise(IndexError, "#{key.inspect} is an invalid #{index_name}")
     end
 
-  protected
+    protected
 
     # Gets the given index.  If the index does not exist, then an ArgumentError
     # is raised.
     def index(name)
-      fail ArgumentError, 'No indices configured' unless @indices.any?
+      raise ArgumentError, 'No indices configured' unless @indices.any?
 
-      @indices[name] || fail(ArgumentError, "Invalid index: #{name.inspect}")
+      @indices[name] || raise(ArgumentError, "Invalid index: #{name.inspect}")
     end
 
     # Gets the value for the given attribute on the node
@@ -205,10 +206,10 @@ module StateMachines
       new_key = value(node, name)
 
       # Only replace the key if it's changed
-      if old_key != new_key
-        remove_from_index(name, old_key)
-        add_to_index(name, new_key, node)
-      end
+      return unless old_key != new_key
+
+      remove_from_index(name, old_key)
+      add_to_index(name, new_key, node)
     end
 
     # Determines whether the given value can be converted to a symbol

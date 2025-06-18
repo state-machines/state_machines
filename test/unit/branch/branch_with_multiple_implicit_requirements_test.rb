@@ -45,11 +45,12 @@ class BranchWithMultipleImplicitRequirementsTest < StateMachinesTest
   end
 
   def test_should_include_all_known_states
-    assert_equal [:first_gear, :idling, :parked], @branch.known_states.sort_by { |state| state.to_s }
+    assert_equal(%i[first_gear idling parked], @branch.known_states.sort_by { |state| state.to_s })
   end
 
   def test_should_not_duplicate_known_statse
     branch = StateMachines::Branch.new(parked: :idling, first_gear: :idling)
-    assert_equal [:first_gear, :idling, :parked], branch.known_states.sort_by { |state| state.to_s }
+
+    assert_equal(%i[first_gear idling parked], branch.known_states.sort_by { |state| state.to_s })
   end
 end

@@ -2,7 +2,7 @@
 
 module StateMachines
   module ClassMethods
-    def self.extended(base) #:nodoc:
+    def self.extended(base) # :nodoc:
       base.class_eval do
         @state_machines = MachineCollection.new
       end
@@ -138,13 +138,13 @@ module StateMachines
     #   vehicle.fire_events!(:ignite, :disable_alarm) # => StateMachines::InvalidParallelTransition: Cannot run events in parallel: ignite, disable_alarm
     def fire_events!(*events)
       run_action = [true, false].include?(events.last) ? events.pop : true
-      fire_events(*(events + [run_action])) || fail(StateMachines::InvalidParallelTransition.new(self, events))
+      fire_events(*(events + [run_action])) || raise(StateMachines::InvalidParallelTransition.new(self, events))
     end
 
-  protected
+    protected
 
-    def initialize_state_machines(options = {}, &block) #:nodoc:
-      self.class.state_machines.initialize_states(self, options, &block)
+    def initialize_state_machines(options = {}, &) # :nodoc:
+      self.class.state_machines.initialize_states(self, options, &)
     end
   end
 end

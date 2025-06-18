@@ -3,8 +3,7 @@
 require 'files/models/vehicle'
 
 class Motorcycle < Vehicle
-  def self.example_class_method(args={})
-  end
+  def self.example_class_method(args = {}); end
 
   state_machine initial: :idling do
     state :first_gear do

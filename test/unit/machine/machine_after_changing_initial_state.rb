@@ -16,7 +16,7 @@ class MachineAfterChangingInitialState < StateMachinesTest
   end
 
   def test_should_include_in_known_states
-    assert_equal [:parked, :idling], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling], @machine.states.map { |state| state.name })
   end
 
   def test_should_reset_original_initial_state
@@ -27,4 +27,3 @@ class MachineAfterChangingInitialState < StateMachinesTest
     assert @machine.state(:idling).initial
   end
 end
-

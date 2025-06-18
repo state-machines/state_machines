@@ -42,6 +42,7 @@ class BranchWithToRequirementTest < StateMachinesTest
 
   def test_should_include_requirement_in_match
     match = @branch.match(@object, to: :idling)
+
     assert_equal @branch.state_requirements.first[:to], match[:to]
   end
 end

@@ -19,8 +19,13 @@ class EventOnFailureTest < StateMachinesTest
     @object.state = 'parked'
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_invalidate_the_state
     @event.fire(@object)
+
     assert_equal ['cannot transition via "ignite"'], @object.errors
   end
 
@@ -31,6 +36,7 @@ class EventOnFailureTest < StateMachinesTest
     @event.fire(@object)
 
     object, transition = callback_args
+
     assert_equal @object, object
     refute_nil transition
     assert_equal @object, transition.object
@@ -38,7 +44,7 @@ class EventOnFailureTest < StateMachinesTest
     assert_equal :ignite, transition.event
     assert_equal :parked, transition.from_name
     assert_equal :parked, transition.to_name
-    assert_equal [], transition.args
+    assert_empty transition.args
   end
 
   def test_should_pass_args_to_failure_callbacks
@@ -48,12 +54,9 @@ class EventOnFailureTest < StateMachinesTest
     @event.fire(@object, foo: 'bar')
 
     object, transition = callback_args
+
     assert_equal @object, object
     refute_nil transition
-    assert_equal [{foo: 'bar'}], transition.args
-  end
-
-  def teardown
-    StateMachines::Integrations.reset
+    assert_equal [{ foo: 'bar' }], transition.args
   end
 end

@@ -8,7 +8,7 @@ class CallbackWithoutTerminatorTest < StateMachinesTest
   end
 
   def test_should_not_halt_if_result_is_false
-    callback = StateMachines::Callback.new(:before, do: lambda { false }, terminator: nil)
+    callback = StateMachines::Callback.new(:before, do: -> { false }, terminator: nil)
     callback.call(@object)
   end
 end

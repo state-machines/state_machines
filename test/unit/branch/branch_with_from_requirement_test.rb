@@ -42,6 +42,7 @@ class BranchWithFromRequirementTest < StateMachinesTest
 
   def test_should_include_requirement_in_match
     match = @branch.match(@object, from: :parked)
+
     assert_equal @branch.state_requirements.first[:from], match[:from]
   end
 end

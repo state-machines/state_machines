@@ -17,4 +17,3 @@ class MachineWithEventsWithCustomHumanNamesTest < StateMachinesTest
     assert_equal 'start', @klass.human_state_event_name(:ignite)
   end
 end
-

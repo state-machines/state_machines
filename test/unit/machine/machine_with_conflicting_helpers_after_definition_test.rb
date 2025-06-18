@@ -14,8 +14,10 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
       ->(_klass, _values) { [] }
     end
   end
+
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
     StateMachines::Integrations.register(MachineWithConflictingHelpersAfterDefinitionTest::Custom)
     @klass = Class.new do
       def self.with_state
@@ -81,12 +83,15 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
       end
     end
 
-
-
     @machine = StateMachines::Machine.new(@klass, integration: :custom)
     @machine.state :parked, :idling
     @machine.event :ignite
     @object = @klass.new
+  end
+
+  def teardown
+    $stderr = @original_stderr
+    StateMachines::Integrations.reset
   end
 
   def test_should_not_redefine_singular_with_scope
@@ -119,11 +124,12 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
 
   def test_should_not_redefine_attribute_writer
     @object.state = 'parked'
+
     assert_equal 'parked', @object.status
   end
 
   def test_should_not_define_attribute_predicate
-    assert @object.state?
+    assert_predicate @object, :state?
   end
 
   def test_should_not_redefine_attribute_name_reader
@@ -215,32 +221,28 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
       end
     end
 
-    assert_equal [], @klass.with_state
-    assert_equal [], @klass.with_states
-    assert_equal [], @klass.without_state
-    assert_equal [], @klass.without_states
+    assert_empty @klass.with_state
+    assert_empty @klass.with_states
+    assert_empty @klass.without_state
+    assert_empty @klass.without_states
     assert_equal 'parked', @klass.human_state_name(:parked)
     assert_equal 'ignite', @klass.human_state_event_name(:ignite)
 
-    assert_equal nil, @object.state
+    assert_nil @object.state
     @object.state = 'idling'
+
     assert_equal 'idling', @object.state
-    assert_equal nil, @object.status
+    assert_nil @object.status
     assert_equal false, @object.state?(:parked)
     assert_equal :idling, @object.state_name
     assert_equal 'idling', @object.human_state_name
-    assert_equal [], @object.state_events
-    assert_equal [], @object.state_transitions
-    assert_equal [], @object.state_paths
+    assert_empty @object.state_events
+    assert_empty @object.state_transitions
+    assert_empty @object.state_paths
     assert_equal false, @object.fire_state_event(:ignite)
   end
 
   def test_should_not_output_warning
     assert_equal '', $stderr.string
-  end
-
-  def teardown
-    $stderr = @original_stderr
-    StateMachines::Integrations.reset
   end
 end

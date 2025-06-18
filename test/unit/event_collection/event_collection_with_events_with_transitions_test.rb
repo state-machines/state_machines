@@ -18,7 +18,7 @@ class EventCollectionWithEventsWithTransitionsTest < StateMachinesTest
 
     @events << @shift_up = StateMachines::Event.new(@machine, :shift_up)
     @shift_up.transition parked: :first_gear
-    @shift_up.transition idling: :first_gear, if: lambda { false }
+    @shift_up.transition idling: :first_gear, if: -> { false }
 
     @machine.events.concat(@events)
 
@@ -42,7 +42,7 @@ class EventCollectionWithEventsWithTransitionsTest < StateMachinesTest
   end
 
   def test_should_filter_valid_events_by_multiple_requirements
-    assert_equal [], @events.valid_for(@object, from: :idling, to: :first_gear)
+    assert_empty @events.valid_for(@object, from: :idling, to: :first_gear)
   end
 
   def test_should_allow_finding_valid_events_without_guards
@@ -51,9 +51,9 @@ class EventCollectionWithEventsWithTransitionsTest < StateMachinesTest
 
   def test_should_find_valid_transitions_based_on_current_state
     assert_equal [
-                     StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-                     StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)
-                 ], @events.transitions_for(@object)
+      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+      StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)
+    ], @events.transitions_for(@object)
   end
 
   def test_should_filter_valid_transitions_by_from_state
@@ -69,7 +69,7 @@ class EventCollectionWithEventsWithTransitionsTest < StateMachinesTest
   end
 
   def test_should_filter_valid_transitions_by_multiple_requirements
-    assert_equal [], @events.transitions_for(@object, from: :idling, to: :first_gear)
+    assert_empty @events.transitions_for(@object, from: :idling, to: :first_gear)
   end
 
   def test_should_allow_finding_valid_transitions_without_guards

@@ -13,4 +13,3 @@ class MatcherHelpersAnyTest < StateMachinesTest
     assert_equal StateMachines::AllMatcher.instance, @matcher
   end
 end
-

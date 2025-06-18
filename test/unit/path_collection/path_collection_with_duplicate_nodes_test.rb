@@ -20,14 +20,14 @@ class PathCollectionWithDuplicateNodesTest < StateMachinesTest
   end
 
   def test_should_not_include_duplicates_in_from_states
-    assert_equal [:parked, :idling, :first_gear], @paths.from_states
+    assert_equal %i[parked idling first_gear], @paths.from_states
   end
 
   def test_should_not_include_duplicates_in_to_states
-    assert_equal [:idling, :first_gear], @paths.to_states
+    assert_equal %i[idling first_gear], @paths.to_states
   end
 
   def test_should_not_include_duplicates_in_events
-    assert_equal [:shift_up, :park], @paths.events
+    assert_equal %i[shift_up park], @paths.events
   end
 end

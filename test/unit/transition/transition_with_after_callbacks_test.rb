@@ -25,7 +25,7 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
 
   def test_should_only_run_those_that_match_transition_context
     @count = 0
-    callback = lambda { @count += 1 }
+    callback = -> { @count += 1 }
 
     @machine.after_transition from: :parked, to: :idling, on: :park, do: callback
     @machine.after_transition from: :parked, to: :parked, on: :park, do: callback
@@ -40,12 +40,14 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @run = false
     @machine.after_transition { |_object| @run = true }
     @transition.run_callbacks { { success: false } }
+
     refute @run
   end
 
   def test_should_run_if_successful
     @machine.after_transition { |_object| @run = true }
     @transition.run_callbacks { { success: true } }
+
     assert @run
   end
 
@@ -53,6 +55,7 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @machine.after_transition { |*args| @args = args }
 
     @transition.run_callbacks
+
     assert_equal [@object, @transition], @args
   end
 
@@ -60,11 +63,12 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @machine.after_transition { throw :halt }
 
     result = @transition.run_callbacks
+
     assert_equal true, result
   end
 
   def test_should_not_catch_exceptions
-    @machine.after_transition  { fail ArgumentError }
+    @machine.after_transition { raise ArgumentError }
     assert_raises(ArgumentError) { @transition.run_callbacks }
   end
 
@@ -73,14 +77,19 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @machine.after_transition { @count += 1 }
     @transition.run_callbacks
     @transition.run_callbacks
+
     assert_equal 1, @count
   end
 
   def test_should_not_be_able_to_run_twice_if_halted
     @count = 0
-    @machine.after_transition { @count += 1; throw :halt }
+    @machine.after_transition do
+      @count += 1
+      throw :halt
+    end
     @transition.run_callbacks
     @transition.run_callbacks
+
     assert_equal 1, @count
   end
 
@@ -90,6 +99,7 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @transition.run_callbacks
     @transition.reset
     @transition.run_callbacks
+
     assert_equal 2, @count
   end
 end

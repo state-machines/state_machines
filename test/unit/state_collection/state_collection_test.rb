@@ -55,16 +55,19 @@ class StateCollectionTest < StateMachinesTest
 
   def test_should_find_state_for_object_if_value_is_known
     @object.state = 'parked'
+
     assert_equal @parked, @states.match(@object)
   end
 
   def test_should_find_bang_state_for_object_if_value_is_known
     @object.state = 'parked'
+
     assert_equal @parked, @states.match!(@object)
   end
 
   def test_should_not_find_state_for_object_with_unknown_value
     @object.state = 'invalid'
+
     assert_nil @states.match(@object)
   end
 

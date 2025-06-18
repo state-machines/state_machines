@@ -21,14 +21,18 @@ class TransitionCollectionWithActionFailedTest < StateMachinesTest
 
     @machine.before_transition { @before_count += 1 }
     @machine.after_transition { @after_count += 1 }
-    @machine.around_transition { |block| @around_before_count += 1; block.call; @around_after_count += 1 }
+    @machine.around_transition do |block|
+      @around_before_count += 1
+      block.call
+      @around_after_count += 1
+    end
     @machine.after_failure { @failure_count += 1 }
 
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ])
     @result = @transitions.perform
   end
 

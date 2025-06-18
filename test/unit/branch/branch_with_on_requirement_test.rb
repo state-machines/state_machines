@@ -37,11 +37,12 @@ class BranchWithOnRequirementTest < StateMachinesTest
   end
 
   def test_should_not_be_included_in_known_states
-    assert_equal [], @branch.known_states
+    assert_empty @branch.known_states
   end
 
   def test_should_include_requirement_in_match
     match = @branch.match(@object, on: :ignite)
+
     assert_equal @branch.event_requirement, match[:on]
   end
 end

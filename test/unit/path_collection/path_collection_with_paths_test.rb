@@ -36,14 +36,14 @@ class PathCollectionWithPathsTest < StateMachinesTest
   end
 
   def test_should_have_from_states
-    assert_equal [:parked, :idling], @paths.from_states
+    assert_equal %i[parked idling], @paths.from_states
   end
 
   def test_should_have_to_states
-    assert_equal [:idling, :first_gear], @paths.to_states
+    assert_equal %i[idling first_gear], @paths.to_states
   end
 
   def test_should_have_no_events
-    assert_equal [:ignite, :shift_up], @paths.events
+    assert_equal %i[ignite shift_up], @paths.events
   end
 end

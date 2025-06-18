@@ -54,7 +54,6 @@ module StateMachines
   #   vehicle.simulate = true
   #   vehicle.moving?           # => false
   class StateContext < Module
-
     include EvalHelpers
 
     # The state machine for which this context's state is defined
@@ -70,7 +69,7 @@ module StateMachines
 
       state_name = state.name
       machine_name = machine.name
-      @condition = lambda { |object| object.class.state_machine(machine_name).states.matches?(object, state_name) }
+      @condition = ->(object) { object.class.state_machine(machine_name).states.matches?(object, state_name) }
     end
 
     # Creates a new transition that determines what to change the current state
@@ -94,11 +93,11 @@ module StateMachines
       raise ArgumentError, 'Must specify :on event' unless options[:on]
       raise ArgumentError, 'Must specify either :to or :from state' unless !options[:to] ^ !options[:from]
 
-      machine.transition(options.merge(options[:to] ? {from: state.name} : {to: state.name}))
+      machine.transition(options.merge(options[:to] ? { from: state.name } : { to: state.name }))
     end
 
     # Hooks in condition-merging to methods that don't exist in this module
-    def method_missing(*args, &block)
+    def method_missing(*args, &)
       # Get the configuration
       if args.last.is_a?(Hash)
         options = args.last
@@ -123,13 +122,13 @@ module StateMachines
         object = condition_args.first || self
 
         proxy.evaluate_method(object, proxy_condition) &&
-        Array(if_condition).all? { |condition| proxy.evaluate_method(object, condition) } &&
-        !Array(unless_condition).any? { |condition| proxy.evaluate_method(object, condition) }
+          Array(if_condition).all? { |condition| proxy.evaluate_method(object, condition) } &&
+          !Array(unless_condition).any? { |condition| proxy.evaluate_method(object, condition) }
       end
 
       # Evaluate the method on the owner class with the condition proxied
       # through
-      machine.owner_class.send(*args, &block)
+      machine.owner_class.send(*args, &)
     end
   end
 end

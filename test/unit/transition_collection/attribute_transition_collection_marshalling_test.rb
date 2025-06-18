@@ -15,6 +15,10 @@ class AttributeTransitionCollectionMarshallingTest < StateMachinesTest
     @object.state_event = 'ignite'
   end
 
+  def teardown
+    self.class.send(:remove_const, 'Example')
+  end
+
   def test_should_marshal_during_before_callbacks
     @machine.before_transition { |object, _transition| Marshal.dump(object) }
     transitions(after: false).perform { true }
@@ -41,26 +45,29 @@ class AttributeTransitionCollectionMarshallingTest < StateMachinesTest
 
   if StateMachines::Transition.pause_supported?
     def test_should_marshal_during_around_callbacks_before_yield
-      @machine.around_transition { |object, _transition, block| Marshal.dump(object); block.call }
+      @machine.around_transition do |object, _transition, block|
+        Marshal.dump(object)
+        block.call
+      end
       transitions(after: false).perform { true }
       transitions.perform { true }
     end
 
     def test_should_marshal_during_around_callbacks_after_yield
-      @machine.around_transition { |object, _transition, block| block.call; Marshal.dump(object) }
+      @machine.around_transition do |object, _transition, block|
+        block.call
+        Marshal.dump(object)
+      end
       transitions(after: false).perform { true }
       transitions.perform { true }
     end
   end
 
-  def teardown
-    self.class.send(:remove_const, 'Example')
-  end
-
   private
+
   def transitions(options = {})
     StateMachines::AttributeTransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], options)
+                                                       StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                     ], options)
   end
 end

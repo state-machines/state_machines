@@ -34,9 +34,9 @@ class TransitionCollectionValidTest < StateMachinesTest
     @object = @klass.new
 
     @result = StateMachines::TransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
-      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
-    ]).perform
+                                                        @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
+                                                        @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
+                                                      ]).perform
   end
 
   def test_should_succeed
@@ -49,7 +49,7 @@ class TransitionCollectionValidTest < StateMachinesTest
   end
 
   def test_should_persist_in_order
-    assert_equal %w(state status), @object.persisted
+    assert_equal %w[state status], @object.persisted
   end
 
   def test_should_store_results_in_transitions

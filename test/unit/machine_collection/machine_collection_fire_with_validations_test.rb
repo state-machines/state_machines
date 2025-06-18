@@ -46,9 +46,13 @@ class MachineCollectionFireWithValidationsTest < StateMachinesTest
     @object = @klass.new
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_not_invalidate_if_transitions_exist
     assert @machines.fire_events(@object, :ignite, :disable_alarm)
-    assert_equal [], @object.errors
+    assert_empty @object.errors
   end
 
   def test_should_invalidate_if_no_transitions_exist
@@ -70,9 +74,5 @@ class MachineCollectionFireWithValidationsTest < StateMachinesTest
     refute @machines.fire_events(@object, :ignite, :disable_alarm)
     assert @state_failure_run
     assert @alarm_state_failure_run
-  end
-
-  def teardown
-    StateMachines::Integrations.reset
   end
 end

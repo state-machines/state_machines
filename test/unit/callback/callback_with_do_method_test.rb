@@ -4,7 +4,7 @@ require 'test_helper'
 
 class CallbackWithDoMethodTest < StateMachinesTest
   def setup
-    @callback = StateMachines::Callback.new(:before, do: lambda { |*args| @args = args })
+    @callback = StateMachines::Callback.new(:before, do: ->(*args) { @args = args })
 
     @object = Object.new
     @result = @callback.call(@object)

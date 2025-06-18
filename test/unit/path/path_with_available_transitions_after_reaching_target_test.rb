@@ -14,7 +14,7 @@ class PathWithAvailableTransitionsAfterReachingTargetTest < StateMachinesTest
       transition parked: :first_gear
     end
     @machine.event :park do
-      transition [:idling, :first_gear] => :parked
+      transition %i[idling first_gear] => :parked
     end
 
     @object = @klass.new
@@ -22,8 +22,8 @@ class PathWithAvailableTransitionsAfterReachingTargetTest < StateMachinesTest
 
     @path = StateMachines::Path.new(@object, @machine, target: :parked)
     @path.concat([
-                     @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-                     @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)
+                   @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                   @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)
                  ])
   end
 
@@ -34,9 +34,9 @@ class PathWithAvailableTransitionsAfterReachingTargetTest < StateMachinesTest
   def test_should_be_able_to_walk
     paths = []
     @path.walk { |path| paths << path }
+
     assert_equal [
-                     [@ignite_transition, @park_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)]
-                 ], paths
+      [@ignite_transition, @park_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)]
+    ], paths
   end
 end
-

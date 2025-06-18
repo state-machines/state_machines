@@ -26,15 +26,15 @@ module StateMachines
       #  Register integration
       def register(name_or_module)
         case name_or_module.class.to_s
-          when 'Module'
-            add(name_or_module)
-          else
-            fail IntegrationError
+        when 'Module'
+          add(name_or_module)
+        else
+          raise IntegrationError
         end
         true
       end
 
-      def reset #:nodoc:#
+      def reset # :nodoc:#
         @integrations = []
       end
 
@@ -47,12 +47,9 @@ module StateMachines
       #   StateMachines::Integrations.register(StateMachines::Integrations::ActiveModel)
       #   StateMachines::Integrations.integrations
       #   # => [StateMachines::Integrations::ActiveModel]
-      def integrations
-        # Register all namespaced integrations
-        @integrations
-      end
+      attr_reader :integrations
 
-      alias_method :list, :integrations
+      alias list integrations
 
       # Attempts to find an integration that matches the given class.  This will
       # look through all of the built-in integrations under the StateMachines::Integrations
@@ -102,12 +99,12 @@ module StateMachines
         integrations.detect { |integration| integration.integration_name == name } || raise(IntegrationNotFound.new(name))
       end
 
-    private
+      private
 
       def add(integration)
-        if integration.respond_to?(:integration_name)
-          @integrations.insert(0, integration) unless @integrations.include?(integration)
-        end
+        return unless integration.respond_to?(:integration_name)
+
+        @integrations.insert(0, integration) unless @integrations.include?(integration)
       end
     end
   end

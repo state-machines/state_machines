@@ -7,6 +7,7 @@ class EvalHelpersSymbolProtectedTest < EvalHelpersBaseTest
   def setup
     class << (@object = Object.new)
       protected
+
       def callback
         true
       end

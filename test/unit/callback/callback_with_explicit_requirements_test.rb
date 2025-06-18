@@ -5,7 +5,7 @@ require 'test_helper'
 class CallbackWithExplicitRequirementsTest < StateMachinesTest
   def setup
     @object = Object.new
-    @callback = StateMachines::Callback.new(:before, from: :parked, to: :idling, on: :ignite, do: lambda {})
+    @callback = StateMachines::Callback.new(:before, from: :parked, to: :idling, on: :ignite, do: -> {})
   end
 
   def test_should_call_with_empty_context
@@ -29,6 +29,6 @@ class CallbackWithExplicitRequirementsTest < StateMachinesTest
   end
 
   def test_should_include_in_known_states
-    assert_equal [:parked, :idling], @callback.known_states
+    assert_equal %i[parked idling], @callback.known_states
   end
 end

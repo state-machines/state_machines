@@ -36,10 +36,11 @@ class StateWithNameTest < StateMachinesTest
 
   def test_should_allow_using_human_name_in_description
     @state.human_name = 'Parked'
+
     assert_equal 'Parked', @state.description(human_name: true)
   end
 
   def test_should_define_predicate
-    assert @klass.new.respond_to?(:parked?)
+    assert_respond_to @klass.new, :parked?
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative 'transition_collection_with_action_hook_base_test.rb'
+require_relative 'transition_collection_with_action_hook_base_test'
 
 class TransitionCollectionWithActionHookErrorTest < TransitionCollectionWithActionHookBaseTest
   def setup
@@ -11,13 +11,13 @@ class TransitionCollectionWithActionHookErrorTest < TransitionCollectionWithActi
       remove_method :save
 
       def save
-        fail ArgumentError
+        raise ArgumentError
       end
     end
 
     begin
-      ; StateMachines::TransitionCollection.new([@transition]).perform
-    rescue
+      StateMachines::TransitionCollection.new([@transition]).perform
+    rescue StandardError
     end
   end
 

@@ -18,16 +18,23 @@ class TransitionCollectionWithBeforeCallbackHaltTest < StateMachinesTest
     @machine.state :idling
     @machine.event :ignite
 
-    @machine.before_transition { @before_count += 1; throw :halt }
+    @machine.before_transition do
+      @before_count += 1
+      throw :halt
+    end
     @machine.before_transition { @before_count += 1 }
     @machine.after_transition { @after_count += 1 }
-    @machine.around_transition { |block| @before_count += 1; block.call; @after_count += 1 }
+    @machine.around_transition do |block|
+      @before_count += 1
+      block.call
+      @after_count += 1
+    end
 
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ])
     @result = @transitions.perform
   end
 

@@ -12,7 +12,7 @@ class StateContextProxyWithIfConditionTest < StateMachinesTest
     @object = @klass.new
 
     @condition_result = nil
-    @options = @state_context.validate(if: lambda { @condition_result })[0]
+    @options = @state_context.validate(if: -> { @condition_result })[0]
   end
 
   def test_should_have_if_option
@@ -21,16 +21,19 @@ class StateContextProxyWithIfConditionTest < StateMachinesTest
 
   def test_should_be_false_if_state_is_different
     @object.state = nil
+
     refute @options[:if].call(@object)
   end
 
   def test_should_be_false_if_original_condition_is_false
     @condition_result = false
+
     refute @options[:if].call(@object)
   end
 
   def test_should_be_true_if_state_matches_and_original_condition_is_true
     @condition_result = true
+
     assert @options[:if].call(@object)
   end
 
@@ -43,9 +46,11 @@ class StateContextProxyWithIfConditionTest < StateMachinesTest
 
     object = @klass.new
     object.callback = false
+
     refute options[:if].call(object)
 
     object.callback = true
+
     assert options[:if].call(object)
   end
 
@@ -58,9 +63,11 @@ class StateContextProxyWithIfConditionTest < StateMachinesTest
 
     object = @klass.new
     object.callback = false
+
     refute options[:if].call(object)
 
     object.callback = true
+
     assert options[:if].call(object)
   end
 end

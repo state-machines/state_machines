@@ -17,11 +17,13 @@ class StateWithoutCachedLambdaValueTest < StateMachinesTest
   def test_should_evaluate_value_each_time
     value1 = @state.value
     value2 = @state.value
+
     refute_same value1, value2
   end
 
   def test_should_not_update_value_index_for_state_collection
     @state.value
+
     assert_nil @machine.states['value', :value]
     assert_equal @state, @machine.states[@dynamic_value, :value]
   end

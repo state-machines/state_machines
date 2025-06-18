@@ -16,18 +16,20 @@ class MachineWithoutInitializationTest < StateMachinesTest
 
   def test_should_not_have_an_initial_state
     object = @klass.new
+
     assert_nil object.state
   end
 
   def test_should_still_allow_manual_initialization
     @klass.send(:include, Module.new do
-                          def initialize(_attributes = {})
-                            super()
-                            initialize_state_machines
-                          end
-                        end)
+      def initialize(_attributes = {})
+        super()
+        initialize_state_machines
+      end
+    end)
 
     object = @klass.new
+
     assert_equal 'parked', object.state
   end
 end

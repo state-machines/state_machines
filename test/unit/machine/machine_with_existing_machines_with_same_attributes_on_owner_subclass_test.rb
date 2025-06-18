@@ -14,12 +14,14 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerSubclassTest < StateMa
 
   def test_should_not_copy_sibling_machines_to_subclass_after_initialization
     @subclass.state_machine(:state) {}
+
     assert_equal @klass.state_machine(:public_state), @subclass.state_machine(:public_state)
   end
 
   def test_should_copy_sibling_machines_to_subclass_after_new_state
     subclass_machine = @subclass.state_machine(:state) {}
     subclass_machine.state :first_gear
+
     refute_equal @klass.state_machine(:public_state), @subclass.state_machine(:public_state)
   end
 
@@ -28,6 +30,7 @@ class MachineWithExistingMachinesWithSameAttributesOnOwnerSubclassTest < StateMa
     @first_gear = subclass_machine.state :first_gear
 
     second_subclass_machine = @subclass.state_machine(:public_state)
+
     assert_equal @first_gear, second_subclass_machine.state(:first_gear)
   end
 end

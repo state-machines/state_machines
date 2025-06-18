@@ -31,11 +31,3 @@ class EventCollectionTest < StateMachinesTest
     assert_equal @open, @events['enable_alarm', :qualified_name]
   end
 end
-
-
-
-
-
-
-
-

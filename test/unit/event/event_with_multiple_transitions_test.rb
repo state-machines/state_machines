@@ -23,6 +23,7 @@ class EventWithMultipleTransitionsTest < StateMachinesTest
 
   def test_should_have_a_transition
     transition = @event.transition_for(@object)
+
     refute_nil transition
     assert_equal 'parked', transition.from
     assert_equal 'idling', transition.to
@@ -58,6 +59,7 @@ class EventWithMultipleTransitionsTest < StateMachinesTest
 
   def test_should_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'idling', @object.state
   end
 end

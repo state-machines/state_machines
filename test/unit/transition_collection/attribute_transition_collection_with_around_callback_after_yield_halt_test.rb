@@ -10,14 +10,17 @@ class AttributeTransitionCollectionWithAroundCallbackAfterYieldHaltTest < StateM
     @machine.state :idling
     @machine.event :ignite
 
-    @machine.around_transition { |block| block.call; throw :halt }
+    @machine.around_transition do |block|
+      block.call
+      throw :halt
+    end
 
     @object = @klass.new
     @object.state_event = 'ignite'
 
     @transitions = StateMachines::AttributeTransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                                      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                                    ])
     @result = @transitions.perform
   end
 

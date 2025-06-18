@@ -20,11 +20,13 @@ class StateWithCachedLambdaValueTest < StateMachinesTest
 
   def test_should_only_evaluate_value_once
     value = @state.value
+
     assert_same value, @state.value
   end
 
   def test_should_update_value_index_for_state_collection
     @state.value
+
     assert_equal @state, @machine.states['value', :value]
     assert_nil @machine.states[@dynamic_value, :value]
   end

@@ -47,12 +47,13 @@ class MachineStateInitializationTest < StateMachinesTest
 
   def test_should_write_to_hash_if_specified
     @machine.initialize_state(@object, to: hash = {})
+
     assert_equal({ 'state' => 'parked' }, hash)
   end
 
   def test_should_not_write_to_object_if_writing_to_hash
     @machine.initialize_state(@object, to: {})
+
     assert_nil @object.state
   end
 end
-

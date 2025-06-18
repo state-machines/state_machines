@@ -12,11 +12,13 @@ class EventTest < StateMachinesTest
   def test_should_allow_changing_machine
     new_machine = StateMachines::Machine.new(Class.new)
     @event.machine = new_machine
+
     assert_equal new_machine, @event.machine
   end
 
   def test_should_allow_changing_human_name
     @event.human_name = 'Stop'
+
     assert_equal 'Stop', @event.human_name
   end
 

@@ -3,8 +3,8 @@
 module StateMachines
   # Represents a collection of events in a state machine
   class EventCollection < NodeCollection
-    def initialize(machine) #:nodoc:
-      super(machine, index: [:name, :qualified_name])
+    def initialize(machine) # :nodoc:
+      super(machine, index: %i[name qualified_name])
     end
 
     # Gets the list of events that can be fired on the given object.
@@ -130,12 +130,11 @@ module StateMachines
                                                      false
                                                    end
                                                  end
-
     end
 
-  private
+    private
 
-    def match(requirements) #:nodoc:
+    def match(requirements) # :nodoc:
       requirements && requirements[:on] ? [fetch(requirements.delete(:on))] : self
     end
   end

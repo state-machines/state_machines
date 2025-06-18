@@ -26,10 +26,14 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     @machine.state :parked, :idling
 
     @machine.events << @event = StateMachines::Event.new(@machine, :ignite)
-    @event.transition(parked: :idling, if: lambda { false })
+    @event.transition(parked: :idling, if: -> { false })
 
     @object = @klass.new
     @object.state = 'parked'
+  end
+
+  def teardown
+    StateMachines::Integrations.reset
   end
 
   def test_should_not_be_able_to_fire
@@ -54,17 +58,20 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
 
   def test_should_not_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'parked', @object.state
   end
 
   def test_should_invalidate_the_state
     @event.fire(@object)
+
     assert_equal ['cannot transition via "ignite"'], @object.errors
   end
 
   def test_should_invalidate_with_human_event_name
     @event.human_name = 'start'
     @event.fire(@object)
+
     assert_equal ['cannot transition via "start"'], @object.errors
   end
 
@@ -78,12 +85,13 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     parked.human_name = 'stopped'
 
     machine.events << event = StateMachines::Event.new(machine, :ignite)
-    event.transition(parked: :idling, if: lambda { false })
+    event.transition(parked: :idling, if: -> { false })
 
     object = @klass.new
     object.state = 'parked'
 
     event.fire(object)
+
     assert_equal ['cannot transition via "ignite" from "stopped"'], object.errors
   end
 
@@ -91,6 +99,7 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     @object.errors = ['invalid']
 
     @event.fire(@object)
+
     assert_equal ['cannot transition via "ignite"'], @object.errors
   end
 
@@ -101,6 +110,7 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     @event.fire(@object)
 
     object, transition = callback_args
+
     assert_equal @object, object
     refute_nil transition
     assert_equal @object, transition.object
@@ -109,9 +119,4 @@ class EventWithMatchingDisabledTransitionsTest < StateMachinesTest
     assert_equal :parked, transition.from_name
     assert_equal :parked, transition.to_name
   end
-
-  def teardown
-    StateMachines::Integrations.reset
-  end
 end
-

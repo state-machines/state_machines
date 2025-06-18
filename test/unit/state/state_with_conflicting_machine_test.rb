@@ -5,11 +5,16 @@ require 'stringio'
 
 class StateWithConflictingMachineTest < StateMachinesTest
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
 
     @klass = Class.new
     @state_machine = StateMachines::Machine.new(@klass, :state)
     @state_machine.states << @state = StateMachines::State.new(@state_machine, :parked)
+  end
+
+  def teardown
+    $stderr = @original_stderr
   end
 
   def test_should_output_warning_if_using_different_attribute
@@ -31,9 +36,5 @@ class StateWithConflictingMachineTest < StateMachinesTest
     @status_machine.states << @state = StateMachines::State.new(@status_machine, :parked)
 
     assert_equal '', $stderr.string
-  end
-
-  def teardown
-    $stderr = @original_stderr
   end
 end

@@ -8,7 +8,7 @@ class StateMachineTest < StateMachinesTest
   end
 
   def test_should_allow_state_machines_on_any_class
-    assert @klass.respond_to?(:state_machine)
+    assert_respond_to @klass, :state_machine
   end
 
   def test_should_evaluate_block_within_machine_context

@@ -13,6 +13,6 @@ class IntegrationFinderTest < StateMachinesTest
   end
 
   def test_should_have_no_integrations
-    assert_equal([], StateMachines::Integrations.list)
+    assert_empty(StateMachines::Integrations.list)
   end
 end

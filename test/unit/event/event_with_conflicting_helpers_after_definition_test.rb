@@ -5,7 +5,8 @@ require 'stringio'
 
 class EventWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
 
     @klass = Class.new do
       def can_ignite?
@@ -27,6 +28,10 @@ class EventWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
     @machine = StateMachines::Machine.new(@klass)
     @machine.events << @event = StateMachines::Event.new(@machine, :ignite)
     @object = @klass.new
+  end
+
+  def teardown
+    $stderr = @original_stderr
   end
 
   def test_should_not_redefine_predicate
@@ -65,7 +70,7 @@ class EventWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
     end
 
     assert_equal false, @object.can_ignite?
-    assert_equal nil, @object.ignite_transition
+    assert_nil @object.ignite_transition
     assert_equal false, @object.ignite
     assert_raises(StateMachines::InvalidTransition) { @object.ignite! }
   end
@@ -73,9 +78,4 @@ class EventWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
   def test_should_not_output_warning
     assert_equal '', $stderr.string
   end
-
-  def teardown
-    $stderr = @original_stderr
-  end
 end
-

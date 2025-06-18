@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'unit/eval_helper/eval_helpers_base_test.rb'
+require 'unit/eval_helper/eval_helpers_base_test'
 
 class EvalHelpersStringTest < EvalHelpersBaseTest
   def setup
@@ -13,7 +13,8 @@ class EvalHelpersStringTest < EvalHelpersBaseTest
   end
 
   def test_should_evaluate_string_within_object_context
-    @object.instance_variable_set(:'@value', 1)
+    @object.instance_variable_set(:@value, 1)
+
     assert_equal 1, evaluate_method(@object, '@value')
   end
 
@@ -21,7 +22,3 @@ class EvalHelpersStringTest < EvalHelpersBaseTest
     assert_equal 1, evaluate_method(@object, '1', 2, 3, 4)
   end
 end
-
-
-
-

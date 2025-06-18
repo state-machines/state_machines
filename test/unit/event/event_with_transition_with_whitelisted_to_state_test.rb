@@ -9,7 +9,7 @@ class EventWithTransitionWithWhitelistedToStateTest < StateMachinesTest
     @machine.state :parked, :idling, :first_gear, :second_gear
 
     @machine.events << @event = StateMachines::Event.new(@machine, :ignite)
-    @event.transition(from: :parked, to: StateMachines::WhitelistMatcher.new([:first_gear, :second_gear]))
+    @event.transition(from: :parked, to: StateMachines::WhitelistMatcher.new(%i[first_gear second_gear]))
 
     @object = @klass.new
     @object.state = 'parked'
@@ -21,6 +21,7 @@ class EventWithTransitionWithWhitelistedToStateTest < StateMachinesTest
 
   def test_should_have_a_transition
     transition = @event.transition_for(@object)
+
     refute_nil transition
     assert_equal 'parked', transition.from
     assert_equal 'first_gear', transition.to
@@ -38,6 +39,7 @@ class EventWithTransitionWithWhitelistedToStateTest < StateMachinesTest
 
   def test_should_not_allow_transition_selection_if_not_matching
     transition = @event.transition_for(@object, from: :parked, to: :parked)
+
     assert_nil transition
   end
 
@@ -47,7 +49,7 @@ class EventWithTransitionWithWhitelistedToStateTest < StateMachinesTest
 
   def test_should_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'first_gear', @object.state
   end
 end
-

@@ -29,19 +29,21 @@ class InvalidTransitionWithIntegrationTest < StateMachinesTest
     skip
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_generate_a_message_without_reasons_if_empty
     @object.errors = ''
     invalid_transition = StateMachines::InvalidTransition.new(@object, @machine, :ignite)
+
     assert_equal 'Cannot transition state via :ignite from :parked', invalid_transition.message
   end
 
   def test_should_generate_a_message_with_error_reasons_if_errors_found
     @object.errors = 'Id is invalid, Name is invalid'
     invalid_transition = StateMachines::InvalidTransition.new(@object, @machine, :ignite)
-    assert_equal 'Cannot transition state via :ignite from :parked (Reason(s): Id is invalid, Name is invalid)', invalid_transition.message
-  end
 
-  def teardown
-    StateMachines::Integrations.reset
+    assert_equal 'Cannot transition state via :ignite from :parked (Reason(s): Id is invalid, Name is invalid)', invalid_transition.message
   end
 end

@@ -29,6 +29,7 @@ class NodeCollectionWithNodesTest < StateMachinesTest
 
     order = []
     @collection.each { |object| order << object }
+
     assert_equal [@parked, @idling, @first_gear, @second_gear], order
   end
 

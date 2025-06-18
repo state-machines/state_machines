@@ -5,7 +5,7 @@ require 'test_helper'
 class BranchWithMultipleFromRequirementsTest < StateMachinesTest
   def setup
     @object = Object.new
-    @branch = StateMachines::Branch.new(from: [:idling, :parked])
+    @branch = StateMachines::Branch.new(from: %i[idling parked])
   end
 
   def test_should_match_if_included
@@ -17,6 +17,6 @@ class BranchWithMultipleFromRequirementsTest < StateMachinesTest
   end
 
   def test_should_be_included_in_known_states
-    assert_equal [:idling, :parked], @branch.known_states
+    assert_equal %i[idling parked], @branch.known_states
   end
 end

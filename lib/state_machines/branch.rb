@@ -8,7 +8,6 @@ module StateMachines
   # state of the transition match, in addition to if/unless conditionals for
   # an object's state.
   class Branch
-
     include EvalHelpers
 
     # The condition that must be met on an object
@@ -31,7 +30,7 @@ module StateMachines
     attr_reader :known_states
 
     # Creates a new branch
-    def initialize(options = {}) #:nodoc:
+    def initialize(options = {}) # :nodoc:
       # Build conditionals
       @if_condition = options.delete(:if)
       @unless_condition = options.delete(:unless)
@@ -39,9 +38,9 @@ module StateMachines
       # Build event requirement
       @event_requirement = build_matcher(options, :on, :except_on)
 
-      if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on]).empty?
+      if (options.keys - %i[from to on except_from except_to except_on]).empty?
         # Explicit from/to requirements specified
-        @state_requirements = [{from: build_matcher(options, :from, :except_from), to: build_matcher(options, :to, :except_to)}]
+        @state_requirements = [{ from: build_matcher(options, :from, :except_from), to: build_matcher(options, :to, :except_to) }]
       else
         # Separate out the event requirement
         options.delete(:on)
@@ -51,7 +50,7 @@ module StateMachines
         @state_requirements = options.collect do |from, to|
           from = WhitelistMatcher.new(from) unless from.is_a?(Matcher)
           to = WhitelistMatcher.new(to) unless to.is_a?(Matcher)
-          {from: from, to: to}
+          { from: from, to: to }
         end
       end
 
@@ -59,7 +58,7 @@ module StateMachines
       # on the priority in which tracked states should be added.
       @known_states = []
       @state_requirements.each do |state_requirement|
-        [:from, :to].each { |option| @known_states |= state_requirement[option].values }
+        %i[from to].each { |option| @known_states |= state_requirement[option].values }
       end
     end
 
@@ -118,16 +117,16 @@ module StateMachines
     def match(object, query = {})
       StateMachines::OptionsValidator.assert_valid_keys!(query, :from, :to, :on, :guard)
 
-      if (match = match_query(query)) && matches_conditions?(object, query)
-        match
-      end
+      return unless (match = match_query(query)) && matches_conditions?(object, query)
+
+      match
     end
 
     def draw(graph, event, valid_states, io = $stdout)
       machine.renderer.draw_branch(self, graph, event, valid_states, io)
     end
 
-  protected
+    protected
 
     # Builds a matcher strategy to use for the given options.  If neither a
     # whitelist nor a blacklist option is specified, then an AllMatcher is
@@ -168,7 +167,7 @@ module StateMachines
     # matching requirement is found, then it is returned.
     def match_states(query)
       state_requirements.detect do |state_requirement|
-        [:from, :to].all? { |option| matches_requirement?(query, option, state_requirement[option]) }
+        %i[from to].all? { |option| matches_requirement?(query, option, state_requirement[option]) }
       end
     end
 
@@ -182,8 +181,8 @@ module StateMachines
     # given object
     def matches_conditions?(object, query)
       query[:guard] == false ||
-      Array(if_condition).all? { |condition| evaluate_method(object, condition) } &&
-      !Array(unless_condition).any? { |condition| evaluate_method(object, condition) }
+        (Array(if_condition).all? { |condition| evaluate_method(object, condition) } &&
+          !Array(unless_condition).any? { |condition| evaluate_method(object, condition) })
     end
   end
 end

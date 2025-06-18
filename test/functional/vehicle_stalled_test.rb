@@ -16,11 +16,11 @@ class VehicleStalledTest < Minitest::Test
   end
 
   def test_should_be_stalled
-    assert @vehicle.stalled?
+    assert_predicate @vehicle, :stalled?
   end
 
   def test_should_be_towed
-    assert @vehicle.auto_shop.busy?
+    assert_predicate @vehicle.auto_shop, :busy?
     assert_equal 1, @vehicle.auto_shop.num_customers
   end
 
@@ -62,6 +62,7 @@ class VehicleStalledTest < Minitest::Test
 
   def test_should_not_allow_repair_if_auto_shop_is_available
     @vehicle.auto_shop.fix_vehicle
+
     refute @vehicle.repair
   end
 end

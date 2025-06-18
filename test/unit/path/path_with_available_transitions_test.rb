@@ -20,7 +20,7 @@ class PathWithAvailableTransitionsTest < StateMachinesTest
 
     @path = StateMachines::Path.new(@object, @machine)
     @path.concat([
-                     @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                   @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
                  ])
   end
 
@@ -33,9 +33,9 @@ class PathWithAvailableTransitionsTest < StateMachinesTest
     @path.walk { |path| paths << path }
 
     assert_equal [
-                     [@ignite_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)],
-                     [@ignite_transition, StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)]
-                 ], paths
+      [@ignite_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)],
+      [@ignite_transition, StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)]
+    ], paths
   end
 
   def test_should_yield_path_instances_when_walking
@@ -46,11 +46,13 @@ class PathWithAvailableTransitionsTest < StateMachinesTest
 
   def test_should_not_modify_current_path_after_walking
     @path.walk {}
+
     assert_equal [@ignite_transition], @path
   end
 
   def test_should_not_modify_object_after_walking
     @path.walk {}
+
     assert_equal 'parked', @object.state
   end
 end

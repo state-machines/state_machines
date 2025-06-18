@@ -5,7 +5,7 @@ require 'test_helper'
 class BranchWithMultipleExceptFromRequirementsTest < StateMachinesTest
   def setup
     @object = Object.new
-    @branch = StateMachines::Branch.new(except_from: [:idling, :parked])
+    @branch = StateMachines::Branch.new(except_from: %i[idling parked])
   end
 
   def test_should_match_if_not_included
@@ -17,6 +17,6 @@ class BranchWithMultipleExceptFromRequirementsTest < StateMachinesTest
   end
 
   def test_should_be_included_in_known_states
-    assert_equal [:idling, :parked], @branch.known_states
+    assert_equal %i[idling parked], @branch.known_states
   end
 end

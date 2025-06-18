@@ -31,18 +31,18 @@ class PathCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_have_no_from_states
-    assert_equal [], @paths.from_states
+    assert_empty @paths.from_states
   end
 
   def test_should_have_no_to_states
-    assert_equal [], @paths.to_states
+    assert_empty @paths.to_states
   end
 
   def test_should_have_no_events
-    assert_equal [], @paths.events
+    assert_empty @paths.events
   end
 
   def test_should_have_no_paths
-    assert @paths.empty?
+    assert_empty @paths
   end
 end

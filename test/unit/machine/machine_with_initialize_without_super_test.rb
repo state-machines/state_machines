@@ -5,8 +5,7 @@ require 'test_helper'
 class MachineWithInitializeWithoutSuperTest < StateMachinesTest
   def setup
     @klass = Class.new do
-      def initialize
-      end
+      def initialize; end
     end
     @machine = StateMachines::Machine.new(@klass, initial: :parked)
     @object = @klass.new
@@ -16,4 +15,3 @@ class MachineWithInitializeWithoutSuperTest < StateMachinesTest
     assert_nil @object.state
   end
 end
-

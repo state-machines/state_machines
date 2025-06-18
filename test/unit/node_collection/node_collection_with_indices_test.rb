@@ -6,7 +6,7 @@ require 'files/node'
 class NodeCollectionWithIndicesTest < StateMachinesTest
   def setup
     machine = StateMachines::Machine.new(Class.new)
-    @collection = StateMachines::NodeCollection.new(machine, index: [:name, :value])
+    @collection = StateMachines::NodeCollection.new(machine, index: %i[name value])
 
     @object = Node.new(:parked, 1)
     @collection << @object

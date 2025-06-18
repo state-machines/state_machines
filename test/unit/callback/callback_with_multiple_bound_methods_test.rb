@@ -9,7 +9,7 @@ class CallbackWithMultipleBoundMethodsTest < StateMachinesTest
     first_context = nil
     second_context = nil
 
-    @callback = StateMachines::Callback.new(:before, do: [lambda { first_context = self }, lambda { second_context = self }], bind_to_object: true)
+    @callback = StateMachines::Callback.new(:before, do: [-> { first_context = self }, -> { second_context = self }], bind_to_object: true)
     @callback.call(@object)
 
     @first_context = first_context

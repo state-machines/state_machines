@@ -8,7 +8,7 @@ class StateCollectionWithStateMatchersTest < StateMachinesTest
     @machine = StateMachines::Machine.new(@klass)
     @states = StateMachines::StateCollection.new(@machine)
 
-    @states << @state = StateMachines::State.new(@machine, :parked, if: lambda { |value| !value.nil? })
+    @states << @state = StateMachines::State.new(@machine, :parked, if: ->(value) { !value.nil? })
     @machine.states.concat(@states)
 
     @object = @klass.new
@@ -21,6 +21,7 @@ class StateCollectionWithStateMatchersTest < StateMachinesTest
 
   def test_should_not_match_if_value_does_not_match
     @object.state = nil
+
     refute @states.matches?(@object, :parked)
   end
 
@@ -28,4 +29,3 @@ class StateCollectionWithStateMatchersTest < StateMachinesTest
     assert_equal @state, @states.match(@object)
   end
 end
-

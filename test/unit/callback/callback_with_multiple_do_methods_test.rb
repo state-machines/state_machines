@@ -4,7 +4,7 @@ require 'test_helper'
 
 class CallbackWithMultipleDoMethodsTest < StateMachinesTest
   def setup
-    @callback = StateMachines::Callback.new(:before, do: [:run_1, :run_2])
+    @callback = StateMachines::Callback.new(:before, do: %i[run_1 run_2])
 
     class << @object = Object.new
       attr_accessor :callbacks
@@ -26,6 +26,6 @@ class CallbackWithMultipleDoMethodsTest < StateMachinesTest
   end
 
   def test_should_call_each_callback_in_order
-    assert_equal [:run_1, :run_2], @object.callbacks
+    assert_equal %i[run_1 run_2], @object.callbacks
   end
 end

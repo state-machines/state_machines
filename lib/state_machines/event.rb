@@ -7,7 +7,6 @@ module StateMachines
   # another.  The state that an attribute is transitioned to depends on the
   # branches configured for the event.
   class Event
-
     include MatcherHelpers
 
     # The state machine for which this event is defined
@@ -34,7 +33,7 @@ module StateMachines
     #
     # Configuration options:
     # * <tt>:human_name</tt> - The human-readable version of this event's name
-    def initialize(machine, name, options = nil, human_name: nil, **extra_options) #:nodoc:
+    def initialize(machine, name, options = nil, human_name: nil, **extra_options) # :nodoc:
       # Handle both old hash style and new kwargs style for backward compatibility
       if options.is_a?(Hash)
         # Old style: initialize(machine, name, {human_name: 'Custom Name'})
@@ -43,6 +42,7 @@ module StateMachines
       else
         # New style: initialize(machine, name, human_name: 'Custom Name')
         raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
+
         StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :human_name) unless extra_options.empty?
       end
 
@@ -63,7 +63,7 @@ module StateMachines
 
     # Creates a copy of this event in addition to the list of associated
     # branches to prevent conflicts across events within a class hierarchy.
-    def initialize_copy(orig) #:nodoc:
+    def initialize_copy(orig) # :nodoc:
       super
       @branches = @branches.dup
       @known_states = @known_states.dup
@@ -77,8 +77,8 @@ module StateMachines
 
     # Evaluates the given block within the context of this event.  This simply
     # provides a DSL-like syntax for defining transitions.
-    def context(&block)
-      instance_eval(&block)
+    def context(&)
+      instance_eval(&)
     end
 
     # Creates a new transition that determines what to change the current state
@@ -102,9 +102,7 @@ module StateMachines
 
       # Only a certain subset of explicit options are allowed for transition
       # requirements
-      if (options.keys - [:from, :to, :on, :except_from, :except_to, :except_on, :if, :unless]).empty?
-        StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless)
-      end
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless) if (options.keys - %i[from to on except_from except_to except_on if unless]).empty?
 
       branches << branch = Branch.new(options.merge(on: name))
       @known_states |= branch.known_states
@@ -138,19 +136,19 @@ module StateMachines
       requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
-        if (match = branch.match(object, requirements))
-          # Branch allows for the transition to occur
-          from = requirements[:from]
-          to = if match[:to].is_a?(LoopbackMatcher)
-                 from
-               else
-                 values = requirements.include?(:to) ? [requirements[:to]].flatten : [from] | machine.states.map { |state| state.name }
+        next unless (match = branch.match(object, requirements))
 
-                 match[:to].filter(values).first
-               end
+        # Branch allows for the transition to occur
+        from = requirements[:from]
+        to = if match[:to].is_a?(LoopbackMatcher)
+               from
+             else
+               values = requirements.include?(:to) ? [requirements[:to]].flatten : [from] | machine.states.map { |state| state.name }
 
-          return Transition.new(object, machine, name, from, to, !custom_from_state)
-        end
+               match[:to].filter(values).first
+             end
+
+        return Transition.new(object, machine, name, from, to, !custom_from_state)
       end
 
       # No transition matched
@@ -163,13 +161,13 @@ module StateMachines
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
-    def fire(object, *args)
+    def fire(object, *)
       machine.reset(object)
 
       if (transition = transition_for(object))
-        transition.perform(*args)
+        transition.perform(*)
       else
-        on_failure(object, *args)
+        on_failure(object, *)
         false
       end
     end
@@ -194,7 +192,6 @@ module StateMachines
       @known_states = []
     end
 
-
     def draw(graph, options = {}, io = $stdout)
       machine.renderer.draw_event(self, graph, options, io)
     end
@@ -216,7 +213,7 @@ module StateMachines
       "#<#{self.class} name=#{name.inspect} transitions=[#{transitions * ', '}]>"
     end
 
-  protected
+    protected
 
     # Add the various instance methods that can transition the object using
     # the current event

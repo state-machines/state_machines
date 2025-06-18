@@ -15,13 +15,13 @@ class STDIORendererTest < Minitest::Test
     io = StringIO.new
     machine.draw(io: io)
 
-    assert_includes(io.string, "Class: ")
-    assert_includes(io.string, "States:")
-    assert_includes(io.string, "parked")
-    assert_includes(io.string, "idling")
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "ignite")
-    assert_includes(io.string, "parked => idling")
+    assert_includes(io.string, 'Class: ')
+    assert_includes(io.string, 'States:')
+    assert_includes(io.string, 'parked')
+    assert_includes(io.string, 'idling')
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'ignite')
+    assert_includes(io.string, 'parked => idling')
   end
 
   def test_draw_machine_with_no_events
@@ -32,11 +32,11 @@ class STDIORendererTest < Minitest::Test
     io = StringIO.new
     machine.draw(io: io)
 
-    assert_includes(io.string, "Class: ")
-    assert_includes(io.string, "States:")
-    assert_includes(io.string, "parked")
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "None")
+    assert_includes(io.string, 'Class: ')
+    assert_includes(io.string, 'States:')
+    assert_includes(io.string, 'parked')
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'None')
   end
 
   def test_draw_machine_with_custom_io
@@ -47,18 +47,19 @@ class STDIORendererTest < Minitest::Test
     io = StringIO.new
     machine.draw(io: io)
 
-    assert_includes(io.string, "Class: ")
-    assert_includes(io.string, "States:")
-    assert_includes(io.string, "parked")
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "None")
+    assert_includes(io.string, 'Class: ')
+    assert_includes(io.string, 'States:')
+    assert_includes(io.string, 'parked')
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'None')
   end
 
   def test_draw_class
-    machine = StateMachines::Machine.new(Class.new) { }
+    machine = StateMachines::Machine.new(Class.new) {}
     io = StringIO.new
     machine.renderer.draw_class(machine: machine, io: io)
-    assert_includes(io.string, "Class: ")
+
+    assert_includes(io.string, 'Class: ')
   end
 
   def test_draw_states
@@ -68,37 +69,41 @@ class STDIORendererTest < Minitest::Test
     end
     io = StringIO.new
     machine.renderer.draw_states(machine: machine, io: io)
-    assert_includes(io.string, "States:")
-    assert_includes(io.string, "parked")
-    assert_includes(io.string, "idling")
+
+    assert_includes(io.string, 'States:')
+    assert_includes(io.string, 'parked')
+    assert_includes(io.string, 'idling')
   end
 
   def test_draw_event
-    machine = StateMachines::Machine.new(Class.new) { }
+    machine = StateMachines::Machine.new(Class.new) {}
     event = StateMachines::Event.new(machine, :ignite)
     graph = {}
     io = StringIO.new
     machine.renderer.draw_event(event, graph, options: {}, io: io)
-    assert_includes(io.string, "Event: ignite")
+
+    assert_includes(io.string, 'Event: ignite')
   end
 
   def test_draw_branch
-    machine = StateMachines::Machine.new(Class.new) { }
+    machine = StateMachines::Machine.new(Class.new) {}
     branch = StateMachines::Branch.new
     graph = {}
     event = StateMachines::Event.new(machine, :ignite)
     io = StringIO.new
     machine.renderer.draw_branch(branch, graph, event, options: {}, io: io)
-    assert_includes(io.string, "Branch: ")
+
+    assert_includes(io.string, 'Branch: ')
   end
 
   def test_draw_state
-    machine = StateMachines::Machine.new(Class.new) { }
+    machine = StateMachines::Machine.new(Class.new) {}
     state = StateMachines::State.new(machine, :parked)
     graph = {}
     io = StringIO.new
     machine.renderer.draw_state(state, graph, options: {}, io: io)
-    assert_includes(io.string, "State: parked")
+
+    assert_includes(io.string, 'State: parked')
   end
 
   def test_draw_events
@@ -111,9 +116,10 @@ class STDIORendererTest < Minitest::Test
     end
     io = StringIO.new
     machine.renderer.draw_events(machine: machine, io: io)
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "ignite")
-    assert_includes(io.string, "parked => idling")
+
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'ignite')
+    assert_includes(io.string, 'parked => idling')
   end
 
   def test_draw_if_unless_condition
@@ -126,9 +132,10 @@ class STDIORendererTest < Minitest::Test
     end
     io = StringIO.new
     machine.renderer.draw_events(machine: machine, io: io)
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "ignite")
-    assert_includes(io.string, "parked => idling IF key_inserted?")
+
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'ignite')
+    assert_includes(io.string, 'parked => idling IF key_inserted?')
   end
 
   def test_draw_blacklist_matcher
@@ -141,9 +148,10 @@ class STDIORendererTest < Minitest::Test
     end
     io = StringIO.new
     machine.renderer.draw_events(machine: machine, io: io)
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "turn_of")
-    assert_includes(io.string, "ALL EXCEPT parked => parked")
+
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'turn_of')
+    assert_includes(io.string, 'ALL EXCEPT parked => parked')
   end
 
   def test_draw_all_and_same_matcher
@@ -156,8 +164,9 @@ class STDIORendererTest < Minitest::Test
     end
     io = StringIO.new
     machine.renderer.draw_events(machine: machine, io: io)
-    assert_includes(io.string, "Events:")
-    assert_includes(io.string, "wave")
-    assert_includes(io.string, "ALL => SAME")
+
+    assert_includes(io.string, 'Events:')
+    assert_includes(io.string, 'wave')
+    assert_includes(io.string, 'ALL => SAME')
   end
 end

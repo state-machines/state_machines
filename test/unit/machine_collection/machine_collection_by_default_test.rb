@@ -8,6 +8,6 @@ class MachineCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_have_any_machines
-    assert @machines.empty?
+    assert_empty @machines
   end
 end

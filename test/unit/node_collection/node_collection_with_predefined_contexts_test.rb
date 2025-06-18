@@ -15,11 +15,13 @@ class NodeCollectionWithPredefinedContextsTest < StateMachinesTest
 
   def test_should_run_contexts_in_the_order_defined
     @collection << Node.new(:parked)
-    assert_equal [:parked, :second_parked], @contexts_run
+
+    assert_equal %i[parked second_parked], @contexts_run
   end
 
   def test_should_not_run_contexts_if_not_matched
     @collection << Node.new(:idling)
-    assert_equal [], @contexts_run
+
+    assert_empty @contexts_run
   end
 end

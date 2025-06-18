@@ -17,6 +17,6 @@ class VehicleRepairedTest < Minitest::Test
   end
 
   def test_should_not_have_a_busy_auto_shop
-    assert @vehicle.auto_shop.available?
+    assert_predicate @vehicle.auto_shop, :available?
   end
 end

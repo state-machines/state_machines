@@ -19,6 +19,7 @@ class MachinePersistenceTest < StateMachinesTest
     assert_nil @machine.read(@object, :event)
 
     @object.state_event = 'ignite'
+
     assert_equal 'ignite', @machine.read(@object, :event)
   end
 
@@ -34,11 +35,13 @@ class MachinePersistenceTest < StateMachinesTest
 
   def test_should_allow_writing_state
     @machine.write(@object, :state, 'idling')
+
     assert_equal 'idling', @object.state
   end
 
   def test_should_allow_writing_custom_attributes
     @machine.write(@object, :event, 'ignite')
+
     assert_equal 'ignite', @object.state_event
   end
 

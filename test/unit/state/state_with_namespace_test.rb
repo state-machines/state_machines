@@ -19,6 +19,6 @@ class StateWithNamespaceTest < StateMachinesTest
   end
 
   def test_should_namespace_predicate
-    assert @object.respond_to?(:alarm_active?)
+    assert_respond_to @object, :alarm_active?
   end
 end

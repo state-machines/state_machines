@@ -32,13 +32,13 @@ module StateMachines
     #   matcher = StateMachines::AllMatcher.instance - [:parked, :idling]
     #   matcher.matches?(:parked)       # => false
     #   matcher.matches?(:first_gear)   # => true
-    def -(blacklist)
-      BlacklistMatcher.new(blacklist)
+    def -(other)
+      BlacklistMatcher.new(other)
     end
-    alias_method :except, :-
+    alias except -
 
     # Always returns true
-    def matches?(value, context = {})
+    def matches?(_value, _context = {})
       true
     end
 
@@ -63,7 +63,7 @@ module StateMachines
     #   matcher = StateMachines::WhitelistMatcher.new([:parked, :idling])
     #   matcher.matches?(:parked)       # => true
     #   matcher.matches?(:first_gear)   # => false
-    def matches?(value, context = {})
+    def matches?(value, _context = {})
       values.include?(value)
     end
 
@@ -83,7 +83,7 @@ module StateMachines
     #   matcher = StateMachines::BlacklistMatcher.new([:parked, :idling])
     #   matcher.matches?(:parked)       # => false
     #   matcher.matches?(:first_gear)   # => true
-    def matches?(value, context = {})
+    def matches?(value, _context = {})
       !values.include?(value)
     end
 

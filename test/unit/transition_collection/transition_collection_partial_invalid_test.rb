@@ -15,7 +15,11 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
     @machine.event :ignite
     @machine.before_transition { @callbacks << :before }
     @machine.after_transition { @callbacks << :after }
-    @machine.around_transition { |block| @callbacks << :around_before; block.call; @callbacks << :around_after }
+    @machine.around_transition do |block|
+      @callbacks << :around_before
+      block.call
+      @callbacks << :around_after
+    end
 
     class << @machine
       def within_transaction(object)
@@ -26,9 +30,9 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-      false
-    ])
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                                                             false
+                                                           ])
   end
 
   def test_should_not_store_invalid_values
@@ -46,6 +50,7 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
   def test_should_not_run_perform_block
     ran_block = false
     @transitions.perform { ran_block = true }
+
     refute ran_block
   end
 

@@ -8,10 +8,10 @@ class MatcherByDefaultTest < StateMachinesTest
   end
 
   def test_should_have_no_values
-    assert_equal [], @matcher.values
+    assert_empty @matcher.values
   end
 
   def test_should_filter_all_values
-    assert_equal [], @matcher.filter([:parked, :idling])
+    assert_empty @matcher.filter(%i[parked idling])
   end
 end

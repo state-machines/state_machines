@@ -21,6 +21,10 @@ class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
     @object = @klass.new
   end
 
+  def teardown
+    $stderr = @original_stderr
+  end
+
   def test_should_not_override_state_predicate
     assert_equal false, @object.parked?
   end
@@ -31,14 +35,11 @@ class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
         super
       end
     end
+
     assert_equal false, @object.parked?
   end
 
   def test_should_output_warning
     assert_match(/Instance method "parked\?" is already defined/, @output)
-  end
-
-  def teardown
-    $stderr = @original_stderr
   end
 end

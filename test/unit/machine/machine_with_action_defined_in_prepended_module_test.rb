@@ -5,15 +5,13 @@ require 'test_helper'
 class MachineWithActionDefinedInPrependedModuleTest < StateMachinesTest
   def setup
     @mod = mod = Module.new do
-      def save
-      end
+      def save; end
     end
 
     @klass = Class.new do
       prepend mod
 
-      def bar
-      end
+      def bar; end
     end
 
     @machine = StateMachines::Machine.new(@klass, action: :save)
@@ -37,7 +35,7 @@ class MachineWithActionDefinedInPrependedModuleTest < StateMachinesTest
   end
 
   def test_should_not_define_action
-    assert @klass.ancestors.none? { |ancestor| ![@klass, @mod].include?(ancestor) && ancestor.method_defined?(:save) }
+    assert(@klass.ancestors.none? { |ancestor| ![@klass, @mod].include?(ancestor) && ancestor.method_defined?(:save) })
   end
 
   def test_should_keep_action_public
@@ -52,4 +50,3 @@ class MachineWithActionDefinedInPrependedModuleTest < StateMachinesTest
     assert_nil @machine.send(:owner_class_ancestor_has_method?, :instance, :bar)
   end
 end
-

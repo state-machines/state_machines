@@ -9,7 +9,7 @@ class PathWithGuardedTransitionsTest < StateMachinesTest
     @machine.state :parked, :idling
     @machine.event :ignite
     @machine.event :shift_up do
-      transition idling: :first_gear, if: lambda { false }
+      transition idling: :first_gear, if: -> { false }
     end
 
     @object = @klass.new
@@ -19,26 +19,26 @@ class PathWithGuardedTransitionsTest < StateMachinesTest
   def test_should_not_walk_transitions_if_guard_enabled
     path = StateMachines::Path.new(@object, @machine)
     path.concat([
-                    StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                  StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
                 ])
 
     paths = []
     path.walk { |next_path| paths << next_path }
 
-    assert_equal [], paths
+    assert_empty paths
   end
 
   def test_should_not_walk_transitions_if_guard_disabled
     path = StateMachines::Path.new(@object, @machine, guard: false)
     path.concat([
-                    ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                  ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
                 ])
 
     paths = []
     path.walk { |next_path| paths << next_path }
 
     assert_equal [
-                     [ignite_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)]
-                 ], paths
+      [ignite_transition, StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)]
+    ], paths
   end
 end

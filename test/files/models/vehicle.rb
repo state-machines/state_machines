@@ -25,7 +25,7 @@ class Vehicle < ModelBase
     before_transition { |vehicle, transition| vehicle.last_transition_args = transition.args }
     before_transition parked: any, do: :put_on_seatbelt
     before_transition any => :stalled, :do => :increase_insurance_premium
-    after_transition any => :parked, :do => lambda { |vehicle| vehicle.seatbelt_on = false }
+    after_transition any => :parked, :do => ->(vehicle) { vehicle.seatbelt_on = false }
     after_transition on: :crash, do: :tow
     after_transition on: :repair, do: :fix
 
@@ -44,7 +44,7 @@ class Vehicle < ModelBase
     end
 
     event :park do
-      transition [:idling, :first_gear] => :parked
+      transition %i[idling first_gear] => :parked
     end
 
     event :ignite do
@@ -66,7 +66,7 @@ class Vehicle < ModelBase
     end
 
     event :crash do
-      transition [:first_gear, :second_gear, :third_gear] => :stalled, :if => ->(vehicle) { vehicle.auto_shop.available? }
+      transition %i[first_gear second_gear third_gear] => :stalled, :if => ->(vehicle) { vehicle.auto_shop.available? }
     end
 
     event :repair do

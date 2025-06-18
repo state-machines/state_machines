@@ -10,17 +10,17 @@ class AttributeTransitionCollectionWithAfterCallbackErrorTest < StateMachinesTes
     @machine.state :idling
     @machine.event :ignite
 
-    @machine.after_transition { fail ArgumentError }
+    @machine.after_transition { raise ArgumentError }
 
     @object = @klass.new
     @object.state_event = 'ignite'
 
     @transitions = StateMachines::AttributeTransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                                      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                                    ])
     begin
-      ; @transitions.perform
-    rescue
+      @transitions.perform
+    rescue StandardError
     end
   end
 

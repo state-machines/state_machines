@@ -51,6 +51,6 @@ class MachineCollectionFireAttributesWithValidationsTest < StateMachinesTest
     @object.state_event = 'ignite'
     @machines.transitions(@object, :save)
 
-    assert @object.errors.empty?
+    assert_empty @object.errors
   end
 end

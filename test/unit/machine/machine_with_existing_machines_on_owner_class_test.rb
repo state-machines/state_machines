@@ -12,6 +12,7 @@ class MachineWithExistingMachinesOnOwnerClassTest < StateMachinesTest
 
   def test_should_track_each_state_machine
     expected = { state: @machine, status: @second_machine }
+
     assert_equal expected, @klass.state_machines
   end
 

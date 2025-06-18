@@ -33,11 +33,12 @@ class BranchWithDifferentRequirementsTest < StateMachinesTest
   end
 
   def test_should_include_all_known_states
-    assert_equal [:parked, :idling], @branch.known_states
+    assert_equal %i[parked idling], @branch.known_states
   end
 
   def test_should_not_duplicate_known_statse
     branch = StateMachines::Branch.new(except_from: :idling, to: :idling, on: :ignite)
+
     assert_equal [:idling], branch.known_states
   end
 end

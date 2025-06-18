@@ -54,12 +54,12 @@ module StateMachines
     #   evaluate_method(person, lambda {|person| person.name}, 21)                              # => "John Smith"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21)          # => "John Smith is 21"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21, 'male')  # => ArgumentError: wrong number of arguments (3 for 2)
-    def evaluate_method(object, method, *args, **kwargs, &block)
+    def evaluate_method(object, method, *args, **, &block)
       case method
       when Symbol
         klass = (class << object; self; end)
         args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity == 0
-        object.send(method, *args, **kwargs, &block)
+        object.send(method, *args, **, &block)
       when Proc
         args.unshift(object)
         arity = method.arity
@@ -79,7 +79,7 @@ module StateMachines
         end
 
         # Call the Proc with the arguments
-        method.call(*args, **kwargs)
+        method.call(*args, **)
 
       when Method
         args.unshift(object)
@@ -90,7 +90,7 @@ module StateMachines
         args = args[0, arity] if [0, 1].include?(arity)
 
         # Call the Method with the arguments and pass the block
-        method.call(*args, **kwargs, &block)
+        method.call(*args, **, &block)
       when String
         # Input validation for string evaluation
         validate_eval_string(method)

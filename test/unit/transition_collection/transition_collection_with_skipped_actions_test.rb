@@ -25,21 +25,29 @@ class TransitionCollectionWithSkippedActionsTest < StateMachinesTest
     @state.event :ignite
     @state.before_transition { @callbacks << :state_before }
     @state.after_transition { @callbacks << :state_after }
-    @state.around_transition { |block| @callbacks << :state_around_before; block.call; @callbacks << :state_around_after }
+    @state.around_transition do |block|
+      @callbacks << :state_around_before
+      block.call
+      @callbacks << :state_around_after
+    end
 
     @status = StateMachines::Machine.new(@klass, :status, initial: :first_gear, action: :save_status)
     @status.state :second_gear
     @status.event :shift_up
     @status.before_transition { @callbacks << :status_before }
     @status.after_transition { @callbacks << :status_after }
-    @status.around_transition { |block| @callbacks << :status_around_before; block.call; @callbacks << :status_around_after }
+    @status.around_transition do |block|
+      @callbacks << :status_around_before
+      block.call
+      @callbacks << :status_around_after
+    end
 
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
-      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
-    ], actions: false)
+                                                             @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
+                                                             @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
+                                                           ], actions: false)
     @result = @transitions.perform
   end
 
@@ -66,6 +74,6 @@ class TransitionCollectionWithSkippedActionsTest < StateMachinesTest
   end
 
   def test_should_run_all_callbacks
-    assert_equal [:state_before, :state_around_before, :status_before, :status_around_before, :status_around_after, :status_after, :state_around_after, :state_after], @callbacks
+    assert_equal %i[state_before state_around_before status_before status_around_before status_around_after status_after state_around_after state_after], @callbacks
   end
 end

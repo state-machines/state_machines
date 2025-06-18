@@ -21,6 +21,10 @@ class EventWithMarshallingTest < StateMachinesTest
     @object.state = 'parked'
   end
 
+  def teardown
+    self.class.send(:remove_const, 'Example')
+  end
+
   def test_should_marshal_during_before_callbacks
     @machine.before_transition { |object, _transition| Marshal.dump(object) }
     @event.fire(@object)
@@ -41,9 +45,5 @@ class EventWithMarshallingTest < StateMachinesTest
   def test_should_marshal_during_after_callbacks
     @machine.after_transition { |object, _transition| Marshal.dump(object) }
     @event.fire(@object)
-  end
-
-  def teardown
-    self.class.send(:remove_const, 'Example')
   end
 end

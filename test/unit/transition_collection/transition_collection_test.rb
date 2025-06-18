@@ -19,9 +19,9 @@ class TransitionCollectionTest < StateMachinesTest
 
     exception = assert_raises(ArgumentError) do
       StateMachines::TransitionCollection.new([
-        StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-        StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-      ])
+                                                StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                                                StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                              ])
     end
     assert_equal 'Cannot perform multiple transitions in parallel for the same state machine attribute', exception.message
   end

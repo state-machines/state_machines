@@ -452,7 +452,7 @@ module StateMachines
     attr_reader :use_transactions
 
     # Creates a new state machine for the given attribute
-    def initialize(owner_class, *args, &block)
+    def initialize(owner_class, *args, &)
       options = args.last.is_a?(Hash) ? args.pop : {}
       StateMachines::OptionsValidator.assert_valid_keys!(options, :attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions)
 
@@ -494,7 +494,7 @@ module StateMachines
       after_initialize
 
       # Evaluate DSL
-      instance_eval(&block) if block_given?
+      instance_eval(&) if block_given?
       self.initial_state = options[:initial] unless sibling_machines.any?
     end
 
@@ -551,7 +551,7 @@ module StateMachines
 
       # Output a warning if there are conflicting initial states for the machine's
       # attribute
-      initial_state = states.detect { |state| state.initial }
+      initial_state = states.detect(&:initial)
       return unless !owner_class_attribute_default.nil? && (dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state))
 
       warn(
@@ -667,7 +667,7 @@ module StateMachines
     #       "State"
     #     end
     #   end_eval
-    def define_helper(scope, method, *args, **kwargs, &block)
+    def define_helper(scope, method, *, **, &block)
       helper_module = @helper_modules.fetch(scope)
 
       if block_given?
@@ -685,7 +685,7 @@ module StateMachines
       else
         # Validate string input before eval if method is a string
         validate_eval_string(method) if method.is_a?(String)
-        helper_module.class_eval(method, *args, **kwargs)
+        helper_module.class_eval(method, __FILE__, __LINE__)
       end
     end
 
@@ -956,13 +956,13 @@ module StateMachines
     #
     # The minimum requirement is that the last argument in the method be an
     # options hash which contains at least <tt>:if</tt> condition support.
-    def state(*names, &block)
+    def state(*names, &)
       options = names.last.is_a?(Hash) ? names.pop : {}
       StateMachines::OptionsValidator.assert_valid_keys!(options, :value, :cache, :if, :human_name)
 
       # Store the context so that it can be used for / matched against any state
       # that gets added
-      @states.context(names, &block) if block_given?
+      @states.context(names, &) if block_given?
 
       if names.first.is_a?(Matcher)
         # Add any states referenced in the matcher.  When matchers are used,
@@ -1259,13 +1259,13 @@ module StateMachines
     #       end
     #     end
     #   end
-    def event(*names, &block)
+    def event(*names, &)
       options = names.last.is_a?(Hash) ? names.pop : {}
       StateMachines::OptionsValidator.assert_valid_keys!(options, :human_name)
 
       # Store the context so that it can be used for / matched against any event
       # that gets added
-      @events.context(names, &block) if block_given?
+      @events.context(names, &) if block_given?
 
       if names.first.is_a?(Matcher)
         # Add any events referenced in the matcher.  When matchers are used,
@@ -1594,10 +1594,15 @@ module StateMachines
     #
     # As can be seen, any number of transitions can be created using various
     # combinations of configuration options.
-    def before_transition(*args, &block)
-      options = (args.last.is_a?(Hash) ? args.pop : {})
-      options[:do] = args if args.any?
-      add_callback(:before, options, &block)
+    def before_transition(*args, **options, &)
+      # Extract legacy positional arguments and merge with keyword options
+      parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
+      add_callback(:before, parsed_options, &)
     end
 
     # Creates a callback that will be invoked *after* a transition is
@@ -1605,10 +1610,15 @@ module StateMachines
     #
     # See +before_transition+ for a description of the possible configurations
     # for defining callbacks.
-    def after_transition(*args, &block)
-      options = (args.last.is_a?(Hash) ? args.pop : {})
-      options[:do] = args if args.any?
-      add_callback(:after, options, &block)
+    def after_transition(*args, **options, &)
+      # Extract legacy positional arguments and merge with keyword options
+      parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
+      add_callback(:after, parsed_options, &)
     end
 
     # Creates a callback that will be invoked *around* a transition so long as
@@ -1666,10 +1676,15 @@ module StateMachines
     #
     # See +before_transition+ for a description of the possible configurations
     # for defining callbacks.
-    def around_transition(*args, &block)
-      options = (args.last.is_a?(Hash) ? args.pop : {})
-      options[:do] = args if args.any?
-      add_callback(:around, options, &block)
+    def around_transition(*args, **options, &)
+      # Extract legacy positional arguments and merge with keyword options
+      parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
+      add_callback(:around, parsed_options, &)
     end
 
     # Creates a callback that will be invoked *after* a transition failures to
@@ -1700,12 +1715,12 @@ module StateMachines
     #       ...
     #     end
     #   end
-    def after_failure(*args, &block)
-      options = (args.last.is_a?(Hash) ? args.pop : {})
-      options[:do] = args if args.any?
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :on, :do, :if, :unless)
+    def after_failure(*args, **options, &)
+      # Extract legacy positional arguments and merge with keyword options
+      parsed_options = parse_callback_arguments(args, options)
+      StateMachines::OptionsValidator.assert_valid_keys!(parsed_options, :on, :do, :if, :unless)
 
-      add_callback(:failure, options, &block)
+      add_callback(:failure, parsed_options, &)
     end
 
     # Generates a list of the possible transition sequences that can be run on
@@ -1806,7 +1821,7 @@ module StateMachines
       # Check whether there are actually any values to interpolate to avoid
       # any warnings
       if message.scan(/%./).any? { |match| match != '%%' }
-        message % values.map { |value| value.last }
+        message % values.map(&:last)
       else
         message
       end
@@ -1817,9 +1832,9 @@ module StateMachines
     # This is only applicable to integrations that involve databases.  By
     # default, this will not run any transactions since the changes aren't
     # taking place within the context of a database.
-    def within_transaction(object, &block)
+    def within_transaction(object, &)
       if use_transactions
-        transaction(object, &block)
+        transaction(object, &)
       else
         yield
       end
@@ -1829,8 +1844,8 @@ module StateMachines
       self.class.renderer
     end
 
-    def draw(**options)
-      renderer.draw_machine(self, **options)
+    def draw(**)
+      renderer.draw_machine(self, **)
     end
 
     # Determines whether an action hook was defined for firing attribute-based
@@ -1896,7 +1911,7 @@ module StateMachines
     # Adds predicate method to the owner class for determining the name of the
     # current state
     def define_state_predicate
-      call_super = !!owner_class_ancestor_has_method?(:instance, "#{name}?")
+      call_super = !owner_class_ancestor_has_method?(:instance, "#{name}?").nil?
       define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
           def #{name}?(*args)
             args.empty? && (#{call_super} || defined?(super)) ? super : self.class.state_machine(#{name.inspect}).states.matches?(self, *args)
@@ -1909,7 +1924,7 @@ module StateMachines
     def define_event_helpers
       # Gets the events that are allowed to fire on the current object
       define_helper(:instance, attribute(:events)) do |machine, object, *args|
-        machine.events.valid_for(object, *args).map { |event| event.name }
+        machine.events.valid_for(object, *args).map(&:name)
       end
 
       # Gets the next possible transitions that can be run on the current
@@ -1959,7 +1974,7 @@ module StateMachines
     # This is only true if there is an action configured and no other machines
     # have process this same configuration already.
     def define_action_helpers?
-      action && !owner_class.state_machines.any? { |_name, machine| machine.action == action && machine != self }
+      action && owner_class.state_machines.none? { |_name, machine| machine.action == action && machine != self }
     end
 
     # Adds helper methods for automatically firing events when an action
@@ -2006,7 +2021,7 @@ module StateMachines
     def owner_class_ancestor_has_method?(scope, method)
       return false unless owner_class_has_method?(scope, method)
 
-      superclasses = owner_class.ancestors.select { |ancestor| ancestor.is_a?(Class) }[1..-1]
+      superclasses = owner_class.ancestors.select { |ancestor| ancestor.is_a?(Class) }[1..]
 
       if scope == :class
         current = owner_class.singleton_class
@@ -2020,7 +2035,7 @@ module StateMachines
       # were included *prior* to the helper modules, in addition to the
       # superclasses
       ancestors = current.ancestors - superclass.ancestors + superclasses
-      ancestors = ancestors[ancestors.index(@helper_modules[scope])..-1].reverse
+      ancestors = ancestors[ancestors.index(@helper_modules[scope])..].reverse
 
       # Search for for the first ancestor that defined this method
       ancestors.detect do |ancestor|
@@ -2067,7 +2082,7 @@ module StateMachines
       plural = custom_plural || pluralize(name)
 
       %i[with without].each do |kind|
-        [name, plural].map { |s| s.to_s }.uniq.each do |suffix|
+        [name, plural].map(&:to_s).uniq.each do |suffix|
           method = "#{kind}_#{suffix}"
 
           next unless (scope = send("create_#{kind}_scope", method))
@@ -2137,9 +2152,31 @@ module StateMachines
       end
     end
 
+    # Parses callback arguments for backward compatibility with both positional
+    # and keyword argument styles. Supports Ruby 3.2+ keyword arguments while
+    # maintaining full backward compatibility with the legacy API.
+    def parse_callback_arguments(args, options)
+      # Handle legacy positional args: before_transition(:method1, :method2, from: :state)
+      if args.any?
+        # Extract hash options from the end of args if present
+        parsed_options = args.last.is_a?(Hash) ? args.pop.dup : {}
+
+        # Merge any additional keyword options
+        parsed_options.merge!(options) if options.any?
+
+        # Remaining args become the :do option (method names to call)
+        parsed_options[:do] = args if args.any?
+
+        parsed_options
+      else
+        # Pure keyword argument style: before_transition(from: :state, to: :other, do: :method)
+        options.dup
+      end
+    end
+
     # Adds a new transition callback of the given type.
-    def add_callback(type, options, &block)
-      callbacks[type == :around ? :before : type] << callback = Callback.new(type, options, &block)
+    def add_callback(type, options, &)
+      callbacks[type == :around ? :before : type] << callback = Callback.new(type, options, &)
       add_states(callback.known_states)
       callback
     end

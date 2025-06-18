@@ -25,4 +25,3 @@ class MachineCollectionTransitionsWithTransitionTest < StateMachinesTest
     assert_equal true, @transitions.perform
   end
 end
-

@@ -18,33 +18,32 @@ class MachineWithNamespaceTest < StateMachinesTest
   end
 
   def test_should_namespace_state_predicates
-    [:alarm_active?, :alarm_off?].each do |name|
-      assert @object.respond_to?(name)
+    %i[alarm_active? alarm_off?].each do |name|
+      assert_respond_to @object, name
     end
   end
 
   def test_should_namespace_event_checks
-    [:can_enable_alarm?, :can_disable_alarm?].each do |name|
-      assert @object.respond_to?(name)
+    %i[can_enable_alarm? can_disable_alarm?].each do |name|
+      assert_respond_to @object, name
     end
   end
 
   def test_should_namespace_event_transition_readers
-    [:enable_alarm_transition, :disable_alarm_transition].each do |name|
-      assert @object.respond_to?(name)
+    %i[enable_alarm_transition disable_alarm_transition].each do |name|
+      assert_respond_to @object, name
     end
   end
 
   def test_should_namespace_events
-    [:enable_alarm, :disable_alarm].each do |name|
-      assert @object.respond_to?(name)
+    %i[enable_alarm disable_alarm].each do |name|
+      assert_respond_to @object, name
     end
   end
 
   def test_should_namespace_bang_events
-    [:enable_alarm!, :disable_alarm!].each do |name|
-      assert @object.respond_to?(name)
+    %i[enable_alarm! disable_alarm!].each do |name|
+      assert_respond_to @object, name
     end
   end
 end
-

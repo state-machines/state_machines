@@ -19,6 +19,7 @@ class EventTransitionsTest < StateMachinesTest
 
   def test_should_automatically_set_on_option
     branch = @event.transition(to: :idling)
+
     assert_instance_of StateMachines::WhitelistMatcher, branch.event_requirement
     assert_equal [:ignite], branch.event_requirement.values
   end
@@ -49,16 +50,16 @@ class EventTransitionsTest < StateMachinesTest
   end
 
   def test_should_allow_transitioning_from_multiple_states
-    assert @event.transition([:parked, :idling] => :idling)
+    assert @event.transition(%i[parked idling] => :idling)
   end
 
   def test_should_allow_transitions_to_multiple_states
-    assert @event.transition(parked: [:parked, :idling])
+    assert @event.transition(parked: %i[parked idling])
   end
 
   def test_should_have_transitions
     branch = @event.transition(to: :idling)
+
     assert_equal [branch], @event.branches
   end
 end
-

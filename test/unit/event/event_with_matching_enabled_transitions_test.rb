@@ -32,12 +32,17 @@ class EventWithMatchingEnabledTransitionsTest < StateMachinesTest
     @object.state = 'parked'
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_be_able_to_fire
     assert @event.can_fire?(@object)
   end
 
   def test_should_have_a_transition
     transition = @event.transition_for(@object)
+
     refute_nil transition
     assert_equal 'parked', transition.from
     assert_equal 'idling', transition.to
@@ -50,6 +55,7 @@ class EventWithMatchingEnabledTransitionsTest < StateMachinesTest
 
   def test_should_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'idling', @object.state
   end
 
@@ -57,21 +63,19 @@ class EventWithMatchingEnabledTransitionsTest < StateMachinesTest
     @object.errors = ['invalid']
 
     @event.fire(@object)
-    assert_equal [], @object.errors
+
+    assert_empty @object.errors
   end
 
   def test_should_not_invalidate_the_state
     @event.fire(@object)
-    assert_equal [], @object.errors
+
+    assert_empty @object.errors
   end
 
   def test_should_not_be_able_to_fire_on_reset
     @event.reset
+
     refute @event.can_fire?(@object)
   end
-
-  def teardown
-    StateMachines::Integrations.reset
-  end
 end
-

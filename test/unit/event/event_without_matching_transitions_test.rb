@@ -37,7 +37,7 @@ class EventWithoutMatchingTransitionsTest < StateMachinesTest
 
   def test_should_not_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'idling', @object.state
   end
 end
-

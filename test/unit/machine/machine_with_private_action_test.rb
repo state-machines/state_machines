@@ -6,8 +6,8 @@ class MachineWithPrivateActionTest < StateMachinesTest
   def setup
     @superclass = Class.new do
       private
-      def save
-      end
+
+      def save; end
     end
     @klass = Class.new(@superclass)
 
@@ -16,11 +16,11 @@ class MachineWithPrivateActionTest < StateMachinesTest
   end
 
   def test_should_define_an_event_attribute_reader
-    assert @object.respond_to?(:state_event)
+    assert_respond_to @object, :state_event
   end
 
   def test_should_define_an_event_attribute_writer
-    assert @object.respond_to?(:state_event=)
+    assert_respond_to @object, :state_event=
   end
 
   def test_should_define_an_event_transition_attribute_reader
@@ -32,7 +32,7 @@ class MachineWithPrivateActionTest < StateMachinesTest
   end
 
   def test_should_define_action
-    assert @klass.ancestors.any? { |ancestor| ![@klass, @superclass].include?(ancestor) && ancestor.private_method_defined?(:save) }
+    assert(@klass.ancestors.any? { |ancestor| ![@klass, @superclass].include?(ancestor) && ancestor.private_method_defined?(:save) })
   end
 
   def test_should_keep_action_private
@@ -40,6 +40,6 @@ class MachineWithPrivateActionTest < StateMachinesTest
   end
 
   def test_should_mark_action_hook_as_defined
-    assert @machine.action_hook?
+    assert_predicate @machine, :action_hook?
   end
 end
