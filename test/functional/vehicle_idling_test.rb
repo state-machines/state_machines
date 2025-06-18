@@ -3,18 +3,18 @@
 require 'test_helper'
 require 'files/models/vehicle'
 
-class VehicleIdlingTest < Minitest::Test
+class VehicleIdlingTest < StateMachinesTest
   def setup
     @vehicle = Vehicle.new
     @vehicle.ignite
   end
 
   def test_should_be_in_idling_state
-    assert_equal 'idling', @vehicle.state
+    assert_sm_state(@vehicle, :idling)
   end
 
   def test_should_be_idling
-    assert @vehicle.idling?
+    assert_predicate @vehicle, :idling?
   end
 
   def test_should_have_seatbelt_on
@@ -26,7 +26,7 @@ class VehicleIdlingTest < Minitest::Test
   end
 
   def test_should_allow_park
-    assert @vehicle.park
+    assert_sm_can_transition(@vehicle, :park)
   end
 
   def test_should_call_park_with_bang_action
@@ -40,22 +40,22 @@ class VehicleIdlingTest < Minitest::Test
   end
 
   def test_should_not_allow_idle
-    refute @vehicle.idle
+    assert_sm_cannot_transition(@vehicle, :idle)
   end
 
   def test_should_allow_shift_up
-    assert @vehicle.shift_up
+    assert_sm_can_transition(@vehicle, :shift_up)
   end
 
   def test_should_not_allow_shift_down
-    refute @vehicle.shift_down
+    assert_sm_cannot_transition(@vehicle, :shift_down)
   end
 
   def test_should_not_allow_crash
-    refute @vehicle.crash
+    assert_sm_cannot_transition(@vehicle, :crash)
   end
 
   def test_should_not_allow_repair
-    refute @vehicle.repair
+    assert_sm_cannot_transition(@vehicle, :repair)
   end
 end

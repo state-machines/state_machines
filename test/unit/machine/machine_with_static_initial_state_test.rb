@@ -14,13 +14,15 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
 
   def test_should_have_an_initial_state
     object = @klass.new
+
     assert_equal 'parked', @machine.initial_state(object).value
   end
 
   def test_should_write_to_attribute_when_initializing_state
     object = @klass.allocate
     @machine.initialize_state(object)
-    assert_equal 'parked', object.state
+
+    assert_sm_state(object, :parked)
   end
 
   def test_should_set_initial_on_state_object
@@ -28,7 +30,9 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
   end
 
   def test_should_set_initial_state_on_created_object
-    assert_equal 'parked', @klass.new.state
+    object = @klass.new
+
+    assert_sm_state(object, :parked)
   end
 
   def test_should_have_correct_initial_state
