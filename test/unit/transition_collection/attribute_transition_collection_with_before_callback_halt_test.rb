@@ -16,8 +16,8 @@ class AttributeTransitionCollectionWithAfterCallbackHaltTest < StateMachinesTest
     @object.state_event = 'ignite'
 
     @transitions = StateMachines::AttributeTransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                                      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                                    ])
     @result = @transitions.perform
   end
 

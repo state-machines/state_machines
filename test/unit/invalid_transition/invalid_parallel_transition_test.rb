@@ -5,7 +5,7 @@ require 'test_helper'
 class InvalidParallelTransitionTest < StateMachinesTest
   def setup
     @object = Object.new
-    @events = [:ignite, :disable_alarm]
+    @events = %i[ignite disable_alarm]
 
     @invalid_transition = StateMachines::InvalidParallelTransition.new(@object, @events)
   end

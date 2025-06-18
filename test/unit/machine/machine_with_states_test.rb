@@ -12,7 +12,7 @@ class MachineWithStatesTest < StateMachinesTest
   end
 
   def test_should_have_states
-    assert_equal [nil, :parked, :idling], @machine.states.map { |state| state.name }
+    assert_equal([nil, :parked, :idling], @machine.states.map { |state| state.name })
   end
 
   def test_should_allow_state_lookup_by_name
@@ -54,4 +54,3 @@ class MachineWithStatesTest < StateMachinesTest
     @machine.state nil
   end
 end
-

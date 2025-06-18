@@ -10,6 +10,7 @@ class NodeCollectionWithoutIndicesTest < StateMachinesTest
 
   def test_should_allow_adding_node
     @collection << Object.new
+
     assert_equal 1, @collection.length
   end
 

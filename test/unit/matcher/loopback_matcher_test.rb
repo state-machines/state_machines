@@ -8,11 +8,11 @@ class LoopbackMatcherTest < StateMachinesTest
   end
 
   def test_should_have_no_values
-    assert_equal [], @matcher.values
+    assert_empty @matcher.values
   end
 
   def test_should_filter_all_values
-    assert_equal [], @matcher.filter([:parked, :idling])
+    assert_empty @matcher.filter(%i[parked idling])
   end
 
   def test_should_match_if_from_context_is_same

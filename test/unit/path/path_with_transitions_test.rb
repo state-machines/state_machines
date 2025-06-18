@@ -14,8 +14,8 @@ class PathWithTransitionsTest < StateMachinesTest
 
     @path = StateMachines::Path.new(@object, @machine)
     @path.concat([
-                     @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-                     @shift_up_transition = StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)
+                   @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                   @shift_up_transition = StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)
                  ])
   end
 
@@ -28,7 +28,7 @@ class PathWithTransitionsTest < StateMachinesTest
   end
 
   def test_should_have_from_states
-    assert_equal [:parked, :idling], @path.from_states
+    assert_equal %i[parked idling], @path.from_states
   end
 
   def test_should_have_a_to_name
@@ -36,16 +36,17 @@ class PathWithTransitionsTest < StateMachinesTest
   end
 
   def test_should_have_to_states
-    assert_equal [:idling, :first_gear], @path.to_states
+    assert_equal %i[idling first_gear], @path.to_states
   end
 
   def test_should_have_events
-    assert_equal [:ignite, :shift_up], @path.events
+    assert_equal %i[ignite shift_up], @path.events
   end
 
   def test_should_not_be_able_to_walk_anywhere
     walked = false
     @path.walk { walked = true }
+
     assert_equal false, walked
   end
 
@@ -53,4 +54,3 @@ class PathWithTransitionsTest < StateMachinesTest
     assert_equal true, @path.complete?
   end
 end
-

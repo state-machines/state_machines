@@ -30,7 +30,7 @@ module StateMachines
     def all
       AllMatcher.instance
     end
-    alias_method :any, :all
+    alias any all
 
     # Represents a state that matches the original +from+ state.  This is useful
     # for defining transitions which are loopbacks.

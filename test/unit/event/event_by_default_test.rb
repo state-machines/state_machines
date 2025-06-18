@@ -2,7 +2,6 @@
 
 require 'test_helper'
 
-
 class EventByDefaultTest < StateMachinesTest
   def setup
     @klass = Class.new
@@ -29,11 +28,11 @@ class EventByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_have_any_branches
-    assert @event.branches.empty?
+    assert_empty @event.branches
   end
 
   def test_should_have_no_known_states
-    assert @event.known_states.empty?
+    assert_empty @event.known_states
   end
 
   def test_should_not_be_able_to_fire
@@ -45,18 +44,18 @@ class EventByDefaultTest < StateMachinesTest
   end
 
   def test_should_define_a_predicate
-    assert @object.respond_to?(:can_ignite?)
+    assert_respond_to @object, :can_ignite?
   end
 
   def test_should_define_a_transition_accessor
-    assert @object.respond_to?(:ignite_transition)
+    assert_respond_to @object, :ignite_transition
   end
 
   def test_should_define_an_action
-    assert @object.respond_to?(:ignite)
+    assert_respond_to @object, :ignite
   end
 
   def test_should_define_a_bang_action
-    assert @object.respond_to?(:ignite!)
+    assert_respond_to @object, :ignite!
   end
 end

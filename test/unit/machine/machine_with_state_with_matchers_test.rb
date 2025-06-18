@@ -6,7 +6,7 @@ class MachineWithStateWithMatchersTest < StateMachinesTest
   def setup
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass)
-    @state = @machine.state :parked, if: ->(value) {!value.nil? }
+    @state = @machine.state :parked, if: ->(value) { !value.nil? }
 
     @object = @klass.new
     @object.state = 1
@@ -18,4 +18,3 @@ class MachineWithStateWithMatchersTest < StateMachinesTest
     refute @state.matches?(nil)
   end
 end
-

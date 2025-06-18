@@ -13,4 +13,3 @@ class MachineWithHelpersTest < StateMachinesTest
     assert_raises(KeyError) { @machine.define_helper(:invalid, :park) {} }
   end
 end
-

@@ -19,10 +19,10 @@ class EventCollectionByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_have_any_valid_events_for_an_object
-    assert @events.valid_for(@object).empty?
+    assert_empty @events.valid_for(@object)
   end
 
   def test_should_not_have_any_transitions_for_an_object
-    assert @events.transitions_for(@object).empty?
+    assert_empty @events.transitions_for(@object)
   end
 end

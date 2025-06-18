@@ -56,24 +56,30 @@ class StateContextTransitionTest < StateMachinesTest
 
   def test_should_automatically_set_to_option_with_from_state
     branch = @state_context.transition(from: :idling, on: :park)
+
     assert_instance_of StateMachines::Branch, branch
 
     state_requirements = branch.state_requirements
+
     assert_equal 1, state_requirements.length
 
     from_requirement = state_requirements[0][:to]
+
     assert_instance_of StateMachines::WhitelistMatcher, from_requirement
     assert_equal [:parked], from_requirement.values
   end
 
   def test_should_automatically_set_from_option_with_to_state
     branch = @state_context.transition(to: :idling, on: :ignite)
+
     assert_instance_of StateMachines::Branch, branch
 
     state_requirements = branch.state_requirements
+
     assert_equal 1, state_requirements.length
 
     from_requirement = state_requirements[0][:from]
+
     assert_instance_of StateMachines::WhitelistMatcher, from_requirement
     assert_equal [:parked], from_requirement.values
   end
@@ -89,18 +95,18 @@ class StateContextTransitionTest < StateMachinesTest
   def test_should_include_all_transition_states_in_machine_states
     @state_context.transition(to: :idling, on: :ignite)
 
-    assert_equal [:parked, :idling], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling], @machine.states.map { |state| state.name })
   end
 
   def test_should_include_all_transition_events_in_machine_events
     @state_context.transition(to: :idling, on: :ignite)
 
-    assert_equal [:ignite], @machine.events.map { |event| event.name }
+    assert_equal([:ignite], @machine.events.map { |event| event.name })
   end
 
   def test_should_allow_multiple_events
-    @state_context.transition(to: :idling, on: [:ignite, :shift_up])
+    @state_context.transition(to: :idling, on: %i[ignite shift_up])
 
-    assert_equal [:ignite, :shift_up], @machine.events.map { |event| event.name }
+    assert_equal(%i[ignite shift_up], @machine.events.map { |event| event.name })
   end
 end

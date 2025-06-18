@@ -16,8 +16,8 @@ class TransitionCollectionWithSkippedAfterCallbacksTest < StateMachinesTest
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], after: false)
+                                                             @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ], after: false)
     @result = @transitions.perform
   end
 
@@ -31,6 +31,7 @@ class TransitionCollectionWithSkippedAfterCallbacksTest < StateMachinesTest
 
   def test_should_run_after_callbacks_on_subsequent_perform
     StateMachines::TransitionCollection.new([@transition]).perform
-    assert @callbacks.include?(:after)
+
+    assert_includes @callbacks, :after
   end
 end

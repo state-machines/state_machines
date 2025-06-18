@@ -17,7 +17,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
 
   def test_should_only_run_those_that_match_transition_context
     @count = 0
-    callback = lambda { @count += 1 }
+    callback = -> { @count += 1 }
 
     @machine.after_failure do: callback
     @machine.after_failure on: :park, do: callback
@@ -30,6 +30,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
   def test_should_run_if_not_successful
     @machine.after_failure { |_object| @run = true }
     @transition.run_callbacks { { success: false } }
+
     assert @run
   end
 
@@ -37,6 +38,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
     @run = false
     @machine.after_failure { |_object| @run = true }
     @transition.run_callbacks { { success: true } }
+
     refute @run
   end
 
@@ -44,6 +46,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
     @machine.after_failure { |*args| @args = args }
 
     @transition.run_callbacks { { success: false } }
+
     assert_equal [@object, @transition], @args
   end
 
@@ -51,11 +54,12 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
     @machine.after_failure { throw :halt }
 
     result = @transition.run_callbacks { { success: false } }
+
     assert_equal true, result
   end
 
   def test_should_not_catch_exceptions
-    @machine.after_failure  { fail ArgumentError }
+    @machine.after_failure { raise ArgumentError }
     assert_raises(ArgumentError) { @transition.run_callbacks { { success: false } } }
   end
 
@@ -64,14 +68,19 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
     @machine.after_failure { @count += 1 }
     @transition.run_callbacks { { success: false } }
     @transition.run_callbacks { { success: false } }
+
     assert_equal 1, @count
   end
 
   def test_should_not_be_able_to_run_twice_if_halted
     @count = 0
-    @machine.after_failure { @count += 1; throw :halt }
+    @machine.after_failure do
+      @count += 1
+      throw :halt
+    end
     @transition.run_callbacks { { success: false } }
     @transition.run_callbacks { { success: false } }
+
     assert_equal 1, @count
   end
 
@@ -81,6 +90,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
     @transition.run_callbacks { { success: false } }
     @transition.reset
     @transition.run_callbacks { { success: false } }
+
     assert_equal 2, @count
   end
 end

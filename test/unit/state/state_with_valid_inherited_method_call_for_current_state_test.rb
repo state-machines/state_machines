@@ -23,7 +23,7 @@ class StateWithValidInheritedMethodCallForCurrentStateTest < StateMachinesTest
   end
 
   def test_should_not_raise_an_exception
-    @state.call(@object, :speed, method_missing: lambda { fail })
+    @state.call(@object, :speed, method_missing: -> { raise })
   end
 
   def test_should_be_able_to_call_super

@@ -30,4 +30,3 @@ class MachineAfterChangingOwnerClassTest < StateMachinesTest
     assert_equal @machine, @original_class.state_machines[:state]
   end
 end
-

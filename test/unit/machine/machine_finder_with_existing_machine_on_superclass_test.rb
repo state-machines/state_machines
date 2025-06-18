@@ -25,6 +25,10 @@ class MachineFinderWithExistingMachineOnSuperclassTest < StateMachinesTest
     @machine = StateMachines::Machine.find_or_create(@klass, :status) {}
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_accept_a_block
     called = false
     StateMachines::Machine.find_or_create(Class.new(@base_class)) do
@@ -75,13 +79,9 @@ class MachineFinderWithExistingMachineOnSuperclassTest < StateMachinesTest
 
   def test_should_use_the_same_integration
     class_ancestors = class << @machine
-      ancestors
-    end
+                        ancestors
+                      end
 
-    assert(class_ancestors.include?(MachineFinderWithExistingMachineOnSuperclassTest::Custom))
-  end
-
-  def teardown
-    StateMachines::Integrations.reset
+    assert_includes(class_ancestors, MachineFinderWithExistingMachineOnSuperclassTest::Custom)
   end
 end

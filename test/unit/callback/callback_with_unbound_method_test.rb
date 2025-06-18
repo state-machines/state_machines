@@ -4,7 +4,7 @@ require 'test_helper'
 
 class CallbackWithUnboundMethodTest < StateMachinesTest
   def setup
-    @callback = StateMachines::Callback.new(:before, do: lambda { |*args| @context = args.unshift(self) })
+    @callback = StateMachines::Callback.new(:before, do: ->(*args) { @context = args.unshift(self) })
 
     @object = Object.new
     @callback.call(@object, {}, 1, 2, 3)

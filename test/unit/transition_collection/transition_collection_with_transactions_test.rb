@@ -22,8 +22,8 @@ class TransitionCollectionWithTransactionsTest < StateMachinesTest
 
     @object = @klass.new
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], use_transactions: true)
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ], use_transactions: true)
   end
 
   def test_should_run_before_callbacks_within_transaction
@@ -50,11 +50,13 @@ class TransitionCollectionWithTransactionsTest < StateMachinesTest
     @machine.before_transition { throw :halt }
 
     @transitions.perform
+
     assert @object.cancelled_transaction
   end
 
   def test_should_cancel_the_transaction_on_action_failure
     @transitions.perform { false }
+
     assert @object.cancelled_transaction
   end
 
@@ -62,6 +64,7 @@ class TransitionCollectionWithTransactionsTest < StateMachinesTest
     @machine.after_transition { throw :halt }
 
     @transitions.perform
+
     refute @object.cancelled_transaction
   end
 end

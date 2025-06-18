@@ -3,7 +3,7 @@
 module StateMachines
   # Represents a type of module that defines instance / class methods for a
   # state machine
-  class HelperModule < Module #:nodoc:
+  class HelperModule < Module # :nodoc:
     def initialize(machine, kind)
       @machine = machine
       @kind = kind

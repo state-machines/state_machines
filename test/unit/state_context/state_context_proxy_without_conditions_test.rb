@@ -24,6 +24,7 @@ class StateContextProxyWithoutConditionsTest < StateMachinesTest
 
   def test_should_be_false_if_state_is_different
     @object.state = nil
+
     refute @options[:if].call(@object)
   end
 

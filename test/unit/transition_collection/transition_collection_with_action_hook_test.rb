@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative 'transition_collection_with_action_hook_base_test.rb'
+require_relative 'transition_collection_with_action_hook_base_test'
 
 class TransitionCollectionWithActionHookTest < TransitionCollectionWithActionHookBaseTest
   def setup
@@ -42,6 +42,6 @@ class TransitionCollectionWithActionHookTest < TransitionCollectionWithActionHoo
   end
 
   def test_should_mark_event_transition_as_transient
-    assert @transition.transient?
+    assert_predicate @transition, :transient?
   end
 end

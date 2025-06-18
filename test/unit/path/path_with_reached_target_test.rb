@@ -19,8 +19,8 @@ class PathWithReachedTargetTest < StateMachinesTest
 
     @path = StateMachines::Path.new(@object, @machine, target: :parked)
     @path.concat([
-                     @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-                     @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)
+                   @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                   @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)
                  ])
   end
 
@@ -31,7 +31,7 @@ class PathWithReachedTargetTest < StateMachinesTest
   def test_should_not_be_able_to_walk
     walked = false
     @path.walk { walked = true }
+
     assert_equal false, walked
   end
 end
-

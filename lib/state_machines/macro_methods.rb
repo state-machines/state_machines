@@ -515,8 +515,8 @@ module StateMachines
     # See StateMachines::Machine for more information about using integrations
     # and the individual integration docs for information about the actual
     # scopes that are generated.
-    def state_machine(*args, &block)
-      StateMachines::Machine.find_or_create(self, *args, &block)
+    def state_machine(*, &)
+      StateMachines::Machine.find_or_create(self, *, &)
     end
   end
 end

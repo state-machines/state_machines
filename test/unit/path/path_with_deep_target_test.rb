@@ -14,7 +14,7 @@ class PathWithDeepTargetTest < StateMachinesTest
       transition parked: :first_gear
     end
     @machine.event :park do
-      transition [:idling, :first_gear] => :parked
+      transition %i[idling first_gear] => :parked
     end
 
     @object = @klass.new
@@ -22,9 +22,9 @@ class PathWithDeepTargetTest < StateMachinesTest
 
     @path = StateMachines::Path.new(@object, @machine, target: :parked)
     @path.concat([
-                     @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
-                     @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked),
-                     @shift_up_transition = StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)
+                   @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
+                   @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked),
+                   @shift_up_transition = StateMachines::Transition.new(@object, @machine, :shift_up, :parked, :first_gear)
                  ])
   end
 
@@ -35,8 +35,9 @@ class PathWithDeepTargetTest < StateMachinesTest
   def test_should_be_able_to_walk
     paths = []
     @path.walk { |path| paths << path }
+
     assert_equal [
-                     [@ignite_transition, @park_transition, @shift_up_transition, StateMachines::Transition.new(@object, @machine, :park, :first_gear, :parked)]
-                 ], paths
+      [@ignite_transition, @park_transition, @shift_up_transition, StateMachines::Transition.new(@object, @machine, :park, :first_gear, :parked)]
+    ], paths
   end
 end

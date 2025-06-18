@@ -30,4 +30,3 @@ class MachineWithInitializeArgumentsAndBlockTest < StateMachinesTest
     assert @object.block_given
   end
 end
-

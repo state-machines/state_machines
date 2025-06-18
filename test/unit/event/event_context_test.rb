@@ -12,7 +12,7 @@ class EventContextTest < StateMachinesTest
   def test_should_evaluate_within_the_event
     scope = nil
     @event.context { scope = self }
+
     assert_equal @event, scope
   end
 end
-

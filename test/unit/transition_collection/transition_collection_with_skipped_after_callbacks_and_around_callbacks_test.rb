@@ -11,13 +11,17 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     @machine = StateMachines::Machine.new(@klass, initial: :parked)
     @machine.state :idling
     @machine.event :ignite
-    @machine.around_transition { |block| @callbacks << :around_before; block.call; @callbacks << :around_after }
+    @machine.around_transition do |block|
+      @callbacks << :around_before
+      block.call
+      @callbacks << :around_after
+    end
 
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], after: false)
+                                                             @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ], after: false)
   end
 
   def test_should_raise_exception
@@ -28,6 +32,7 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
   def test_should_succeed
     skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
     @transitions.perform
+
     assert_equal true, @transitions.perform
   end
 
@@ -35,6 +40,7 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
 
     @transitions.perform
+
     refute @callbacks.include?(:around_after)
   end
 
@@ -43,7 +49,8 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
 
     @transitions.perform
     StateMachines::TransitionCollection.new([@transition]).perform
-    assert @callbacks.include?(:around_after)
+
+    assert_includes @callbacks, :around_after
   end
 
   def test_should_not_rerun_around_callbacks_before_yield_on_subsequent_perform
@@ -52,6 +59,7 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     @transitions.perform
     @callbacks = []
     StateMachines::TransitionCollection.new([@transition]).perform
+
     refute @callbacks.include?(:around_before)
   end
 end

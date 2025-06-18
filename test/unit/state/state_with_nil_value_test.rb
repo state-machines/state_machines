@@ -27,11 +27,13 @@ class StateWithNilValueTest < StateMachinesTest
 
   def test_should_have_a_description_with_human_name
     @state.human_name = 'Parked'
+
     assert_equal 'Parked (nil)', @state.description(human_name: true)
   end
 
   def test_should_define_predicate
     object = @klass.new
-    assert object.respond_to?(:parked?)
+
+    assert_respond_to object, :parked?
   end
 end

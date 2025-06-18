@@ -20,4 +20,3 @@ class StateCollectionWithNamespaceTest < StateMachinesTest
     assert_equal @state, @states[:vehicle_parked, :qualified_name]
   end
 end
-

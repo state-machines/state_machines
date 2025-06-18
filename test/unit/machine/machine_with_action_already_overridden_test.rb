@@ -5,8 +5,7 @@ require 'test_helper'
 class MachineWithActionAlreadyOverriddenTest < StateMachinesTest
   def setup
     @superclass = Class.new do
-      def save
-      end
+      def save; end
     end
     @klass = Class.new(@superclass)
 
@@ -20,6 +19,6 @@ class MachineWithActionAlreadyOverriddenTest < StateMachinesTest
   end
 
   def test_should_mark_action_hook_as_defined
-    assert @machine.action_hook?
+    assert_predicate @machine, :action_hook?
   end
 end

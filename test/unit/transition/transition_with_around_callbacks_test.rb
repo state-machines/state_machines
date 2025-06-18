@@ -16,7 +16,11 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
   end
 
   def test_should_run_around_callbacks
-    @machine.around_transition { |_object, _transition, block| @run_before = true; block.call; @run_after = true }
+    @machine.around_transition do |_object, _transition, block|
+      @run_before = true
+      block.call
+      @run_after = true
+    end
     result = @transition.run_callbacks
 
     assert_equal true, result
@@ -26,7 +30,10 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
 
   def test_should_only_run_those_that_match_transition_context
     @count = 0
-    callback = lambda { |_object, _transition, block| @count += 1; block.call }
+    callback = lambda { |_object, _transition, block|
+      @count += 1
+      block.call
+    }
 
     @machine.around_transition from: :parked, to: :idling, on: :park, do: callback
     @machine.around_transition from: :parked, to: :parked, on: :park, do: callback
@@ -38,7 +45,11 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
   end
 
   def test_should_pass_transition_as_argument
-    @machine.around_transition { |*args| block = args.pop; @args = args; block.call }
+    @machine.around_transition do |*args|
+      block = args.pop
+      @args = args
+      block.call
+    end
     @transition.run_callbacks
 
     assert_equal [@object, @transition], @args
@@ -46,14 +57,25 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
 
   def test_should_run_block_between_callback
     @callbacks = []
-    @machine.around_transition { |block| @callbacks << :before; block.call; @callbacks << :after }
-    @transition.run_callbacks { @callbacks << :within; { success: true } }
+    @machine.around_transition do |block|
+      @callbacks << :before
+      block.call
+      @callbacks << :after
+    end
+    @transition.run_callbacks do
+      @callbacks << :within
+      { success: true }
+    end
 
-    assert_equal [:before, :within, :after], @callbacks
+    assert_equal %i[before within after], @callbacks
   end
 
   def test_should_have_access_to_result_after_yield
-    @machine.around_transition { |block| @before_result = @transition.result; block.call; @after_result = @transition.result }
+    @machine.around_transition do |block|
+      @before_result = @transition.result
+      block.call
+      @after_result = @transition.result
+    end
     @transition.run_callbacks { { result: 1, success: true } }
 
     assert_nil @before_result
@@ -64,23 +86,31 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
     @machine.around_transition { throw :halt }
 
     result = @transition.run_callbacks
+
     assert_equal false, result
   end
 
   def test_should_catch_after_yield_halts
-    @machine.around_transition { |block| block.call; throw :halt }
+    @machine.around_transition do |block|
+      block.call
+      throw :halt
+    end
 
     result = @transition.run_callbacks
+
     assert_equal true, result
   end
 
   def test_should_not_catch_before_yield
-    @machine.around_transition  { fail ArgumentError }
+    @machine.around_transition { raise ArgumentError }
     assert_raises(ArgumentError) { @transition.run_callbacks }
   end
 
   def test_should_not_catch_after_yield
-    @machine.around_transition { |block| block.call; fail ArgumentError }
+    @machine.around_transition do |block|
+      block.call
+      raise ArgumentError
+    end
     assert_raises(ArgumentError) { @transition.run_callbacks }
   end
 
@@ -88,15 +118,21 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
     @machine.around_transition {}
 
     result = @transition.run_callbacks
+
     assert_equal false, result
   end
 
   def test_should_not_be_able_to_run_twice
     @before_count = 0
     @after_count = 0
-    @machine.around_transition { |block| @before_count += 1; block.call; @after_count += 1 }
+    @machine.around_transition do |block|
+      @before_count += 1
+      block.call
+      @after_count += 1
+    end
     @transition.run_callbacks
     @transition.run_callbacks
+
     assert_equal 1, @before_count
     assert_equal 1, @after_count
   end
@@ -104,39 +140,64 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
   def test_should_be_able_to_run_again_after_resetting
     @before_count = 0
     @after_count = 0
-    @machine.around_transition { |block| @before_count += 1; block.call; @after_count += 1 }
+    @machine.around_transition do |block|
+      @before_count += 1
+      block.call
+      @after_count += 1
+    end
     @transition.run_callbacks
     @transition.reset
     @transition.run_callbacks
+
     assert_equal 2, @before_count
     assert_equal 2, @after_count
   end
 
   def test_should_succeed_if_block_result_is_false
-    @machine.around_transition { |block| @before_run = true; block.call; @after_run = true }
-    assert_equal true, @transition.run_callbacks { { success: true, result: false } }
+    @machine.around_transition do |block|
+      @before_run = true
+      block.call
+      @after_run = true
+    end
+
+    assert_equal(true, @transition.run_callbacks { { success: true, result: false } })
     assert @before_run
     assert @after_run
   end
 
   def test_should_succeed_if_block_result_is_true
-    @machine.around_transition { |block| @before_run = true; block.call; @after_run = true }
-    assert_equal true, @transition.run_callbacks { { success: true, result: true } }
+    @machine.around_transition do |block|
+      @before_run = true
+      block.call
+      @after_run = true
+    end
+
+    assert_equal(true, @transition.run_callbacks { { success: true, result: true } })
     assert @before_run
     assert @after_run
   end
 
   def test_should_only_run_before_if_block_success_is_false
     @after_run = false
-    @machine.around_transition { |block| @before_run = true; block.call; @after_run = true }
-    assert_equal true, @transition.run_callbacks { { success: false } }
+    @machine.around_transition do |block|
+      @before_run = true
+      block.call
+      @after_run = true
+    end
+
+    assert_equal(true, @transition.run_callbacks { { success: false } })
     assert @before_run
     refute @after_run
   end
 
   def test_should_succeed_if_block_success_is_false
-    @machine.around_transition { |block| @before_run = true; block.call; @after_run = true }
-    assert_equal true, @transition.run_callbacks { { success: true } }
+    @machine.around_transition do |block|
+      @before_run = true
+      block.call
+      @after_run = true
+    end
+
+    assert_equal(true, @transition.run_callbacks { { success: true } })
     assert @before_run
     assert @after_run
   end

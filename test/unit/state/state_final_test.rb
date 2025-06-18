@@ -9,7 +9,7 @@ class StateFinalTest < StateMachinesTest
   end
 
   def test_should_be_final_without_input_transitions
-    assert @state.final?
+    assert_predicate @state, :final?
   end
 
   def test_should_be_final_with_input_transitions
@@ -17,7 +17,7 @@ class StateFinalTest < StateMachinesTest
       transition idling: :parked
     end
 
-    assert @state.final?
+    assert_predicate @state, :final?
   end
 
   def test_should_be_final_with_loopback
@@ -25,6 +25,6 @@ class StateFinalTest < StateMachinesTest
       transition parked: same
     end
 
-    assert @state.final?
+    assert_predicate @state, :final?
   end
 end

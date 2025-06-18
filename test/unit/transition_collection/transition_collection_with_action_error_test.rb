@@ -6,7 +6,7 @@ class TransitionCollectionWithActionErrorTest < StateMachinesTest
   def setup
     @klass = Class.new do
       def save
-        fail ArgumentError
+        raise ArgumentError
       end
     end
     @before_count = 0
@@ -21,14 +21,18 @@ class TransitionCollectionWithActionErrorTest < StateMachinesTest
 
     @machine.before_transition { @before_count += 1 }
     @machine.after_transition { @after_count += 1 }
-    @machine.around_transition { |block| @around_before_count += 1; block.call; @around_after_count += 1 }
+    @machine.around_transition do |block|
+      @around_before_count += 1
+      block.call
+      @around_after_count += 1
+    end
     @machine.after_failure { @failure_count += 1 }
 
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ])
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ])
 
     @raised = true
     begin

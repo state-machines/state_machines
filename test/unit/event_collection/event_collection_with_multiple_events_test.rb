@@ -23,7 +23,7 @@ class EventCollectionWithMultipleEventsTest < StateMachinesTest
   def test_should_only_include_all_valid_events_for_an_object
     object = @klass.new
     object.state = 'first_gear'
+
     assert_equal [@park, @shift_down], @events.valid_for(object)
   end
 end
-

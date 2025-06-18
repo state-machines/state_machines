@@ -35,7 +35,7 @@ module StateMachines
         end
       end
 
-      def self.included(base) #:nodoc:
+      def self.included(base) # :nodoc:
         base.extend ClassMethods
       end
     end

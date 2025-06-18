@@ -6,7 +6,7 @@ module StateMachines
     # The object that failed
     attr_reader :object
 
-    def initialize(object, message = nil) #:nodoc:
+    def initialize(object, message = nil) # :nodoc:
       @object = object
 
       super(message)
@@ -49,12 +49,13 @@ module StateMachines
     # The event that was attempted to be run
     attr_reader :event
 
-    def initialize(object, event_name) #:nodoc:
+    def initialize(object, event_name) # :nodoc:
       @event = event_name
 
       super(object, "#{event.inspect} is an unknown state machine event")
     end
   end
+
   # An invalid transition was attempted
   class InvalidTransition < Error
     # The machine attempting to be transitioned
@@ -63,7 +64,7 @@ module StateMachines
     # The current state value for the machine
     attr_reader :from
 
-    def initialize(object, machine, event) #:nodoc:
+    def initialize(object, machine, event) # :nodoc:
       @machine = machine
       @from_state = machine.states.match!(object)
       @from = machine.read(object, :state)
@@ -101,7 +102,7 @@ module StateMachines
     # The set of events that failed the transition(s)
     attr_reader :events
 
-    def initialize(object, events) #:nodoc:
+    def initialize(object, events) # :nodoc:
       @events = events
 
       super(object, "Cannot run events in parallel: #{events * ', '}")

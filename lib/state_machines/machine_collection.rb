@@ -25,20 +25,24 @@ module StateMachines
     #   writing to the object.  Default is to write directly to the object.
     def initialize_states(object, options = {}, attributes = {})
       StateMachines::OptionsValidator.assert_valid_keys!(options, :static, :dynamic, :to)
-      options = {static: true, dynamic: true}.merge(options)
+      options = { static: true, dynamic: true }.merge(options)
 
       result = yield if block_given?
 
-      each_value do |machine|
-        unless machine.dynamic_initial_state?
-          force = options[:static] == :force || !attributes.keys.map(&:to_sym).include?(machine.attribute)
-          machine.initialize_state(object, force: force, to: options[:to])
+      if options[:static]
+        each_value do |machine|
+          unless machine.dynamic_initial_state?
+            force = options[:static] == :force || !attributes.keys.map(&:to_sym).include?(machine.attribute)
+            machine.initialize_state(object, force: force, to: options[:to])
+          end
         end
-      end if options[:static]
+      end
 
-      each_value do |machine|
-        machine.initialize_state(object, force: options[:dynamic] == :force, to: options[:to]) if machine.dynamic_initial_state?
-      end if options[:dynamic]
+      if options[:dynamic]
+        each_value do |machine|
+          machine.initialize_state(object, force: options[:dynamic] == :force, to: options[:to]) if machine.dynamic_initial_state?
+        end
+      end
 
       result
     end
@@ -52,7 +56,7 @@ module StateMachines
       transitions = events.collect do |event_name|
         # Find the actual event being run
         event = nil
-        detect { |name, machine| event = machine.events[event_name, :qualified_name] }
+        detect { |_name, machine| event = machine.events[event_name, :qualified_name] }
 
         raise(InvalidEvent.new(object, event_name)) unless event
 
@@ -66,7 +70,7 @@ module StateMachines
       # Run the events in parallel only if valid transitions were found for
       # all of them
       if events.length == transitions.length
-        TransitionCollection.new(transitions, {use_transactions: resolve_use_transactions, actions: run_action}).perform
+        TransitionCollection.new(transitions, { use_transactions: resolve_use_transactions, actions: run_action }).perform
       else
         false
       end
@@ -78,14 +82,14 @@ module StateMachines
     #
     # These should only be fired as a result of the action being run.
     def transitions(object, action, options = {})
-      transitions = map do |name, machine|
+      transitions = map do |_name, machine|
         machine.events.attribute_transition_for(object, true) if machine.action == action
       end
 
-      AttributeTransitionCollection.new(transitions.compact, {use_transactions: resolve_use_transactions}.merge(options))
+      AttributeTransitionCollection.new(transitions.compact, { use_transactions: resolve_use_transactions }.merge(options))
     end
 
-  protected
+    protected
 
     def resolve_use_transactions
       use_transactions = nil

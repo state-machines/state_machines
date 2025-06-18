@@ -5,8 +5,7 @@ require 'test_helper'
 class TransitionWithActionTest < StateMachinesTest
   def setup
     @klass = Class.new do
-      def save
-      end
+      def save; end
     end
 
     @machine = StateMachines::Machine.new(@klass, action: :save)

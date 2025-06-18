@@ -22,9 +22,9 @@ class TransitionCollectionWithBlockTest < StateMachinesTest
 
     @object = @klass.new
     @transitions = StateMachines::TransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
-      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
-    ])
+                                                             @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
+                                                             @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
+                                                           ])
     @result = @transitions.perform { 1 }
   end
 

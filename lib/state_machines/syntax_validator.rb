@@ -48,6 +48,7 @@ module StateMachines
           # Ripper.sexp returns nil on a parse error, but no exception
           raise SyntaxError, "syntax error in #{filename}"
         end
+
         true
       end
       module_function :validate!

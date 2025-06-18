@@ -24,12 +24,17 @@ class TransitionWithoutCallbacksTest < StateMachinesTest
   end
 
   def test_should_call_block_if_provided
-    @transition.run_callbacks { @ran_block = true; {} }
+    @transition.run_callbacks do
+      @ran_block = true
+      {}
+    end
+
     assert @ran_block
   end
 
   def test_should_track_block_result
     @transition.run_callbacks { { result: 1 } }
+
     assert_equal 1, @transition.result
   end
 end

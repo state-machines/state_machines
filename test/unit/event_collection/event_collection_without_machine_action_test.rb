@@ -17,4 +17,3 @@ class EventCollectionWithoutMachineActionTest < StateMachinesTest
     assert_nil @events.attribute_transition_for(@object)
   end
 end
-

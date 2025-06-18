@@ -6,10 +6,10 @@ class MachineAfterBeingCopiedTest < StateMachinesTest
   def setup
     @machine = StateMachines::Machine.new(Class.new, :state, initial: :parked)
     @machine.event(:ignite) {}
-    @machine.before_transition(lambda {})
-    @machine.after_transition(lambda {})
-    @machine.around_transition(lambda {})
-    @machine.after_failure(lambda {})
+    @machine.before_transition(-> {})
+    @machine.after_transition(-> {})
+    @machine.around_transition(-> {})
+    @machine.after_failure(-> {})
 
     @copied_machine = @machine.clone
   end

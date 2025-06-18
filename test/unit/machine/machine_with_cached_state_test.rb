@@ -19,4 +19,3 @@ class MachineWithCachedStateTest < StateMachinesTest
     assert_equal @object.state, @klass.new.state
   end
 end
-

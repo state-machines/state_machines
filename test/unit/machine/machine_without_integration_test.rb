@@ -30,4 +30,3 @@ class MachineWithoutIntegrationTest < StateMachinesTest
     assert_equal '', @machine.errors_for(@object)
   end
 end
-

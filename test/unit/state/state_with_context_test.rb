@@ -43,11 +43,11 @@ class StateWithContextTest < StateMachinesTest
   end
 
   def test_should_define_each_context_method_in_owner_class
-    %w(speed rpm).each { |method| assert @klass.method_defined?(method) }
+    %w[speed rpm].each { |method| assert @klass.method_defined?(method) }
   end
 
   def test_should_define_aliased_context_method_in_owner_class
-    %w(speed rpm).each { |method| assert @klass.method_defined?("__state_idling_#{method}_#{@context.object_id}__") }
+    %w[speed rpm].each { |method| assert @klass.method_defined?("__state_idling_#{method}_#{@context.object_id}__") }
   end
 
   def test_should_not_use_context_methods_as_owner_class_methods

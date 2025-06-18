@@ -15,6 +15,6 @@ class TransitionLoopbackTest < StateMachinesTest
   end
 
   def test_should_be_loopback
-    assert @transition.loopback?
+    assert_predicate @transition, :loopback?
   end
 end

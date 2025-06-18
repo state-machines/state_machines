@@ -26,6 +26,6 @@ class CallbackWithMultipleMethodArgumentsTest < StateMachinesTest
   end
 
   def test_should_call_each_callback_in_order
-    assert_equal [:run_1, :run_2], @object.callbacks
+    assert_equal %i[run_1 run_2], @object.callbacks
   end
 end

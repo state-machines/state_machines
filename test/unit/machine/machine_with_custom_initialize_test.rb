@@ -21,6 +21,7 @@ class MachineWithCustomInitializeTest < StateMachinesTest
   def test_should_allow_custom_options
     @machine.state :idling
     @object = @klass.new('idling', static: :force)
+
     assert_equal 'parked', @object.state
   end
 end

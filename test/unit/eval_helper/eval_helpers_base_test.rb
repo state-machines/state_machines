@@ -5,6 +5,5 @@ require 'test_helper'
 class EvalHelpersBaseTest < StateMachinesTest
   include StateMachines::EvalHelpers
 
-  def default_test
-  end
+  def default_test; end
 end

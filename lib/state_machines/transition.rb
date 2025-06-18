@@ -33,11 +33,11 @@ module StateMachines
     # Determines whether the current ruby implementation supports pausing and
     # resuming transitions
     def self.pause_supported?
-      %w(ruby maglev).include?(RUBY_ENGINE)
+      %w[ruby maglev].include?(RUBY_ENGINE)
     end
 
     # Creates a new, specific transition
-    def initialize(object, machine, event, from_name, to_name, read_state = true) #:nodoc:
+    def initialize(object, machine, event, from_name, to_name, read_state = true) # :nodoc:
       @object = object
       @machine = machine
       @args = []
@@ -136,7 +136,7 @@ module StateMachines
     #   transition = StateMachines::Transition.new(Vehicle.new, machine, :ignite, :parked, :idling)
     #   transition.attributes   # => {:object => #<Vehicle:0xb7d60ea4>, :attribute => :state, :event => :ignite, :from => 'parked', :to => 'idling'}
     def attributes
-      @attributes ||= {object: object, attribute: attribute, event: event, from: from, to: to}
+      @attributes ||= { object: object, attribute: attribute, event: event, from: from, to: to }
     end
 
     # Runs the actual transition and any before/after callbacks associated
@@ -162,16 +162,14 @@ module StateMachines
       self.args = args
 
       # Run the transition
-      !!TransitionCollection.new([self], {use_transactions: machine.use_transactions, actions: run_action}).perform
+      !!TransitionCollection.new([self], { use_transactions: machine.use_transactions, actions: run_action }).perform
     end
 
     # Runs a block within a transaction for the object being transitioned.
     # By default, transactions are a no-op unless otherwise defined by the
     # machine's integration.
-    def within_transaction
-      machine.within_transaction(object) do
-        yield
-      end
+    def within_transaction(&)
+      machine.within_transaction(object, &)
     end
 
     # Runs the before / after callbacks for this transition.  If a block is
@@ -186,7 +184,7 @@ module StateMachines
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
     def run_callbacks(options = {}, &block)
-      options = {before: true, after: true}.merge(options)
+      options = { before: true, after: true }.merge(options)
       @success = false
 
       halted = pausable { before(options[:after], &block) } if options[:before]
@@ -219,10 +217,10 @@ module StateMachines
     #
     #   vehicle.state   # => 'idling'
     def persist
-      unless @persisted
-        machine.write(object, :state, to)
-        @persisted = true
-      end
+      return if @persisted
+
+      machine.write(object, :state, to)
+      @persisted = true
     end
 
     # Rolls back changes made to the object's state via this transition.  This
@@ -265,11 +263,11 @@ module StateMachines
     # and event involved in the transition are equal
     def ==(other)
       other.instance_of?(self.class) &&
-      other.object == object &&
-      other.machine == machine &&
-      other.from_name == from_name &&
-      other.to_name == to_name &&
-      other.event == event
+        other.object == object &&
+        other.machine == machine &&
+        other.from_name == from_name &&
+        other.to_name == to_name &&
+        other.event == event
     end
 
     # Generates a nicely formatted description of this transitions's contents.
@@ -279,10 +277,10 @@ module StateMachines
     #   transition = StateMachines::Transition.new(object, machine, :ignite, :parked, :idling)
     #   transition   # => #<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>
     def inspect
-      "#<#{self.class} #{%w(attribute event from from_name to to_name).map { |attr| "#{attr}=#{send(attr).inspect}" } * ' '}>"
+      "#<#{self.class} #{%w[attribute event from from_name to to_name].map { |attr| "#{attr}=#{send(attr).inspect}" } * ' '}>"
     end
 
-  private
+    private
 
     # Runs a block that may get paused.  If the block doesn't pause, then
     # execution will continue as normal.  If the block gets paused, then it
@@ -292,13 +290,16 @@ module StateMachines
     # getting paused.
     def pausable
       begin
-        halted = !catch(:halt) { yield; true }
-      rescue => error
+        halted = !catch(:halt) do
+          yield
+          true
+        end
+      rescue StandardError => e
         raise unless @resume_block
       end
 
       if @resume_block
-        @resume_block.call(halted, error)
+        @resume_block.call(halted, e)
       else
         halted
       end
@@ -310,12 +311,12 @@ module StateMachines
     def pause
       raise ArgumentError, 'around_transition callbacks cannot be called in multiple execution contexts in java implementations of Ruby. Use before/after_transitions instead.' unless self.class.pause_supported?
 
-      unless @resume_block
-        require 'continuation' unless defined?(callcc)
-        callcc do |block|
-          @paused_block = block
-          throw :halt, true
-        end
+      return if @resume_block
+
+      require 'continuation' unless defined?(callcc)
+      callcc do |block|
+        @paused_block = block
+        throw :halt, true
       end
     end
 
@@ -372,8 +373,9 @@ module StateMachines
         @before_run = true
       end
 
-      action = {success: true}.merge(block_given? ? yield : {})
-      @result, @success = action[:result], action[:success]
+      action = { success: true }.merge(block_given? ? yield : {})
+      @result = action[:result]
+      @success = action[:success]
     end
 
     # Runs the machine's +after+ callbacks for this transition.  Only
@@ -390,17 +392,17 @@ module StateMachines
     # exception will not bubble up to the caller since +after+ callbacks
     # should never halt the execution of a +perform+.
     def after
-      unless @after_run
-        # First resume previously paused callbacks
-        if resume
-          catch(:halt) do
-            type = @success ? :after : :failure
-            machine.callbacks[type].each { |callback| callback.call(object, context, self) }
-          end
-        end
+      return if @after_run
 
-        @after_run = true
+      # First resume previously paused callbacks
+      if resume
+        catch(:halt) do
+          type = @success ? :after : :failure
+          machine.callbacks[type].each { |callback| callback.call(object, context, self) }
+        end
       end
+
+      @after_run = true
     end
 
     # Gets a hash of the context defining this unique transition (including
@@ -412,7 +414,7 @@ module StateMachines
     #   transition = StateMachines::Transition.new(Vehicle.new, machine, :ignite, :parked, :idling)
     #   transition.context    # => {:on => :ignite, :from => :parked, :to => :idling}
     def context
-      @context ||= {on: event, from: from_name, to: to_name}
+      @context ||= { on: event, from: from_name, to: to_name }
     end
   end
 end

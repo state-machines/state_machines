@@ -17,4 +17,3 @@ class MachineWithStatesWithCustomHumanNamesTest < StateMachinesTest
     assert_equal 'stopped', @klass.human_state_name(:parked)
   end
 end
-

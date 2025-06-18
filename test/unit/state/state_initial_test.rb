@@ -10,6 +10,6 @@ class StateInitialTest < StateMachinesTest
 
   def test_should_be_initial
     assert @state.initial
-    assert @state.initial?
+    assert_predicate @state, :initial?
   end
 end

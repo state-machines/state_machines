@@ -13,9 +13,12 @@ class TransitionCollectionWithSkippedActionsAndBlockTest < StateMachinesTest
     @object = @klass.new
 
     @transitions = StateMachines::TransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], actions: false)
-    @result = @transitions.perform { @ran_block = true; 1 }
+                                                             @state_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ], actions: false)
+    @result = @transitions.perform do
+      @ran_block = true
+      1
+    end
   end
 
   def test_should_succeed

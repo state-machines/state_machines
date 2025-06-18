@@ -9,7 +9,7 @@ class MachineWithEventMatchersTest < StateMachinesTest
   end
 
   def test_should_empty_array_for_all_matcher
-    assert_equal [], @machine.event(StateMachines::AllMatcher.instance)
+    assert_empty @machine.event(StateMachines::AllMatcher.instance)
   end
 
   def test_should_return_referenced_events_for_blacklist_matcher
@@ -25,10 +25,10 @@ class MachineWithEventMatchersTest < StateMachinesTest
     assert_equal expected_message, exception.message
   end
 
-
   def test_should_track_referenced_events
     @machine.event(StateMachines::BlacklistMatcher.new([:park]))
-    assert_equal [:park], @machine.events.map { |event| event.name }
+
+    assert_equal([:park], @machine.events.map { |event| event.name })
   end
 
   def test_should_eval_context_for_matching_events
@@ -36,13 +36,15 @@ class MachineWithEventMatchersTest < StateMachinesTest
     @machine.event(StateMachines::BlacklistMatcher.new([:park])) { contexts_run << name }
 
     @machine.event :park
-    assert_equal [], contexts_run
+
+    assert_empty contexts_run
 
     @machine.event :ignite
+
     assert_equal [:ignite], contexts_run
 
     @machine.event :shift_up, :shift_down
-    assert_equal [:ignite, :shift_up, :shift_down], contexts_run
+
+    assert_equal %i[ignite shift_up shift_down], contexts_run
   end
 end
-

@@ -17,14 +17,17 @@ class AttributeTransitionCollectionWithCallbacksTest < StateMachinesTest
     @object = @klass.new
 
     @transitions = StateMachines::AttributeTransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
-      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
-    ])
+                                                                      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
+                                                                      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
+                                                                    ])
   end
 
   def test_should_not_have_events_during_before_callbacks
     @state.before_transition { |object, _transition| @before_state_event = object.state_event }
-    @state.around_transition { |object, _transition, block| @around_state_event = object.state_event; block.call }
+    @state.around_transition do |object, _transition, block|
+      @around_state_event = object.state_event
+      block.call
+    end
     @transitions.perform
 
     assert_nil @before_state_event
@@ -39,7 +42,10 @@ class AttributeTransitionCollectionWithCallbacksTest < StateMachinesTest
 
   def test_should_not_have_events_during_after_callbacks
     @state.after_transition { |object, _transition| @after_state_event = object.state_event }
-    @state.around_transition { |object, _transition, block| block.call; @around_state_event = object.state_event }
+    @state.around_transition do |object, _transition, block|
+      block.call
+      @around_state_event = object.state_event
+    end
     @transitions.perform
 
     assert_nil @after_state_event
@@ -61,7 +67,10 @@ class AttributeTransitionCollectionWithCallbacksTest < StateMachinesTest
 
   def test_should_not_have_event_transitions_during_after_callbacks
     @state.after_transition { |object, _transition| @after_state_event_transition = object.send(:state_event_transition) }
-    @state.around_transition { |object, _transition, block| block.call; @around_state_event_transition = object.send(:state_event_transition) }
+    @state.around_transition do |object, _transition, block|
+      block.call
+      @around_state_event_transition = object.send(:state_event_transition)
+    end
     @transitions.perform
 
     assert_nil @after_state_event_transition

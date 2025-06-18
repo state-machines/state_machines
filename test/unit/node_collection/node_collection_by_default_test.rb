@@ -19,6 +19,7 @@ class NodeCollectionByDefaultTest < StateMachinesTest
 
   def test_should_index_by_name
     @collection << object = Node.new(:parked)
+
     assert_equal object, @collection[:parked]
   end
 end

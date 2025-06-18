@@ -37,16 +37,16 @@ class ModernCallbackApiTest < StateMachinesTest
         before_transition do |object, transition|
           case [transition.from_name, transition.to_name, transition.event]
           when %i[draft pending submit]
-            object.submitted_at = Time.zone.now
+            object.submitted_at = Time.now
             object.callback_log << 'submitting for review'
           when %i[pending approved approve]
-            object.approved_at = Time.zone.now
+            object.approved_at = Time.now
             object.callback_log << 'approving submission'
           when %i[pending rejected reject]
-            object.rejected_at = Time.zone.now
+            object.rejected_at = Time.now
             object.callback_log << 'rejecting submission'
           when %i[approved published publish]
-            object.published_at = Time.zone.now
+            object.published_at = Time.now
             object.callback_log << 'publishing content'
           else
             object.callback_log << "transition: #{transition.from} -> #{transition.to} via #{transition.event}"
@@ -69,11 +69,11 @@ class ModernCallbackApiTest < StateMachinesTest
         # Modern keyword style with multiple conditions
         around_transition(from: :pending, on: %i[approve reject]) do |object, _transition, block|
           object.callback_log << 'starting review process'
-          start_time = Time.zone.now
+          start_time = Time.now
 
           block.call # Execute the transition
 
-          duration = Time.zone.now - start_time
+          duration = Time.now - start_time
           object.callback_log << "review completed in #{duration.round(2)} seconds"
         end
       end
@@ -113,7 +113,7 @@ class ModernCallbackApiTest < StateMachinesTest
     assert_includes @workflow.callback_log, 'submitting for review'
     assert_includes @workflow.callback_log, 'notifying stakeholders'
     assert_includes @workflow.callback_log, 'status changed to pending'
-    assert_not_nil @workflow.submitted_at
+    refute_nil @workflow.submitted_at
   end
 
   def test_should_support_pattern_matching_in_callbacks
@@ -126,7 +126,7 @@ class ModernCallbackApiTest < StateMachinesTest
     assert_includes @workflow.callback_log, 'approving submission'
     assert_includes @workflow.callback_log, 'starting review process'
     assert(@workflow.callback_log.any? { |log| log.start_with?('review completed in') })
-    assert_not_nil @workflow.approved_at
+    refute_nil @workflow.approved_at
   end
 
   def test_should_support_mixed_callback_styles
@@ -137,7 +137,7 @@ class ModernCallbackApiTest < StateMachinesTest
     assert_equal 'published', @workflow.status
     assert_includes @workflow.callback_log, 'publishing content'
     assert_includes @workflow.callback_log, 'sending publication notifications'
-    assert_not_nil @workflow.published_at
+    refute_nil @workflow.published_at
   end
 
   def test_should_maintain_backward_compatibility_with_legacy_callbacks

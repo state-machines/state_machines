@@ -20,8 +20,8 @@ class TransitionCollectionWithoutTransactionsTest < StateMachinesTest
 
     @object = @klass.new
     @transitions = StateMachines::TransitionCollection.new([
-      StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-    ], use_transactions: false)
+                                                             StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
+                                                           ], use_transactions: false)
     @transitions.perform
   end
 

@@ -18,7 +18,7 @@ class MachineCollectionTransitionsWithInvalidEventsTest < StateMachinesTest
   end
 
   def test_should_be_empty
-    assert @transitions.empty?
+    assert_empty @transitions
   end
 
   def test_should_not_perform

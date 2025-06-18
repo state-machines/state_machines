@@ -17,7 +17,7 @@ class MachineWithEventsWithTransitionsTest < StateMachinesTest
   end
 
   def test_should_track_states_defined_in_event_transitions
-    assert_equal [:parked, :idling, :stalled], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling stalled], @machine.states.map { |state| state.name })
   end
 
   def test_should_not_duplicate_states_defined_in_multiple_event_transitions
@@ -25,7 +25,7 @@ class MachineWithEventsWithTransitionsTest < StateMachinesTest
       transition idling: :parked
     end
 
-    assert_equal [:parked, :idling, :stalled], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling stalled], @machine.states.map { |state| state.name })
   end
 
   def test_should_track_state_from_new_events
@@ -33,7 +33,6 @@ class MachineWithEventsWithTransitionsTest < StateMachinesTest
       transition idling: :first_gear
     end
 
-    assert_equal [:parked, :idling, :stalled, :first_gear], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling stalled first_gear], @machine.states.map { |state| state.name })
   end
 end
-

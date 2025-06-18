@@ -24,12 +24,13 @@ class EventWithMachineActionTest < StateMachinesTest
 
   def test_should_run_action_on_fire
     @event.fire(@object)
+
     assert @object.saved
   end
 
   def test_should_not_run_action_if_configured_to_skip
     @event.fire(@object, false)
+
     refute @object.saved
   end
 end
-

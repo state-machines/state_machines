@@ -19,6 +19,7 @@ class TrafficLightStopTest < Minitest::Test
 
   def test_should_pass_block_through
     color = @light.color { |value| value.upcase! }
+
     assert_equal 'RED', color
   end
 

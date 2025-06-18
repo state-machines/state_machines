@@ -15,7 +15,7 @@ class VehicleThirdGearTest < Minitest::Test
   end
 
   def test_should_be_third_gear
-    assert @vehicle.third_gear?
+    assert_predicate @vehicle, :third_gear?
   end
 
   def test_should_not_allow_park

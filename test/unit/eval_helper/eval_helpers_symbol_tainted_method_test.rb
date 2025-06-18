@@ -3,7 +3,7 @@
 require 'test_helper'
 require 'unit/eval_helper/eval_helpers_base_test'
 
-if Gem::Version.new(RUBY_VERSION) < Gem::Version.new("3.2")
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.2')
 
   class EvalHelpersSymbolTaintedMethodTest < EvalHelpersBaseTest
     def setup

@@ -10,11 +10,11 @@ class MachineWithActionUndefinedTest < StateMachinesTest
   end
 
   def test_should_define_an_event_attribute_reader
-    assert @object.respond_to?(:state_event)
+    assert_respond_to @object, :state_event
   end
 
   def test_should_define_an_event_attribute_writer
-    assert @object.respond_to?(:state_event=)
+    assert_respond_to @object, :state_event=
   end
 
   def test_should_define_an_event_transition_attribute_reader

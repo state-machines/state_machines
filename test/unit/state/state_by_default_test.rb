@@ -38,6 +38,7 @@ class StateByDefaultTest < StateMachinesTest
 
   def test_should_not_have_any_methods
     expected = {}
+
     assert_equal expected, @state.context_methods
   end
 end

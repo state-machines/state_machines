@@ -5,7 +5,6 @@ require_relative 'options_validator'
 module StateMachines
   # Represents a collection of transitions in a state machine
   class TransitionCollection < Array
-
     # Whether to skip running the action for each transition's machine
     attr_reader :skip_actions
 
@@ -30,10 +29,10 @@ module StateMachines
       reject! { |transition| !transition }
 
       attributes = map { |transition| transition.attribute }.uniq
-      fail ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
+      raise ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
       StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions)
-      options = {actions: true, after: true, use_transactions: true}.merge(options)
+      options = { actions: true, after: true, use_transactions: true }.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
       @use_transactions = options[:use_transactions]
@@ -76,11 +75,11 @@ module StateMachines
       end
     end
 
-  protected
+    protected
 
-    attr_reader :results #:nodoc:
+    attr_reader :results # :nodoc:
 
-  private
+    private
 
     # Is this a valid set of transitions?  If the collection was creating with
     # any +false+ values for transitions, then the the collection will be
@@ -131,7 +130,7 @@ module StateMachines
       if transition = self[index]
         throw :halt unless transition.run_callbacks(after: !skip_after) do
           run_callbacks(index + 1, &block)
-          {result: results[transition.action], success: success?}
+          { result: results[transition.action], success: success? }
         end
       else
         persist
@@ -152,13 +151,13 @@ module StateMachines
     def run_actions
       catch_exceptions do
         @success = if block_given?
-          result = yield
-          actions.each { |action| results[action] = result }
-          !!result
-        else
-          actions.compact.each { |action| !skip_actions && (results[action] = object.send(action)) }
-          results.values.all?
-        end
+                     result = yield
+                     actions.each { |action| results[action] = result }
+                     !!result
+                   else
+                     actions.compact.each { |action| !skip_actions && (results[action] = object.send(action)) }
+                     results.values.all?
+                   end
       end
     end
 
@@ -171,12 +170,10 @@ module StateMachines
     # occur will automatically result in the transition rolling back any changes
     # that were made to the object involved.
     def catch_exceptions
-      begin
-        yield
-      rescue
-        rollback
-        raise
-      end
+      yield
+    rescue StandardError
+      rollback
+      raise
     end
 
     # Runs a block within a transaction for the object being transitioned.  If
@@ -196,11 +193,11 @@ module StateMachines
   # Represents a collection of transitions that were generated from attribute-
   # based events
   class AttributeTransitionCollection < TransitionCollection
-    def initialize(transitions = [], options = {}) #:nodoc:
-      super(transitions, {use_transactions: false, actions: false}.merge(options))
+    def initialize(transitions = [], options = {}) # :nodoc:
+      super(transitions, { use_transactions: false, actions: false }.merge(options))
     end
 
-  private
+    private
 
     # Hooks into running transition callbacks so that event / event transition
     # attributes can be properly updated
@@ -216,9 +213,9 @@ module StateMachines
         # Rollback only if exceptions occur during before callbacks
         begin
           super
-        rescue
+        rescue StandardError
           rollback unless @before_run
-          @success = nil  # mimics ActiveRecord.save behavior on rollback
+          @success = nil # mimics ActiveRecord.save behavior on rollback
           raise
         end
 

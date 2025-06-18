@@ -6,7 +6,6 @@ module StateMachines
   # Represents a collection of paths that are generated based on a set of
   # requirements regarding what states to start and end on
   class PathCollection < Array
-
     # The object whose state machine is being walked
     attr_reader :object
 
@@ -28,7 +27,7 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one
     def initialize(object, machine, options = {})
-      options = {deep: false, from: machine.states.match!(object).name}.merge(options)
+      options = { deep: false, from: machine.states.match!(object).name }.merge(options)
       StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :deep, :guard)
 
       @object = object
@@ -71,7 +70,7 @@ module StateMachines
       flat_map(&:events).uniq
     end
 
-  private
+    private
 
     # Gets the initial set of paths to walk
     def initial_paths

@@ -13,7 +13,7 @@ Rake::TestTask.new(:unit) do |t|
 end
 
 desc 'Default: run all tests.'
-task test: [:unit, :functional]
+task test: %i[unit functional]
 task default: :test
 
 desc 'Update COSS version to match current gem version'

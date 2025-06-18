@@ -5,7 +5,7 @@ require 'test_helper'
 class BranchWithOnMatcherRequirementTest < StateMachinesTest
   def setup
     @object = Object.new
-    @branch = StateMachines::Branch.new(on: StateMachines::BlacklistMatcher.new([:ignite, :park]))
+    @branch = StateMachines::Branch.new(on: StateMachines::BlacklistMatcher.new(%i[ignite park]))
   end
 
   def test_should_match_if_included

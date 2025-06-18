@@ -19,18 +19,18 @@ class EventWithNamespaceTest < StateMachinesTest
   end
 
   def test_should_namespace_predicate
-    assert @object.respond_to?(:can_enable_alarm?)
+    assert_respond_to @object, :can_enable_alarm?
   end
 
   def test_should_namespace_transition_accessor
-    assert @object.respond_to?(:enable_alarm_transition)
+    assert_respond_to @object, :enable_alarm_transition
   end
 
   def test_should_namespace_action
-    assert @object.respond_to?(:enable_alarm)
+    assert_respond_to @object, :enable_alarm
   end
 
   def test_should_namespace_bang_action
-    assert @object.respond_to?(:enable_alarm!)
+    assert_respond_to @object, :enable_alarm!
   end
 end

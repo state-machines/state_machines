@@ -37,6 +37,10 @@ class EventCollectionWithValidationsTest < StateMachinesTest
     @object = @klass.new
   end
 
+  def teardown
+    StateMachines::Integrations.reset
+  end
+
   def test_should_invalidate_if_invalid_event_specified
     @object.state_event = 'invalid'
     @events.attribute_transition_for(@object, true)
@@ -66,11 +70,6 @@ class EventCollectionWithValidationsTest < StateMachinesTest
     @object.state_event = 'ignite'
     @events.attribute_transition_for(@object, true)
 
-    assert_equal [], @object.errors
-  end
-
-  def teardown
-    StateMachines::Integrations.reset
+    assert_empty @object.errors
   end
 end
-

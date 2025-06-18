@@ -6,7 +6,7 @@ class MachineWithInitializeAndSuperTest < StateMachinesTest
   def setup
     @klass = Class.new do
       def initialize
-        super()
+        super
       end
     end
     @machine = StateMachines::Machine.new(@klass, initial: :parked)

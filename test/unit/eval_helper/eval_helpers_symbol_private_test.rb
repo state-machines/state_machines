@@ -7,6 +7,7 @@ class EvalHelpersSymbolPrivateTest < EvalHelpersBaseTest
   def setup
     class << (@object = Object.new)
       private
+
       def callback
         true
       end

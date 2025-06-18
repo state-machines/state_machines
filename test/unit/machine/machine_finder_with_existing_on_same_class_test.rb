@@ -22,4 +22,3 @@ class MachineFinderWithExistingOnSameClassTest < StateMachinesTest
     assert_same @machine, @existing_machine
   end
 end
-

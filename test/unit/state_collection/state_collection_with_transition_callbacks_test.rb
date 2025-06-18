@@ -11,11 +11,12 @@ class StateCollectionWithTransitionCallbacksTest < StateMachinesTest
     @states << @idling = StateMachines::State.new(@machine, :idling)
     @machine.states.concat(@states)
 
-    @machine.before_transition to: :idling, do: lambda {}
+    @machine.before_transition to: :idling, do: -> {}
   end
 
   def test_should_order_states_after_initial_state
     @parked.initial = true
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
@@ -23,6 +24,7 @@ class StateCollectionWithTransitionCallbacksTest < StateMachinesTest
     @machine.event :ignite do
       transition from: :parked
     end
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
@@ -32,6 +34,7 @@ class StateCollectionWithTransitionCallbacksTest < StateMachinesTest
         0
       end
     end
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
@@ -39,4 +42,3 @@ class StateCollectionWithTransitionCallbacksTest < StateMachinesTest
     assert_equal [@parked, @idling], @states.by_priority
   end
 end
-

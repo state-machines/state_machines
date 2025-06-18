@@ -38,17 +38,20 @@ class MotorcycleTest < Minitest::Test
 
   def test_should_inherit_decibels_from_superclass
     @motorcycle.park
-    assert_equal 0.0, @motorcycle.decibels
+
+    assert_in_delta(0.0, @motorcycle.decibels)
   end
 
   def test_should_use_decibels_defined_in_state
     @motorcycle.shift_up
-    assert_equal 1.0, @motorcycle.decibels
+
+    assert_in_delta(1.0, @motorcycle.decibels)
   end
 
   def test_should_not_inherit_from_superclass_if_value_is_set
     vehicle = Vehicle.new
     @motorcycle.shift_up
-    assert_equal 0.0, vehicle.decibels
+
+    assert_in_delta(0.0, vehicle.decibels)
   end
 end

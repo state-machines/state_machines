@@ -22,38 +22,38 @@ class MachineWithCustomNameTest < StateMachinesTest
   end
 
   def test_should_define_a_reader_attribute_for_the_attribute
-    assert @object.respond_to?(:status)
+    assert_respond_to @object, :status
   end
 
   def test_should_define_a_writer_attribute_for_the_attribute
-    assert @object.respond_to?(:status=)
+    assert_respond_to @object, :status=
   end
 
   def test_should_define_a_predicate_for_the_attribute
-    assert @object.respond_to?(:status?)
+    assert_respond_to @object, :status?
   end
 
   def test_should_define_a_name_reader_for_the_attribute
-    assert @object.respond_to?(:status_name)
+    assert_respond_to @object, :status_name
   end
 
   def test_should_define_an_event_reader_for_the_attribute
-    assert @object.respond_to?(:status_events)
+    assert_respond_to @object, :status_events
   end
 
   def test_should_define_a_transition_reader_for_the_attribute
-    assert @object.respond_to?(:status_transitions)
+    assert_respond_to @object, :status_transitions
   end
 
   def test_should_define_an_event_runner_for_the_attribute
-    assert @object.respond_to?(:fire_status_event)
+    assert_respond_to @object, :fire_status_event
   end
 
   def test_should_define_a_human_attribute_name_reader_for_the_attribute
-    assert @klass.respond_to?(:human_status_name)
+    assert_respond_to @klass, :human_status_name
   end
 
   def test_should_define_a_human_event_name_reader_for_the_attribute
-    assert @klass.respond_to?(:human_status_event_name)
+    assert_respond_to @klass, :human_status_event_name
   end
 end

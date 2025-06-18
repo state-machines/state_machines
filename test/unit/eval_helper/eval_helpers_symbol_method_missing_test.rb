@@ -6,8 +6,8 @@ require 'unit/eval_helper/eval_helpers_base_test'
 class EvalHelpersSymbolMethodMissingTest < EvalHelpersBaseTest
   def setup
     class << (@object = Object.new)
-      def method_missing(symbol, *args)
-        send("method_missing_#{symbol}", *args)
+      def method_missing(symbol, *)
+        send("method_missing_#{symbol}", *)
       end
 
       def method_missing_callback(*args)

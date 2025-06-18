@@ -124,7 +124,7 @@ module StateMachines
     # callback can be found in their attribute definitions.
     def initialize(type, *args, &block)
       @type = type
-      raise ArgumentError, 'Type must be :before, :after, :around, or :failure' unless [:before, :after, :around, :failure].include?(type)
+      raise ArgumentError, 'Type must be :before, :after, :around, or :failure' unless %i[before after around failure].include?(type)
 
       options = args.last.is_a?(Hash) ? args.pop : {}
       @methods = args
@@ -132,7 +132,7 @@ module StateMachines
       @methods << block if block_given?
       raise ArgumentError, 'Method(s) for callback must be specified' unless @methods.any?
 
-      options = {bind_to_object: self.class.bind_to_object, terminator: self.class.terminator}.merge(options)
+      options = { bind_to_object: self.class.bind_to_object, terminator: self.class.terminator }.merge(options)
 
       # Proxy lambda blocks so that they're bound to the object
       bind_to_object = options.delete(:bind_to_object)
@@ -156,16 +156,16 @@ module StateMachines
     #
     # If a terminator has been configured and it matches the result from the
     # evaluated method, then the callback chain should be halted.
-    def call(object, context = {}, *args, &block)
+    def call(object, context = {}, *, &)
       if @branch.matches?(object, context)
-        run_methods(object, context, 0, *args, &block)
+        run_methods(object, context, 0, *, &)
         true
       else
         false
       end
     end
 
-  private
+    private
 
     # Runs all of the methods configured for this callback.
     #
@@ -179,7 +179,7 @@ module StateMachines
     def run_methods(object, context = {}, index = 0, *args, &block)
       if type == :around
         current_method = @methods[index]
-        if  current_method
+        if current_method
           yielded = false
           evaluate_method(object, current_method, *args) do
             yielded = true
@@ -187,8 +187,8 @@ module StateMachines
           end
 
           throw :halt unless yielded
-        else
-          yield if block_given?
+        elsif block_given?
+          yield
         end
       else
         @methods.each do |method|
@@ -206,13 +206,12 @@ module StateMachines
       arity += 1 if arity >= 0 # Make sure the object gets passed
       arity += 1 if arity == 1 && type == :around # Make sure the block gets passed
 
-      method = lambda { |object, *args| object.instance_exec(*args, &block) }
-
+      method = ->(object, *args) { object.instance_exec(*args, &block) }
 
       # Proxy arity to the original block
       (
-      class << method;
-        self;
+      class << method
+        self
       end).class_eval do
         define_method(:arity) { arity }
       end

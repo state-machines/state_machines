@@ -18,6 +18,7 @@ class TransitionWithCustomMachineAttributeTest < StateMachinesTest
 
   def test_should_persist
     @transition.persist
+
     assert_equal 2, @object.state_id
   end
 

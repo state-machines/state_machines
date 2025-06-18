@@ -11,21 +11,25 @@ class VehicleLockedTest < Minitest::Test
 
   def test_should_be_parked_after_park
     @vehicle.park
-    assert @vehicle.parked?
+
+    assert_predicate @vehicle, :parked?
   end
 
   def test_should_be_parked_after_ignite
     @vehicle.ignite
-    assert @vehicle.parked?
+
+    assert_predicate @vehicle, :parked?
   end
 
   def test_should_be_parked_after_shift_up
     @vehicle.shift_up
-    assert @vehicle.parked?
+
+    assert_predicate @vehicle, :parked?
   end
 
   def test_should_be_parked_after_shift_down
     @vehicle.shift_down
-    assert @vehicle.parked?
+
+    assert_predicate @vehicle, :parked?
   end
 end

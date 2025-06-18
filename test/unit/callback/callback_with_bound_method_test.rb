@@ -9,7 +9,7 @@ class CallbackWithBoundMethodTest < StateMachinesTest
 
   def test_should_call_method_within_the_context_of_the_object_for_block_methods
     context = nil
-    callback = StateMachines::Callback.new(:before, do: lambda { |*args| context = [self] + args }, bind_to_object: true)
+    callback = StateMachines::Callback.new(:before, do: ->(*args) { context = [self] + args }, bind_to_object: true)
     callback.call(@object, {}, 1, 2, 3)
 
     assert_equal [@object, 1, 2, 3], context
@@ -27,11 +27,12 @@ class CallbackWithBoundMethodTest < StateMachinesTest
     callback = StateMachines::Callback.new(:before, do: :after_ignite, bind_to_object: true)
     callback.call(@object)
 
-    assert_equal [], @object.context
+    assert_empty @object.context
   end
 
   def test_should_ignore_option_for_string_methods
     callback = StateMachines::Callback.new(:before, do: '[1, 2, 3]', bind_to_object: true)
+
     assert callback.call(@object)
   end
 end

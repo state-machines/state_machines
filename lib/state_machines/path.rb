@@ -7,8 +7,6 @@ module StateMachines
   # object.  Paths can walk to new transitions, revealing all of the possible
   # branches that can be encountered in the object's state machine.
   class Path < Array
-
-
     # The object whose state machine is being walked
     attr_reader :object
 
@@ -32,7 +30,7 @@ module StateMachines
       @guard = options[:guard]
     end
 
-    def initialize_copy(orig) #:nodoc:
+    def initialize_copy(orig) # :nodoc:
       super
       @transitions = nil
     end
@@ -90,7 +88,7 @@ module StateMachines
       !empty? && (@target ? to_name == @target : transitions.empty?)
     end
 
-  private
+    private
 
     # Calculates the number of times the given state has been walked to
     def times_walked_to(state)

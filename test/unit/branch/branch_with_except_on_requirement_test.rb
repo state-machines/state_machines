@@ -33,6 +33,6 @@ class BranchWithExceptOnRequirementTest < StateMachinesTest
   end
 
   def test_should_not_be_included_in_known_states
-    assert_equal [], @branch.known_states
+    assert_empty @branch.known_states
   end
 end

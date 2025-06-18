@@ -23,12 +23,13 @@ class MachineWithMultipleEventsTest < StateMachinesTest
     object = @klass.new
     object.state = 'first_gear'
     object.park
+
     assert_equal 'parked', object.state
 
     object = @klass.new
     object.state = 'first_gear'
     object.shift_down
+
     assert_equal 'parked', object.state
   end
 end
-

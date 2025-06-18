@@ -7,8 +7,7 @@ class CallbackWithAroundTypeAndMultipleMethodsTest < StateMachinesTest
     @callback = StateMachines::Callback.new(:around, :run_1, :run_2)
 
     class << @object = Object.new
-      attr_accessor :before_callbacks
-      attr_accessor :after_callbacks
+      attr_accessor :before_callbacks, :after_callbacks
 
       def run_1
         (@before_callbacks ||= []) << :run_1
@@ -30,22 +29,26 @@ class CallbackWithAroundTypeAndMultipleMethodsTest < StateMachinesTest
 
   def test_should_evaluate_before_callbacks_in_order
     @callback.call(@object)
-    assert_equal [:run_1, :run_2], @object.before_callbacks
+
+    assert_equal %i[run_1 run_2], @object.before_callbacks
   end
 
   def test_should_evaluate_after_callbacks_in_reverse_order
     @callback.call(@object)
-    assert_equal [:run_2, :run_1], @object.after_callbacks
+
+    assert_equal %i[run_2 run_1], @object.after_callbacks
   end
 
   def test_should_call_block_after_before_callbacks
     @callback.call(@object) { (@object.before_callbacks ||= []) << :block }
-    assert_equal [:run_1, :run_2, :block], @object.before_callbacks
+
+    assert_equal %i[run_1 run_2 block], @object.before_callbacks
   end
 
   def test_should_call_block_before_after_callbacks
     @callback.call(@object) { (@object.after_callbacks ||= []) << :block }
-    assert_equal [:block, :run_2, :run_1], @object.after_callbacks
+
+    assert_equal %i[block run_2 run_1], @object.after_callbacks
   end
 
   def test_should_halt_if_first_doesnt_yield
@@ -73,7 +76,8 @@ class CallbackWithAroundTypeAndMultipleMethodsTest < StateMachinesTest
     end
 
     catch(:halt) { @callback.call(@object) }
-    assert_equal [:run_1, :run_2], @object.before_callbacks
+
+    assert_equal %i[run_1 run_2], @object.before_callbacks
     assert_nil @object.after_callbacks
   end
 
@@ -89,7 +93,8 @@ class CallbackWithAroundTypeAndMultipleMethodsTest < StateMachinesTest
     end
 
     catch(:halt) { @callback.call(@object) }
-    assert_equal [:run_1, :run_2], @object.before_callbacks
+
+    assert_equal %i[run_1 run_2], @object.before_callbacks
     assert_equal [:run_2], @object.after_callbacks
   end
 end

@@ -21,6 +21,7 @@ class StateCollectionWithCustomStateValuesTest < StateMachinesTest
 
   def test_should_not_match_if_value_does_not_match
     @object.state = 2
+
     refute @states.matches?(@object, :parked)
   end
 
@@ -28,4 +29,3 @@ class StateCollectionWithCustomStateValuesTest < StateMachinesTest
     assert_equal @state, @states.match(@object)
   end
 end
-

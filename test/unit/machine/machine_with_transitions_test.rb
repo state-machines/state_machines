@@ -36,9 +36,11 @@ class MachineWithTransitionsTest < StateMachinesTest
 
   def test_should_allow_implicit_options
     branch = @machine.transition(first_gear: :second_gear, on: :shift_up)
+
     assert_instance_of StateMachines::Branch, branch
 
     state_requirements = branch.state_requirements
+
     assert_equal 1, state_requirements.length
 
     assert_instance_of StateMachines::WhitelistMatcher, state_requirements[0][:from]
@@ -53,37 +55,39 @@ class MachineWithTransitionsTest < StateMachinesTest
     branch = @machine.transition(first_gear: :second_gear, second_gear: :third_gear, on: :shift_up)
 
     state_requirements = branch.state_requirements
+
     assert_equal 2, state_requirements.length
   end
 
   def test_should_allow_verbose_options
     branch = @machine.transition(from: :parked, to: :idling, on: :ignite)
+
     assert_instance_of StateMachines::Branch, branch
   end
 
   def test_should_include_all_transition_states_in_machine_states
     @machine.transition(parked: :idling, on: :ignite)
 
-    assert_equal [:parked, :idling], @machine.states.map { |state| state.name }
+    assert_equal(%i[parked idling], @machine.states.map { |state| state.name })
   end
 
   def test_should_include_all_transition_events_in_machine_events
     @machine.transition(parked: :idling, on: :ignite)
 
-    assert_equal [:ignite], @machine.events.map { |event| event.name }
+    assert_equal([:ignite], @machine.events.map { |event| event.name })
   end
 
   def test_should_allow_multiple_events
-    branches = @machine.transition(parked: :ignite, on: [:ignite, :shift_up])
+    branches = @machine.transition(parked: :ignite, on: %i[ignite shift_up])
 
     assert_equal 2, branches.length
-    assert_equal [:ignite, :shift_up], @machine.events.map { |event| event.name }
+    assert_equal(%i[ignite shift_up], @machine.events.map { |event| event.name })
   end
 
   def test_should_not_modify_options
     options = { parked: :idling, on: :ignite }
     @machine.transition(options)
 
-    assert_equal options, parked: :idling, on: :ignite
+    assert_equal({ parked: :idling, on: :ignite }, options)
   end
 end

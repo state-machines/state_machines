@@ -21,6 +21,7 @@ class EventWithTransitionWithLoopbackStateTest < StateMachinesTest
 
   def test_should_have_a_transition
     transition = @event.transition_for(@object)
+
     refute_nil transition
     assert_equal 'parked', transition.from
     assert_equal 'parked', transition.to
@@ -33,6 +34,7 @@ class EventWithTransitionWithLoopbackStateTest < StateMachinesTest
 
   def test_should_not_change_the_current_state
     @event.fire(@object)
+
     assert_equal 'parked', @object.state
   end
 end

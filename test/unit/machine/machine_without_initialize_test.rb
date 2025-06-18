@@ -13,4 +13,3 @@ class MachineWithoutInitializeTest < StateMachinesTest
     assert_equal 'parked', @object.state
   end
 end
-

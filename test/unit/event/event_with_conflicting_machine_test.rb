@@ -5,12 +5,17 @@ require 'stringio'
 
 class EventWithConflictingMachineTest < StateMachinesTest
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
 
     @klass = Class.new
     @state_machine = StateMachines::Machine.new(@klass, :state)
     @state_machine.state :parked, :idling
     @state_machine.events << @state_event = StateMachines::Event.new(@state_machine, :ignite)
+  end
+
+  def teardown
+    $stderr = @original_stderr
   end
 
   def test_should_not_overwrite_first_event
@@ -26,6 +31,7 @@ class EventWithConflictingMachineTest < StateMachinesTest
     @status_event.transition(parked: :first_gear)
 
     @object.ignite
+
     assert_equal 'idling', @object.state
     assert_equal 'first_gear', @object.status
   end
@@ -42,9 +48,5 @@ class EventWithConflictingMachineTest < StateMachinesTest
     @status_machine.events << @status_event = StateMachines::Event.new(@status_machine, :ignite)
 
     assert_equal '', $stderr.string
-  end
-
-  def teardown
-    $stderr = @original_stderr
   end
 end

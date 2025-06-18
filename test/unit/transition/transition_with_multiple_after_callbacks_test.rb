@@ -26,7 +26,10 @@ class TransitionWithMultipleAfterCallbacksTest < StateMachinesTest
 
   def test_should_not_run_further_callbacks_if_halted
     @callbacks = []
-    @machine.after_transition { @callbacks << 1; throw :halt }
+    @machine.after_transition do
+      @callbacks << 1
+      throw :halt
+    end
     @machine.after_transition { @callbacks << 2 }
 
     assert_equal true, @transition.run_callbacks

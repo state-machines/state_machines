@@ -3,8 +3,8 @@
 module StateMachines
   # Represents a collection of states in a state machine
   class StateCollection < NodeCollection
-    def initialize(machine) #:nodoc:
-      super(machine, index: [:name, :qualified_name, :value])
+    def initialize(machine) # :nodoc:
+      super(machine, index: %i[name qualified_name value])
     end
 
     # Determines whether the given object is in a specific state.  If the
@@ -103,7 +103,7 @@ module StateMachines
       order
     end
 
-  private
+    private
 
     # Gets the value for the given attribute on the node
     def value(node, attribute)

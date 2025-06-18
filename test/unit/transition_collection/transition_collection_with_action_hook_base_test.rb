@@ -31,6 +31,5 @@ class TransitionCollectionWithActionHookBaseTest < StateMachinesTest
     @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
   end
 
-  def default_test
-  end
+  def default_test; end
 end

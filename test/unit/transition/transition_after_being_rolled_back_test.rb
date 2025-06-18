@@ -32,6 +32,7 @@ class TransitionAfterBeingRolledBackTest < StateMachinesTest
 
   def test_should_still_be_able_to_persist
     @transition.persist
+
     assert_equal 'idling', @object.state
   end
 end

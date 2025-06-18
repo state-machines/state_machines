@@ -24,7 +24,7 @@ class TransitionWithoutRunningActionTest < StateMachinesTest
   end
 
   def test_should_have_empty_args
-    assert_equal [], @transition.args
+    assert_empty @transition.args
   end
 
   def test_should_not_have_a_result

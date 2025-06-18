@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative 'transition_collection_with_action_hook_base_test.rb'
+require_relative 'transition_collection_with_action_hook_base_test'
 
 class TransitionCollectionWithActionHookWithDifferentActionsTest < TransitionCollectionWithActionHookBaseTest
   def setup

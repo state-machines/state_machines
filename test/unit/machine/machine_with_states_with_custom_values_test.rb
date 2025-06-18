@@ -20,4 +20,3 @@ class MachineWithStatesWithCustomValuesTest < StateMachinesTest
     assert_equal @state, @machine.states[1, :value]
   end
 end
-

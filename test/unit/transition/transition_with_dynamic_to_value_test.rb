@@ -7,7 +7,7 @@ class TransitionWithDynamicToValueTest < StateMachinesTest
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass)
     @machine.state :parked
-    @machine.state :idling, value: lambda { 1 }
+    @machine.state :idling, value: -> { 1 }
     @machine.event :ignite
 
     @object = @klass.new

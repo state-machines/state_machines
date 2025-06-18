@@ -19,6 +19,7 @@ class StateWithSymbolicValueTest < StateMachinesTest
 
   def test_should_allow_human_name_in_description
     @state.human_name = 'Parked'
+
     assert_equal 'Parked', @state.description(human_name: true)
   end
 
@@ -29,6 +30,7 @@ class StateWithSymbolicValueTest < StateMachinesTest
 
   def test_should_define_predicate
     object = @klass.new
-    assert object.respond_to?(:parked?)
+
+    assert_respond_to object, :parked?
   end
 end

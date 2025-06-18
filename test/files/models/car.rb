@@ -5,7 +5,7 @@ require_relative 'vehicle'
 class Car < Vehicle
   state_machine do
     event :reverse do
-      transition [:parked, :idling, :first_gear] => :backing_up
+      transition %i[parked idling first_gear] => :backing_up
     end
 
     event :park do

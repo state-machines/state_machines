@@ -18,6 +18,7 @@ class StateCollectionWithInitialStateTest < StateMachinesTest
     @machine.event :ignite do
       transition to: :idling
     end
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
@@ -27,6 +28,7 @@ class StateCollectionWithInitialStateTest < StateMachinesTest
         0
       end
     end
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
@@ -35,16 +37,16 @@ class StateCollectionWithInitialStateTest < StateMachinesTest
   end
 
   def test_should_order_state_before_callback_states
-    @machine.before_transition from: :idling, do: lambda {}
+    @machine.before_transition from: :idling, do: -> {}
+
     assert_equal [@parked, @idling], @states.by_priority
   end
 
   def test_should_have_correct_states
-    assert_sm_states_list(@machine, [:parked, :idling])
+    assert_sm_states_list(@machine, %i[parked idling])
   end
 
   def test_should_have_correct_initial_state
     assert_sm_initial_state(@machine, :parked)
   end
 end
-

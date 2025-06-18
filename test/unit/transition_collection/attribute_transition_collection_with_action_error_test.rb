@@ -19,13 +19,13 @@ class AttributeTransitionCollectionWithActionErrorTest < StateMachinesTest
     @object.status_event = 'shift_up'
 
     @transitions = StateMachines::AttributeTransitionCollection.new([
-      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
-      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
-    ])
+                                                                      @state_transition = StateMachines::Transition.new(@object, @state, :ignite, :parked, :idling),
+                                                                      @status_transition = StateMachines::Transition.new(@object, @status, :shift_up, :first_gear, :second_gear)
+                                                                    ])
 
     begin
-      ; @transitions.perform { fail ArgumentError }
-    rescue
+      @transitions.perform { raise ArgumentError }
+    rescue StandardError
     end
   end
 

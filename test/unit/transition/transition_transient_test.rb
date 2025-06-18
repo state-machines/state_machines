@@ -17,6 +17,6 @@ class TransitionTransientTest < StateMachinesTest
   end
 
   def test_should_be_transient
-    assert @transition.transient?
+    assert_predicate @transition, :transient?
   end
 end

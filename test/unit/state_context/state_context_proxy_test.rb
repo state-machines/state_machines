@@ -20,7 +20,7 @@ class StateContextProxyTest < StateMachinesTest
 
   def test_should_pass_block_through_to_class
     options = {}
-    proxy_block = lambda {}
+    proxy_block = -> {}
     validation = @state_context.validate(:name, options, &proxy_block)
 
     assert_equal [:name, options, proxy_block], validation

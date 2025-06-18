@@ -4,15 +4,15 @@ require 'test_helper'
 
 class WhitelistMatcherTest < StateMachinesTest
   def setup
-    @matcher = StateMachines::WhitelistMatcher.new([:parked, :idling])
+    @matcher = StateMachines::WhitelistMatcher.new(%i[parked idling])
   end
 
   def test_should_have_values
-    assert_equal [:parked, :idling], @matcher.values
+    assert_equal %i[parked idling], @matcher.values
   end
 
   def test_should_filter_unknown_values
-    assert_equal [:parked, :idling], @matcher.filter([:parked, :idling, :first_gear])
+    assert_equal %i[parked idling], @matcher.filter(%i[parked idling first_gear])
   end
 
   def test_should_match_known_values
@@ -27,6 +27,7 @@ class WhitelistMatcherTest < StateMachinesTest
     assert_equal '[:parked, :idling]', @matcher.description
 
     matcher = StateMachines::WhitelistMatcher.new([:parked])
+
     assert_equal ':parked', matcher.description
   end
 end

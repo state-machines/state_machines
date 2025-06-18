@@ -13,9 +13,9 @@ module StateMachines
     end
 
     module_function def draw_states(machine:, io: $stdout)
-      io.puts "  States:"
+      io.puts '  States:'
       if machine.states.to_a.empty?
-        io.puts "    - None"
+        io.puts '    - None'
       else
         machine.states.each do |state|
           io.puts "    - #{state.name}"
@@ -23,31 +23,31 @@ module StateMachines
       end
     end
 
-    module_function def draw_event(event, graph, options: {}, io: $stdout)
+    module_function def draw_event(event, _graph, options: {}, io: $stdout)
       io = io || options[:io] || $stdout
       io.puts "  Event: #{event.name}"
     end
 
-    module_function def draw_branch(branch, graph, event, options: {}, io: $stdout)
+    module_function def draw_branch(branch, _graph, _event, options: {}, io: $stdout)
       io = io || options[:io] || $stdout
       io.puts "  Branch: #{branch.inspect}"
     end
 
-    module_function def draw_state(state, graph, options: {}, io: $stdout)
+    module_function def draw_state(state, _graph, options: {}, io: $stdout)
       io = io || options[:io] || $stdout
       io.puts "  State: #{state.name}"
     end
 
     module_function def draw_events(machine:, io: $stdout)
-      io.puts "  Events:"
+      io.puts '  Events:'
       if machine.events.to_a.empty?
-        io.puts "    - None"
+        io.puts '    - None'
       else
         machine.events.each do |event|
           io.puts "    - #{event.name}"
           event.branches.each do |branch|
             branch.state_requirements.each do |requirement|
-              out = +"      - "
+              out = +'      - '
               out << "#{draw_requirement(requirement[:from])} => #{draw_requirement(requirement[:to])}"
               out << " IF #{branch.if_condition}" if branch.if_condition
               out << " UNLESS #{branch.unless_condition}" if branch.unless_condition
@@ -60,14 +60,14 @@ module StateMachines
 
     module_function def draw_requirement(requirement)
       case requirement
-        when StateMachines::BlacklistMatcher
-          "ALL EXCEPT #{requirement.values.join(', ')}"
-        when StateMachines::AllMatcher
-          "ALL"
-        when StateMachines::LoopbackMatcher
-          "SAME"
-        else
-          requirement.values.join(', ')
+      when StateMachines::BlacklistMatcher
+        "ALL EXCEPT #{requirement.values.join(', ')}"
+      when StateMachines::AllMatcher
+        'ALL'
+      when StateMachines::LoopbackMatcher
+        'SAME'
+      else
+        requirement.values.join(', ')
       end
     end
   end

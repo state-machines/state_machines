@@ -18,6 +18,7 @@ class ErrorByDefaultTest < StateMachinesTest
 
   def test_should_index_by_name
     @collection << object = Struct.new(:name).new(:parked)
+
     assert_equal object, @collection[:parked]
   end
 end

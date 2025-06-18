@@ -21,4 +21,3 @@ class MachineWithOtherStates < StateMachinesTest
     assert_nil @idling.matcher
   end
 end
-

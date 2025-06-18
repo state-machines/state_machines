@@ -28,6 +28,6 @@ class CallbackWithMixedMethodsTest < StateMachinesTest
   end
 
   def test_should_call_each_callback_in_order
-    assert_equal [:argument, :do, :block], @object.callbacks
+    assert_equal %i[argument do block], @object.callbacks
   end
 end

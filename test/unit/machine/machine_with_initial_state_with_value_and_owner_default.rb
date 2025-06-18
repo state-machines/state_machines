@@ -4,7 +4,8 @@ require 'test_helper'
 
 class MachineWithInitialStateWithValueAndOwnerDefault < StateMachinesTest
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
 
     state_machine_with_defaults = Class.new(StateMachines::Machine) do
       def owner_class_attribute_default

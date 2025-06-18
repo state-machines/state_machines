@@ -13,12 +13,14 @@ class NodeCollectionWithPostdefinedContextsTest < StateMachinesTest
   def test_should_run_context_if_matched
     contexts_run = []
     @collection.context([:parked]) { contexts_run << :parked }
+
     assert_equal [:parked], contexts_run
   end
 
   def test_should_not_run_contexts_if_not_matched
     contexts_run = []
     @collection.context([:idling]) { contexts_run << :idling }
-    assert_equal [], contexts_run
+
+    assert_empty contexts_run
   end
 end

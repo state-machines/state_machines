@@ -31,6 +31,7 @@ class TransitionAfterBeingPersistedTest < StateMachinesTest
   def test_should_not_be_able_to_persist_twice
     @object.state = 'parked'
     @transition.persist
+
     assert_equal 'parked', @object.state
   end
 
@@ -38,11 +39,13 @@ class TransitionAfterBeingPersistedTest < StateMachinesTest
     @object.state = 'parked'
     @transition.reset
     @transition.persist
+
     assert_equal 'idling', @object.state
   end
 
   def test_should_revert_to_from_state_on_rollback
     @transition.rollback
+
     assert_equal 'parked', @object.state
   end
 end

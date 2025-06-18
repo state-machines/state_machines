@@ -458,7 +458,7 @@ module StateMachines
 
       # Find an integration that matches this machine's owner class
       @integration = if options.include?(:integration)
-                       options[:integration] && StateMachines::Integrations.find_by(name: options[:integration])
+                       options[:integration] && StateMachines::Integrations.find_by_name(options[:integration])
                      else
                        StateMachines::Integrations.match(owner_class)
                      end
@@ -672,7 +672,7 @@ module StateMachines
 
       if block_given?
         if !self.class.ignore_method_conflicts && (conflicting_ancestor = owner_class_ancestor_has_method?(scope, method))
-          ancestor_name = conflicting_ancestor.name.presence || conflicting_ancestor.to_s
+          ancestor_name = (conflicting_ancestor.name && !conflicting_ancestor.name.empty?) ? conflicting_ancestor.name : conflicting_ancestor.to_s
           warn "#{scope == :class ? 'Class' : 'Instance'} method \"#{method}\" is already defined in #{ancestor_name}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
         else
           name = self.name
@@ -1825,7 +1825,9 @@ module StateMachines
       end
     end
 
-    delegate :renderer, to: :class
+    def renderer
+      self.class.renderer
+    end
 
     def draw(**)
       renderer.draw_machine(self, **)

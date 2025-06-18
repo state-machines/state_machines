@@ -31,4 +31,3 @@ class InvalidTransitionWithNamespaceTest < StateMachinesTest
     assert_equal :alarm_active, @invalid_transition.qualified_from_name
   end
 end
-

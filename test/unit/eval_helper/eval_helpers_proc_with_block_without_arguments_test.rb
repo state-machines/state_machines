@@ -6,7 +6,7 @@ require 'unit/eval_helper/eval_helpers_base_test'
 class EvalHelpersProcWithoutArgumentsTest < EvalHelpersBaseTest
   def setup
     @object = Object.new
-    @proc = lambda { |*args| args }
+    @proc = ->(*args) { args }
     class << @proc
       def arity
         0
@@ -15,6 +15,6 @@ class EvalHelpersProcWithoutArgumentsTest < EvalHelpersBaseTest
   end
 
   def test_should_call_proc_with_no_arguments
-    assert_equal [], evaluate_method(@object, @proc, 1, 2, 3)
+    assert_empty evaluate_method(@object, @proc, 1, 2, 3)
   end
 end

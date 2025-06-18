@@ -7,16 +7,17 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
     include StateMachines::Integrations::Base
 
     def create_with_scope(_name)
-      lambda { |_klass, _values| [] }
+      ->(_klass, _values) { [] }
     end
 
     def create_without_scope(_name)
-      lambda { |_klass, _values| [] }
+      ->(_klass, _values) { [] }
     end
   end
 
   def setup
-    @original_stderr, $stderr = $stderr, StringIO.new
+    @original_stderr = $stderr
+    $stderr = StringIO.new
 
     StateMachines::Integrations.register(MachineWithConflictingHelpersBeforeDefinitionTest::Custom)
 
@@ -90,6 +91,10 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
     @object = @klass.new
   end
 
+  def teardown
+    $stderr = @original_stderr
+  end
+
   def test_should_not_redefine_singular_with_scope
     assert_equal :with_state, @klass.with_state
   end
@@ -120,11 +125,12 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
 
   def test_should_not_redefine_attribute_writer
     @object.state = 'parked'
+
     assert_equal 'parked', @object.status
   end
 
   def test_should_not_define_attribute_predicate
-    assert @object.state?
+    assert_predicate @object, :state?
   end
 
   def test_should_not_redefine_attribute_name_reader
@@ -153,25 +159,20 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
 
   def test_should_output_warning
     expected = [
-        'Instance method "state_events"',
-        'Instance method "state_transitions"',
-        'Instance method "fire_state_event"',
-        'Instance method "state_paths"',
-        'Class method "human_state_name"',
-        'Class method "human_state_event_name"',
-        'Instance method "state_name"',
-        'Instance method "human_state_name"',
-        'Class method "with_state"',
-        'Class method "with_states"',
-        'Class method "without_state"',
-        'Class method "without_states"'
+      'Instance method "state_events"',
+      'Instance method "state_transitions"',
+      'Instance method "fire_state_event"',
+      'Instance method "state_paths"',
+      'Class method "human_state_name"',
+      'Class method "human_state_event_name"',
+      'Instance method "state_name"',
+      'Instance method "human_state_name"',
+      'Class method "with_state"',
+      'Class method "with_states"',
+      'Class method "without_state"',
+      'Class method "without_states"'
     ].map { |method| "#{method} is already defined in #{@superclass}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n" }.join
 
     assert_equal expected, $stderr.string
   end
-
-  def teardown
-    $stderr = @original_stderr
-  end
 end
-

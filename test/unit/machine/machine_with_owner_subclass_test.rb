@@ -17,4 +17,3 @@ class MachineWithOwnerSubclassTest < StateMachinesTest
     assert_equal @klass.state_machines, @subclass.state_machines
   end
 end
-

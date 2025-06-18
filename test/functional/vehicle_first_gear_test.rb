@@ -15,7 +15,7 @@ class VehicleFirstGearTest < Minitest::Test
   end
 
   def test_should_be_first_gear
-    assert @vehicle.first_gear?
+    assert_predicate @vehicle, :first_gear?
   end
 
   def test_should_allow_park
