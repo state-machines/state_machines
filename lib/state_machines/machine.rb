@@ -2,6 +2,7 @@
 
 require_relative 'options_validator'
 require_relative 'machine/class_methods'
+require_relative 'syntax_validator'
 
 module StateMachines
   # Represents a state machine for a particular attribute.  State machines
@@ -2205,10 +2206,9 @@ module StateMachines
         raise SecurityError, "Potentially dangerous code detected in eval string: #{method_string.inspect}" if method_string.match?(pattern)
       end
 
-      # Basic syntax validation
+      # Basic syntax validation (cross-platform)
       begin
-        # Try to parse the string as Ruby code without executing it
-        RubyVM::InstructionSequence.compile(method_string)
+        SyntaxValidator.validate!(method_string, '(eval)')
       rescue SyntaxError => e
         raise ArgumentError, "Invalid Ruby syntax in eval string: #{e.message}"
       end
