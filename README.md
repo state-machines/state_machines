@@ -42,7 +42,7 @@ class Vehicle
 
   state_machine :state, initial: :parked do
     before_transition parked: any - :parked, do: :put_on_seatbelt
-    
+
     after_transition on: :crash, do: :tow
     after_transition on: :repair, do: :fix
     after_transition any => :parked do |vehicle, transition|
@@ -256,30 +256,36 @@ vehicle.state_name              # => :parked
 
 ## Testing
 
-State Machines provides a `TestHelper` module with assertion methods to make testing state machines easier and more expressive.
+State Machines provides an optional `TestHelper` module with assertion methods to make testing state machines easier and more expressive.
+
+**Note: TestHelper is not required by default** - you must explicitly require it in your test files.
 
 ### Setup
 
-Include the test helper in your test class:
+First, require the test helper module, then include it in your test class:
 
 ```ruby
 # For Minitest
+require 'state_machines/test_helper'
+
 class VehicleTest < Minitest::Test
   include StateMachines::TestHelper
-  
+
   def test_initial_state
     vehicle = Vehicle.new
-    assert_state vehicle, :state, :parked
+    assert_sm_state vehicle, :parked
   end
 end
 
-# For RSpec  
+# For RSpec
+require 'state_machines/test_helper'
+
 RSpec.describe Vehicle do
   include StateMachines::TestHelper
-  
+
   it "starts in parked state" do
     vehicle = Vehicle.new
-    assert_state vehicle, :state, :parked
+    assert_sm_state vehicle, :parked
   end
 end
 ```
@@ -292,10 +298,17 @@ The TestHelper provides both basic assertions and comprehensive state machine-sp
 
 ```ruby
 vehicle = Vehicle.new
-assert_state vehicle, :state, :parked
-assert_can_transition vehicle, :ignite
-assert_cannot_transition vehicle, :shift_up
-assert_transition vehicle, :ignite, :state, :idling
+
+# New standardized API (all methods prefixed with assert_sm_)
+assert_sm_state(vehicle, :parked)                                    # Uses default :state machine
+assert_sm_state(vehicle, :parked, machine_name: :status)             # Specify machine explicitly
+assert_sm_can_transition(vehicle, :ignite)                           # Test transition capability
+assert_sm_cannot_transition(vehicle, :shift_up)                      # Test transition restriction
+assert_sm_transition(vehicle, :ignite, :idling)                      # Test actual transition
+
+# Multi-FSM examples
+assert_sm_state(vehicle, :inactive, machine_name: :insurance_state)  # Test insurance state
+assert_sm_can_transition(vehicle, :buy_insurance, machine_name: :insurance_state)
 ```
 
 #### Extended State Machine Assertions
@@ -308,7 +321,7 @@ vehicle = Vehicle.new
 assert_sm_states_list machine, [:parked, :idling, :stalled]
 assert_sm_initial_state machine, :parked
 
-# Event behavior  
+# Event behavior
 assert_sm_event_triggers vehicle, :ignite
 refute_sm_event_triggers vehicle, :shift_up
 assert_sm_event_raises_error vehicle, :invalid_event, StateMachines::InvalidTransition
@@ -317,7 +330,105 @@ assert_sm_event_raises_error vehicle, :invalid_event, StateMachines::InvalidTran
 assert_sm_state_persisted record, expected: :active
 ```
 
+#### Indirect Event Testing
+
+Test that methods trigger state machine events indirectly:
+
+```ruby
+# Minitest style
+vehicle = Vehicle.new
+vehicle.ignite  # Put in idling state
+
+# Test that a custom method triggers a specific event
+assert_sm_triggers_event(vehicle, :crash) do
+  vehicle.redline  # Custom method that calls crash! internally
+end
+
+# Test multiple events
+assert_sm_triggers_event(vehicle, [:crash, :emergency]) do
+  vehicle.emergency_stop
+end
+
+# Test on specific state machine (multi-FSM support)
+assert_sm_triggers_event(vehicle, :disable, machine_name: :alarm) do
+  vehicle.turn_off_alarm
+end
+```
+
+```ruby
+# RSpec style (coming soon with proper matcher support)
+RSpec.describe Vehicle do
+  include StateMachines::TestHelper
+
+  it "triggers crash when redlining" do
+    vehicle = Vehicle.new
+    vehicle.ignite
+
+    expect_to_trigger_event(vehicle, :crash) do
+      vehicle.redline
+    end
+  end
+end
+```
+
+#### Callback Definition Testing (TDD Support)
+
+Verify that callbacks are properly defined in your state machine:
+
+```ruby
+# Test after_transition callbacks
+assert_after_transition(Vehicle, on: :crash, do: :tow)
+assert_after_transition(Vehicle, from: :stalled, to: :parked, do: :log_repair)
+
+# Test before_transition callbacks
+assert_before_transition(Vehicle, from: :parked, do: :put_on_seatbelt)
+assert_before_transition(Vehicle, on: :ignite, if: :seatbelt_on?)
+
+# Works with machine instances too
+machine = Vehicle.state_machine(:state)
+assert_after_transition(machine, on: :crash, do: :tow)
+```
+
+#### Multiple State Machine Support
+
+The TestHelper fully supports objects with multiple state machines:
+
+```ruby
+# Example: StarfleetShip with 3 state machines
+ship = StarfleetShip.new
+
+# Test states on different machines
+assert_sm_state(ship, :docked, machine_name: :status)       # Main ship status
+assert_sm_state(ship, :down, machine_name: :shields)        # Shield system
+assert_sm_state(ship, :standby, machine_name: :weapons)     # Weapons system
+
+# Test transitions on specific machines
+assert_sm_transition(ship, :undock, :impulse, machine_name: :status)
+assert_sm_transition(ship, :raise_shields, :up, machine_name: :shields)
+assert_sm_transition(ship, :arm_weapons, :armed, machine_name: :weapons)
+
+# Test event triggering across multiple machines
+assert_sm_triggers_event(ship, :red_alert, machine_name: :status) do
+  ship.engage_combat_mode  # Custom method affecting multiple systems
+end
+
+assert_sm_triggers_event(ship, :raise_shields, machine_name: :shields) do
+  ship.engage_combat_mode
+end
+
+# Test callback definitions on specific machines
+shields_machine = StarfleetShip.state_machine(:shields)
+assert_before_transition(shields_machine, from: :down, to: :up, do: :power_up_shields)
+
+# Test persistence across multiple machines
+assert_sm_state_persisted(ship, "impulse", :status)
+assert_sm_state_persisted(ship, "up", :shields)
+assert_sm_state_persisted(ship, "armed", :weapons)
+```
+
 The test helper works with both Minitest and RSpec, automatically detecting your testing framework.
+
+**Note:** All methods use consistent keyword arguments with `machine_name:` as the last parameter, making the API intuitive and Grep-friendly.
 
 ## Additional Topics
 
