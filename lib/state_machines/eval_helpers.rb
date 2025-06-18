@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'syntax_validator'
+
 module StateMachines
   # Provides a set of helper methods for evaluating methods within the context
   # of an object.
@@ -143,7 +145,7 @@ module StateMachines
       # Basic syntax validation - but allow yield since it's valid in block context
       begin
         test_code = method_string.include?('yield') ? "def dummy_method; #{method_string}; end" : method_string
-        RubyVM::InstructionSequence.compile(test_code)
+        SyntaxValidator.validate!(test_code, '(eval)')
       rescue SyntaxError => e
         raise ArgumentError, "Invalid Ruby syntax in eval string: #{e.message}"
       end

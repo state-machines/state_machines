@@ -1,4 +1,4 @@
-name: Ruby
+name: Alternative Ruby Engines
 
 on:
   push:
@@ -12,15 +12,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby-version: ['jruby', 'truffleruby']
+        include:
+          - ruby-version: 'jruby-9.4.8.0'
+            java-version: '17'
+            name: 'JRuby 9.4.8 (Java 17)'
+          - ruby-version: 'jruby-10.0.0.1' 
+            java-version: '21'
+            name: 'JRuby 10.0.0.1 (Java 21)'
+          - ruby-version: 'truffleruby'
+            java-version: '21'
+            name: 'TruffleRuby'
 
+    name: ${{ matrix.name }}
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java-version }}
+        
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
+        
     - name: Run tests
       run: bundle exec rake
-      continue-on-error: true
