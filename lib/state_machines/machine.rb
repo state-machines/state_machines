@@ -672,7 +672,7 @@ module StateMachines
 
       if block_given?
         if !self.class.ignore_method_conflicts && (conflicting_ancestor = owner_class_ancestor_has_method?(scope, method))
-          ancestor_name = (conflicting_ancestor.name && !conflicting_ancestor.name.empty?) ? conflicting_ancestor.name : conflicting_ancestor.to_s
+          ancestor_name = conflicting_ancestor.name && !conflicting_ancestor.name.empty? ? conflicting_ancestor.name : conflicting_ancestor.to_s
           warn "#{scope == :class ? 'Class' : 'Instance'} method \"#{method}\" is already defined in #{ancestor_name}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
         else
           name = self.name
@@ -685,7 +685,7 @@ module StateMachines
       else
         # Validate string input before eval if method is a string
         validate_eval_string(method) if method.is_a?(String)
-        helper_module.class_eval(method, *, **)
+        helper_module.class_eval(method, __FILE__, __LINE__)
       end
     end
 
@@ -1597,6 +1597,11 @@ module StateMachines
     def before_transition(*args, **options, &)
       # Extract legacy positional arguments and merge with keyword options
       parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
       add_callback(:before, parsed_options, &)
     end
 
@@ -1608,6 +1613,11 @@ module StateMachines
     def after_transition(*args, **options, &)
       # Extract legacy positional arguments and merge with keyword options
       parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
       add_callback(:after, parsed_options, &)
     end
 
@@ -1669,6 +1679,11 @@ module StateMachines
     def around_transition(*args, **options, &)
       # Extract legacy positional arguments and merge with keyword options
       parsed_options = parse_callback_arguments(args, options)
+
+      # Only validate callback-specific options, not state transition requirements
+      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
+      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
+
       add_callback(:around, parsed_options, &)
     end
 
