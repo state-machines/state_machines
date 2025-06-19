@@ -5,7 +5,7 @@
 ##########################################################
 # 1. Basic Project Information
 name = "state_machines"
-version = "0.20.0"
+version = "0.30.0"
 description = "Adds support for creating state machines for attributes on any Ruby class"
 licenses = ["MIT"]
 ai_contributions = true  # AI was used to enhance testing framework
