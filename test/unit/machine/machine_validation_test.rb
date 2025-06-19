@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative '../../../lib/state_machines/machine/validation'
-require_relative '../../../lib/state_machines/syntax_validator'
 
 class MachineValidationTest < StateMachinesTest
   include StateMachines::Machine::Validation

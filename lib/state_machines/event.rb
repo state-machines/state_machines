@@ -131,12 +131,14 @@ module StateMachines
     #   specified, then this will match any to state.
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one.  Default is true.
-    def transition_for(object, requirements = {})
+    #
+    # Event arguments are passed to guard conditions if they accept multiple parameters.
+    def transition_for(object, requirements = {}, *event_args)
       StateMachines::OptionsValidator.assert_valid_keys!(requirements, :from, :to, :guard)
       requirements[:from] = machine.states.match!(object).name unless (custom_from_state = requirements.include?(:from))
 
       branches.each do |branch|
-        next unless (match = branch.match(object, requirements))
+        next unless (match = branch.match(object, requirements, event_args))
 
         # Branch allows for the transition to occur
         from = requirements[:from]
@@ -161,13 +163,13 @@ module StateMachines
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
-    def fire(object, *)
+    def fire(object, *event_args)
       machine.reset(object)
 
-      if (transition = transition_for(object))
-        transition.perform(*)
+      if (transition = transition_for(object, {}, *event_args))
+        transition.perform(*event_args)
       else
-        on_failure(object, *)
+        on_failure(object, *event_args)
         false
       end
     end

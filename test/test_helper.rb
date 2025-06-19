@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'state_machines'
-require_relative '../lib/state_machines/test_helper'
+require 'state_machines/test_helper'
 require 'minitest/autorun'
 require 'debug' if RUBY_ENGINE == 'ruby'
 require 'minitest/reporters'

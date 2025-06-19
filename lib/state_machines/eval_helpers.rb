@@ -47,6 +47,11 @@ module StateMachines
     # the method defines additional arguments other than the object context,
     # then all arguments are required.
     #
+    # For guard conditions in state machines, event arguments can be passed
+    # automatically based on the guard's arity:
+    # - Guards with arity 1 receive only the object (backward compatible)
+    # - Guards with arity -1 or > 1 receive object + event arguments
+    #
     # For example,
     #
     #   person = Person.new('John Smith')
@@ -54,6 +59,16 @@ module StateMachines
     #   evaluate_method(person, lambda {|person| person.name}, 21)                              # => "John Smith"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21)          # => "John Smith is 21"
     #   evaluate_method(person, lambda {|person, age| "#{person.name} is #{age}"}, 21, 'male')  # => ArgumentError: wrong number of arguments (3 for 2)
+    #
+    # With event arguments for guards:
+    #
+    #   # Single parameter guard (backward compatible)
+    #   guard = lambda {|obj| obj.valid? }
+    #   evaluate_method_with_event_args(object, guard, [arg1, arg2])  # => calls guard.call(object)
+    #
+    #   # Multi-parameter guard (receives event args)
+    #   guard = lambda {|obj, *args| obj.valid? && args[0] == :force }
+    #   evaluate_method_with_event_args(object, guard, [:force])      # => calls guard.call(object, :force)
     def evaluate_method(object, method, *args, **, &block)
       case method
       when Symbol
@@ -116,6 +131,80 @@ module StateMachines
         end
       else
         raise ArgumentError, 'Methods must be a symbol denoting the method to call, a block to be invoked, or a string to be evaluated'
+      end
+    end
+
+    # Evaluates a guard method with support for event arguments passed to transitions.
+    # This method uses arity detection to determine whether to pass event arguments
+    # to the guard, ensuring backward compatibility.
+    #
+    # == Parameters
+    # * object - The object context to evaluate within
+    # * method - The guard method/proc to evaluate
+    # * event_args - Array of arguments passed to the event (optional)
+    #
+    # == Arity-based behavior
+    # * Arity 1: Only passes the object (backward compatible)
+    # * Arity -1 or > 1: Passes object + event arguments
+    #
+    # == Examples
+    #
+    #   # Backward compatible single-parameter guard
+    #   guard = lambda {|obj| obj.valid? }
+    #   evaluate_method_with_event_args(object, guard, [:force])  # => calls guard.call(object)
+    #
+    #   # New multi-parameter guard receiving event args
+    #   guard = lambda {|obj, *args| obj.valid? && args[0] != :skip }
+    #   evaluate_method_with_event_args(object, guard, [:skip])   # => calls guard.call(object, :skip)
+    def evaluate_method_with_event_args(object, method, event_args = [])
+      case method
+      when Symbol
+        # Symbol methods currently don't support event arguments
+        # This maintains backward compatibility
+        evaluate_method(object, method)
+      when Proc
+        arity = method.arity
+
+        # Arity-based decision for backward compatibility:
+        # - arity 0: no arguments
+        # - arity 1: only object (existing behavior)
+        # - arity -1 (splat) or > 1: object + event args (new behavior)
+        if arity == 0
+          method.call
+        elsif arity == 1
+          method.call(object)
+        elsif arity == -1
+          # Splat parameters: object + all event args
+          method.call(object, *event_args)
+        elsif arity > 1
+          # Explicit parameters: object + limited event args
+          args_needed = arity - 1 # Subtract 1 for the object parameter
+          method.call(object, *event_args[0, args_needed])
+        else
+          # Negative arity other than -1 (unlikely but handle gracefully)
+          method.call(object, *event_args)
+        end
+      when Method
+        arity = method.arity
+
+        if arity == 0
+          method.call
+        elsif arity == 1
+          method.call(object)
+        elsif arity == -1
+          method.call(object, *event_args)
+        elsif arity > 1
+          args_needed = arity - 1
+          method.call(object, *event_args[0, args_needed])
+        else
+          method.call(object, *event_args)
+        end
+      when String
+        # String evaluation doesn't support event arguments for security
+        evaluate_method(object, method)
+      else
+        # Fall back to standard evaluation
+        evaluate_method(object, method)
       end
     end
 

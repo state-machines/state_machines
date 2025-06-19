@@ -108,16 +108,18 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard matches with the if/unless
     #   conditionals defined for this branch.  Default is true.
     #
+    # Event arguments are passed to guard conditions if they accept multiple parameters.
+    #
     # == Examples
     #
     #   branch = StateMachines::Branch.new(:parked => :idling, :on => :ignite)
     #
     #   branch.match(object, :on => :ignite)  # => {:to => ..., :from => ..., :on => ...}
     #   branch.match(object, :on => :park)    # => nil
-    def match(object, query = {})
+    def match(object, query = {}, event_args = [])
       StateMachines::OptionsValidator.assert_valid_keys!(query, :from, :to, :on, :guard)
 
-      return unless (match = match_query(query)) && matches_conditions?(object, query)
+      return unless (match = match_query(query)) && matches_conditions?(object, query, event_args)
 
       match
     end
@@ -178,11 +180,11 @@ module StateMachines
     end
 
     # Verifies that the conditionals for this branch evaluate to true for the
-    # given object
-    def matches_conditions?(object, query)
+    # given object. Event arguments are passed to guards that accept multiple parameters.
+    def matches_conditions?(object, query, event_args = [])
       query[:guard] == false ||
-        (Array(if_condition).all? { |condition| evaluate_method(object, condition) } &&
-          !Array(unless_condition).any? { |condition| evaluate_method(object, condition) })
+        (Array(if_condition).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) } &&
+          !Array(unless_condition).any? { |condition| evaluate_method_with_event_args(object, condition, event_args) })
     end
   end
 end
