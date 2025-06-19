@@ -37,7 +37,8 @@ module StateMachines
         # were included *prior* to the helper modules, in addition to the
         # superclasses
         ancestors = current.ancestors - superclass.ancestors + superclasses
-        ancestors = ancestors[ancestors.index(@helper_modules[scope])..].reverse
+        helper_module_index = ancestors.index(@helper_modules[scope])
+        ancestors = helper_module_index ? ancestors[helper_module_index..].reverse : ancestors.reverse
 
         # Search for for the first ancestor that defined this method
         ancestors.detect do |ancestor|

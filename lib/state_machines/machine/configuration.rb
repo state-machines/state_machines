@@ -104,7 +104,9 @@ module StateMachines
         # Output a warning if there are conflicting initial states for the machine's
         # attribute
         initial_state = states.detect(&:initial)
-        return unless !owner_class_attribute_default.nil? && (dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state))
+        has_owner_default = !owner_class_attribute_default.nil?
+        has_conflicting_default = dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state)
+        return unless has_owner_default && has_conflicting_default
 
         warn(
           "Both #{owner_class.name} and its #{name.inspect} machine have defined " \
