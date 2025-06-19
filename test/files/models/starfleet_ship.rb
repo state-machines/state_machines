@@ -189,3 +189,47 @@ class StarfleetShip < ModelBase
     warp_core_temperature < 1800
   end
 end
+
+# Experimental Moroccan ship class for testing guard arguments - RMNS Atlas Monkey! 🇲🇦🐒🚀
+class RmnsAtlasMonkey < StarfleetShip
+  # Override the engage_warp event to demonstrate emergency override
+  state_machine :status do
+    event :engage_warp do
+      # Emergency override allows warp even if core is unstable
+      transition impulse: :warp, if: ->(ship, *args) {
+        ship.send(:warp_core_stable?) || args.include?(:emergency_override)
+      }
+    end
+
+    # Event with mixed guard types
+    event :emergency_warp do
+      # Multi-param lambda guard (new behavior) - needs to be first for specificity
+      transition impulse: :warp, if: ->(ship, *args) {
+        # Check if first arg is authorization code and second is :confirmed
+        args.length >= 2 && args[0] == "omega-3-7" && args[1] == :confirmed
+      }
+      # Symbol guard (existing behavior)
+      transition impulse: :warp, if: :warp_core_stable?
+      # Single-param lambda guard (existing behavior)
+      transition impulse: :warp, if: ->(ship) { ship.captain_on_bridge }
+    end
+  end
+
+  # Add new weapons event to demonstrate target-specific firing
+  state_machine :weapons do
+    event :fire_at_target do
+      transition targeted: :firing, if: ->(ship, target_type, *args) {
+        case target_type
+        when :asteroid
+          true  # Can always fire at asteroids
+        when :enemy_ship
+          ship.shields_name == :up  # Need shields up for combat
+        when :photon_torpedo
+          args.include?(:full_spread)  # Special firing pattern for torpedoes
+        else
+          false
+        end
+      }
+    end
+  end
+end
