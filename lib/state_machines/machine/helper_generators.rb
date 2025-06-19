@@ -38,7 +38,7 @@ module StateMachines
       # Adds predicate method to the owner class for determining the name of the
       # current state
       def define_state_predicate
-        call_super = !owner_class_ancestor_has_method?(:instance, "#{name}?").nil?
+        call_super = owner_class_ancestor_has_method?(:instance, "#{name}?") ? true : false
         define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
             def #{name}?(*args)
               args.empty? && (#{call_super} || defined?(super)) ? super : self.class.state_machine(#{name.inspect}).states.matches?(self, *args)
