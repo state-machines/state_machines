@@ -163,13 +163,13 @@ module StateMachines
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
-    def fire(object, *)
+    def fire(object, *event_args)
       machine.reset(object)
 
-      if (transition = transition_for(object, {}, *))
-        transition.perform(*)
+      if (transition = transition_for(object, {}, *event_args))
+        transition.perform(*event_args)
       else
-        on_failure(object, *)
+        on_failure(object, *event_args)
         false
       end
     end

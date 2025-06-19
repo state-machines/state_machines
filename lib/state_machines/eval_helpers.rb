@@ -64,11 +64,11 @@ module StateMachines
     #
     #   # Single parameter guard (backward compatible)
     #   guard = lambda {|obj| obj.valid? }
-    #   evaluate_method_with_transition(object, guard, [arg1, arg2])  # => calls guard.call(object)
+    #   evaluate_method_with_event_args(object, guard, [arg1, arg2])  # => calls guard.call(object)
     #
     #   # Multi-parameter guard (receives event args)
     #   guard = lambda {|obj, *args| obj.valid? && args[0] == :force }
-    #   evaluate_method_with_transition(object, guard, [:force])      # => calls guard.call(object, :force)
+    #   evaluate_method_with_event_args(object, guard, [:force])      # => calls guard.call(object, :force)
     def evaluate_method(object, method, *args, **, &block)
       case method
       when Symbol
