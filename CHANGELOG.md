@@ -3,6 +3,21 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.30.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.20.0...state_machines/v0.30.0) (2025-06-19)
+
+
+### Features
+
+* add basic safety check for eval_helpers ([#126](https://github.com/state-machines/state_machines/issues/126)) ([604e3e6](https://github.com/state-machines/state_machines/commit/604e3e6f3958f2b4be7a9fcbac9502b4583946de))
+* add more test_helper after receiving feedback ([#128](https://github.com/state-machines/state_machines/issues/128)) ([4f3ab0a](https://github.com/state-machines/state_machines/commit/4f3ab0a4733d2aabfe78b193cde426b354e96d33))
+* add support to kwargs ([#130](https://github.com/state-machines/state_machines/issues/130)) ([9be0c8f](https://github.com/state-machines/state_machines/commit/9be0c8f6cd20990745878bfd0dd4ce6d6c8ff8a1))
+
+
+### Bug Fixes
+
+* extract internal into modules ([#131](https://github.com/state-machines/state_machines/issues/131)) ([9f4850d](https://github.com/state-machines/state_machines/commit/9f4850d032d374239cf261cc4abcfed09e49ea3d))
+* restore jruby support and tests ([#129](https://github.com/state-machines/state_machines/issues/129)) ([2bcb42e](https://github.com/state-machines/state_machines/commit/2bcb42e80afff2eefb29c475cd667184061109ab))
+
 ## [0.20.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.10.1...state_machines/v0.20.0) (2025-06-17)
 
 
