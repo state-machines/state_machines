@@ -3,6 +3,18 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.30.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.30.0...state_machines/v0.30.1) (2025-06-20)
+
+
+### Features
+
+* modernize codebase with Ruby 3.2+ features ([#134](https://github.com/state-machines/state_machines/issues/134)) ([b3ab92d](https://github.com/state-machines/state_machines/commit/b3ab92de9c90826a521097a863a137fd2cb429c2))
+
+
+### Bug Fixes
+
+* Passing event arguments to guards ([#132](https://github.com/state-machines/state_machines/issues/132)) ([4e21b79](https://github.com/state-machines/state_machines/commit/4e21b79a16d2ea3ef6fcb3e882fb2b6288f0c132))
+
 ## [0.30.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.20.0...state_machines/v0.30.0) (2025-06-19)
 
 
