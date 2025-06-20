@@ -206,13 +206,13 @@ module StateMachines
     #   event.transition all - :idling => :parked, :idling => same
     #   event   # => #<StateMachines::Event name=:park transitions=[all - :idling => :parked, :idling => same]>
     def inspect
-      transitions = branches.map do |branch|
+      transitions = branches.flat_map do |branch|
         branch.state_requirements.map do |state_requirement|
           "#{state_requirement[:from].description} => #{state_requirement[:to].description}"
-        end * ', '
-      end
+        end
+      end.join(', ')
 
-      "#<#{self.class} name=#{name.inspect} transitions=[#{transitions * ', '}]>"
+      "#<#{self.class} name=#{name.inspect} transitions=[#{transitions}]>"
     end
 
     protected

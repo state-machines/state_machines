@@ -182,9 +182,21 @@ module StateMachines
     # Verifies that the conditionals for this branch evaluate to true for the
     # given object. Event arguments are passed to guards that accept multiple parameters.
     def matches_conditions?(object, query, event_args = [])
-      query[:guard] == false ||
-        (Array(if_condition).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) } &&
-          !Array(unless_condition).any? { |condition| evaluate_method_with_event_args(object, condition, event_args) })
+      case [query[:guard], if_condition, unless_condition]
+      in [false, _, _]
+        true
+      in [_, nil, nil]
+        true
+      in [_, if_conds, nil] if if_conds
+        Array(if_conds).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
+      in [_, nil, unless_conds] if unless_conds
+        Array(unless_conds).none? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
+      in [_, if_conds, unless_conds] if if_conds || unless_conds
+        Array(if_conds).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) } &&
+          Array(unless_conds).none? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
+      else
+        true
+      end
     end
   end
 end

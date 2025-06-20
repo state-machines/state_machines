@@ -558,8 +558,8 @@ module StateMachines
         else
           name = self.name
           helper_module.class_eval do
-            define_method(method) do |*block_args, **block_kwargs|
-              block.call((scope == :instance ? self.class : self).state_machine(name), self, *block_args, **block_kwargs)
+            define_method(method) do |*args, **kwargs|
+              block.call((scope == :instance ? self.class : self).state_machine(name), self, *args, **kwargs)
             end
           end
         end
