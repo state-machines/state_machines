@@ -3,6 +3,13 @@
 module StateMachines
   class Machine
     module StateMethods
+      # Checks if the given value is a matcher (either legacy Matcher class or Data.define matcher)
+      def matcher?(value)
+        value.is_a?(Matcher) || 
+          value.is_a?(WhitelistMatcher) || 
+          value.is_a?(BlacklistMatcher) ||
+          (value.respond_to?(:matches?) && value.respond_to?(:values))
+      end
       # Gets the initial state of the machine for the given object. If a dynamic
       # initial state was configured for this machine, then the object will be
       # passed into the lambda block to help determine the actual state.
@@ -45,7 +52,7 @@ module StateMachines
         # that gets added
         @states.context(names, &) if block_given?
 
-        if names.first.is_a?(Matcher)
+        if matcher?(names.first)
           # Add any states referenced in the matcher.  When matchers are used,
           # states are not allowed to be configured.
           raise ArgumentError, "Cannot configure states when using matchers (using #{options.inspect})" if options.any?

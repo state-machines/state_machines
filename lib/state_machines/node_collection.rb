@@ -9,6 +9,14 @@ module StateMachines
   class NodeCollection
     include Enumerable
 
+    # Checks if the given value is a matcher (either legacy Matcher class or Data.define matcher)
+    def matcher?(value)
+      value.is_a?(Matcher) || 
+        value.is_a?(WhitelistMatcher) || 
+        value.is_a?(BlacklistMatcher) ||
+        (value.respond_to?(:matches?) && value.respond_to?(:values))
+    end
+
     # The machine associated with the nodes
     attr_reader :machine
 
@@ -75,7 +83,7 @@ module StateMachines
     # which match the given set of nodes.  Matchers can be used so that the
     # context can get added once and evaluated after multiple adds.
     def context(nodes, &block)
-      nodes = nodes.first.is_a?(Matcher) ? nodes.first : WhitelistMatcher.new(nodes)
+      nodes = matcher?(nodes.first) ? nodes.first : WhitelistMatcher.new(nodes)
       @contexts << context = { nodes: nodes, block: block }
 
       # Evaluate the new context for existing nodes
