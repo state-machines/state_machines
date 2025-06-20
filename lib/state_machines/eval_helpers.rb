@@ -71,16 +71,18 @@ module StateMachines
     #   evaluate_method_with_event_args(object, guard, [:force])      # => calls guard.call(object, :force)
     def evaluate_method(object, method, *args, **, &block)
       case method
-      when Symbol
+      in Symbol => sym
         klass = (class << object; self; end)
-        args = [] if (klass.method_defined?(method) || klass.private_method_defined?(method)) && object.method(method).arity == 0
-        object.send(method, *args, **, &block)
-      when Proc
+        args = [] if (klass.method_defined?(sym) || klass.private_method_defined?(sym)) && object.method(sym).arity.zero?
+        object.send(sym, *args, **, &block)
+      in Proc => proc
         args.unshift(object)
-        arity = method.arity
+        arity = proc.arity
         # Handle blocks for Procs
-        if block_given? && arity != 0
-          if [1, 2].include?(arity)
+        case [block_given?, arity]
+        in [true, arity] if arity != 0
+          case arity
+          in 1 | 2
             # Force the block to be either the only argument or the second one
             # after the object (may mean additional arguments get discarded)
             args = args[0, arity - 1] + [block]
@@ -88,46 +90,47 @@ module StateMachines
             # insert the block to the end of the args
             args << block
           end
-        elsif [0, 1].include?(arity)
+        in [_, 0 | 1]
           # These method types are only called with 0, 1, or n arguments
           args = args[0, arity]
+        else
+          # No changes needed for other cases
         end
 
         # Call the Proc with the arguments
-        method.call(*args, **)
+        proc.call(*args, **)
 
-      when Method
+      in Method => meth
         args.unshift(object)
-        arity = method.arity
+        arity = meth.arity
 
         # Methods handle blocks via &block, not as arguments
         # Only limit arguments if necessary based on arity
         args = args[0, arity] if [0, 1].include?(arity)
 
         # Call the Method with the arguments and pass the block
-        method.call(*args, **, &block)
-      when String
+        meth.call(*args, **, &block)
+      in String => str
         # Input validation for string evaluation
-        validate_eval_string(method)
+        validate_eval_string(str)
 
-        if block_given?
-          if StateMachines::Transition.pause_supported?
-            eval(method, object.instance_eval { binding }, &block)
-          else
-            # Support for JRuby and Truffle Ruby, which don't support binding blocks
-            # Need to check with @headius, if jruby 10 does now.
-            eigen = class << object; self; end
-            eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-                  def __temp_eval_method__(*args, &b)
-                    #{method}
-                  end
-            RUBY
-            result = object.__temp_eval_method__(*args, &block)
-            eigen.send(:remove_method, :__temp_eval_method__)
-            result
-          end
-        else
-          eval(method, object.instance_eval { binding })
+        case [block_given?, StateMachines::Transition.pause_supported?]
+        in [true, true]
+          eval(str, object.instance_eval { binding }, &block)
+        in [true, false]
+          # Support for JRuby and Truffle Ruby, which don't support binding blocks
+          # Need to check with @headius, if jruby 10 does now.
+          eigen = class << object; self; end
+          eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+                def __temp_eval_method__(*args, &b)
+                  #{str}
+                end
+          RUBY
+          result = object.__temp_eval_method__(*args, &block)
+          eigen.send(:remove_method, :__temp_eval_method__)
+          result
+        in [false, _]
+          eval(str, object.instance_eval { binding })
         end
       else
         raise ArgumentError, 'Methods must be a symbol denoting the method to call, a block to be invoked, or a string to be evaluated'
@@ -158,48 +161,47 @@ module StateMachines
     #   evaluate_method_with_event_args(object, guard, [:skip])   # => calls guard.call(object, :skip)
     def evaluate_method_with_event_args(object, method, event_args = [])
       case method
-      when Symbol
+      in Symbol
         # Symbol methods currently don't support event arguments
         # This maintains backward compatibility
         evaluate_method(object, method)
-      when Proc
-        arity = method.arity
+      in Proc => proc
+        arity = proc.arity
 
-        # Arity-based decision for backward compatibility:
-        # - arity 0: no arguments
-        # - arity 1: only object (existing behavior)
-        # - arity -1 (splat) or > 1: object + event args (new behavior)
-        if arity == 0
-          method.call
-        elsif arity == 1
-          method.call(object)
-        elsif arity == -1
+        # Arity-based decision for backward compatibility using pattern matching
+        case arity
+        in 0
+          proc.call
+        in 1
+          proc.call(object)
+        in -1
           # Splat parameters: object + all event args
-          method.call(object, *event_args)
-        elsif arity > 1
+          proc.call(object, *event_args)
+        in arity if arity > 1
           # Explicit parameters: object + limited event args
           args_needed = arity - 1 # Subtract 1 for the object parameter
-          method.call(object, *event_args[0, args_needed])
+          proc.call(object, *event_args[0, args_needed])
         else
           # Negative arity other than -1 (unlikely but handle gracefully)
-          method.call(object, *event_args)
+          proc.call(object, *event_args)
         end
-      when Method
-        arity = method.arity
+      in Method => meth
+        arity = meth.arity
 
-        if arity == 0
-          method.call
-        elsif arity == 1
-          method.call(object)
-        elsif arity == -1
-          method.call(object, *event_args)
-        elsif arity > 1
+        case arity
+        in 0
+          meth.call
+        in 1
+          meth.call(object)
+        in -1
+          meth.call(object, *event_args)
+        in arity if arity > 1
           args_needed = arity - 1
-          method.call(object, *event_args[0, args_needed])
+          meth.call(object, *event_args[0, args_needed])
         else
-          method.call(object, *event_args)
+          meth.call(object, *event_args)
         end
-      when String
+      in String
         # String evaluation doesn't support event arguments for security
         evaluate_method(object, method)
       else

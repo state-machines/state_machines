@@ -193,7 +193,7 @@ module StateMachines
       else
         @methods.each do |method|
           result = evaluate_method(object, method, *args)
-          throw :halt if @terminator && @terminator.call(result)
+          throw :halt if @terminator&.call(result)
         end
       end
     end
