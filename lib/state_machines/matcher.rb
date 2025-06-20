@@ -54,7 +54,13 @@ module StateMachines
   end
 
   # Matches a specific set of values
-  class WhitelistMatcher < Matcher
+  class WhitelistMatcher < Data.define(:values)
+    # Creates a new whitelist matcher for querying against the given set of values
+    def self.new(values = [])
+      normalized_values = values.is_a?(Array) ? values : [values]
+      super(normalized_values)
+    end
+
     # Checks whether the given value exists within the whitelist configured
     # for this matcher.
     #
@@ -67,6 +73,12 @@ module StateMachines
       values.include?(value)
     end
 
+    # Generates a subset of values that exists in both the set of values being
+    # filtered and the values configured for the matcher
+    def filter(values)
+      self.values & values
+    end
+
     # A human-readable description of this matcher
     def description
       values.length == 1 ? values.first.inspect : values.inspect
@@ -74,7 +86,13 @@ module StateMachines
   end
 
   # Matches everything but a specific set of values
-  class BlacklistMatcher < Matcher
+  class BlacklistMatcher < Data.define(:values)
+    # Creates a new blacklist matcher for querying against the given set of values
+    def self.new(values = [])
+      normalized_values = values.is_a?(Array) ? values : [values]
+      super(normalized_values)
+    end
+
     # Checks whether the given value exists outside the blacklist configured
     # for this matcher.
     #

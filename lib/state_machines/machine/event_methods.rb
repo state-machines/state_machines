@@ -3,6 +3,13 @@
 module StateMachines
   class Machine
     module EventMethods
+      # Checks if the given value is a matcher (either legacy Matcher class or Data.define matcher)
+      def matcher?(value)
+        value.is_a?(Matcher) || 
+          value.is_a?(WhitelistMatcher) || 
+          value.is_a?(BlacklistMatcher) ||
+          (value.respond_to?(:matches?) && value.respond_to?(:values))
+      end
       # Defines one or more events for the machine and the transitions that can
       # be performed when those events are run.
       def event(*names, &)
@@ -13,7 +20,7 @@ module StateMachines
         # that gets added
         @events.context(names, &) if block_given?
 
-        if names.first.is_a?(Matcher)
+        if matcher?(names.first)
           # Add any events referenced in the matcher.  When matchers are used,
           # events are not allowed to be configured.
           raise ArgumentError, "Cannot configure events when using matchers (using #{options.inspect})" if options.any?

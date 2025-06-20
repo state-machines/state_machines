@@ -48,8 +48,8 @@ module StateMachines
 
         # Implicit from/to requirements specified
         @state_requirements = options.collect do |from, to|
-          from = WhitelistMatcher.new(from) unless from.is_a?(Matcher)
-          to = WhitelistMatcher.new(to) unless to.is_a?(Matcher)
+          from = WhitelistMatcher.new(from) unless matcher?(from)
+          to = WhitelistMatcher.new(to) unless matcher?(to)
           { from: from, to: to }
         end
       end
@@ -138,15 +138,23 @@ module StateMachines
 
       if options.include?(whitelist_option)
         value = options[whitelist_option]
-        value.is_a?(Matcher) ? value : WhitelistMatcher.new(options[whitelist_option])
+        matcher?(value) ? value : WhitelistMatcher.new(options[whitelist_option])
       elsif options.include?(blacklist_option)
         value = options[blacklist_option]
-        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if value.is_a?(Matcher)
+        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if matcher?(value)
 
         BlacklistMatcher.new(value)
       else
         AllMatcher.instance
       end
+    end
+
+    # Checks if the given value is a matcher (either legacy Matcher class or Data.define matcher)
+    def matcher?(value)
+      value.is_a?(Matcher) || 
+        value.is_a?(WhitelistMatcher) || 
+        value.is_a?(BlacklistMatcher) ||
+        (value.respond_to?(:matches?) && value.respond_to?(:values))
     end
 
     # Verifies that all configured requirements (event and state) match the
