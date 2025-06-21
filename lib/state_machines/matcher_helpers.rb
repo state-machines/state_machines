@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module StateMachines
+  # Module method to check if a value is a matcher
+  def self.matcher?(value)
+    value.is_a?(Matcher) || 
+      (value.respond_to?(:matches?) && value.respond_to?(:values))
+  end
+
   # Provides a set of helper methods for generating matchers
   module MatcherHelpers
     # Represents a state that matches all known states in a machine.

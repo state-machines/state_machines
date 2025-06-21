@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'options_validator'
+require_relative 'eval_helpers'
 
 module StateMachines
   # Represents a set of requirements that must be met in order for a transition
@@ -48,8 +49,8 @@ module StateMachines
 
         # Implicit from/to requirements specified
         @state_requirements = options.collect do |from, to|
-          from = WhitelistMatcher.new(from) unless matcher?(from)
-          to = WhitelistMatcher.new(to) unless matcher?(to)
+          from = WhitelistMatcher.new(from) unless StateMachines.matcher?(from)
+          to = WhitelistMatcher.new(to) unless StateMachines.matcher?(to)
           { from: from, to: to }
         end
       end
@@ -138,10 +139,10 @@ module StateMachines
 
       if options.include?(whitelist_option)
         value = options[whitelist_option]
-        matcher?(value) ? value : WhitelistMatcher.new(options[whitelist_option])
+        StateMachines.matcher?(value) ? value : WhitelistMatcher.new(value)
       elsif options.include?(blacklist_option)
         value = options[blacklist_option]
-        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if matcher?(value)
+        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if StateMachines.matcher?(value)
 
         BlacklistMatcher.new(value)
       else
@@ -149,13 +150,6 @@ module StateMachines
       end
     end
 
-    # Checks if the given value is a matcher (either legacy Matcher class or Data.define matcher)
-    def matcher?(value)
-      value.is_a?(Matcher) || 
-        value.is_a?(WhitelistMatcher) || 
-        value.is_a?(BlacklistMatcher) ||
-        (value.respond_to?(:matches?) && value.respond_to?(:values))
-    end
 
     # Verifies that all configured requirements (event and state) match the
     # given query.  If a match is found, then a hash containing the
