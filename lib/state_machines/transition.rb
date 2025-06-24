@@ -158,7 +158,14 @@ module StateMachines
     #   transition.perform(Time.now)        # => Passes in additional arguments and runs the +save+ action
     #   transition.perform(Time.now, false) # => Passes in additional arguments and only sets the state attribute
     def perform(*args)
-      run_action = [true, false].include?(args.last) ? args.pop : true
+      run_action = true
+
+      if [true, false].include?(args.last)
+        run_action = args.pop
+      elsif args.last.is_a?(Hash) && args.last.key?(:run_action)
+        run_action = args.last.delete(:run_action)
+      end
+
       self.args = args
 
       # Run the transition
