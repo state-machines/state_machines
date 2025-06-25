@@ -153,10 +153,12 @@ module StateMachines
     #
     #   vehicle = Vehicle.new
     #   transition = StateMachines::Transition.new(vehicle, machine, :ignite, :parked, :idling)
-    #   transition.perform                  # => Runs the +save+ action after setting the state attribute
-    #   transition.perform(false)           # => Only sets the state attribute
-    #   transition.perform(Time.now)        # => Passes in additional arguments and runs the +save+ action
-    #   transition.perform(Time.now, false) # => Passes in additional arguments and only sets the state attribute
+    #   transition.perform                              # => Runs the +save+ action after setting the state attribute
+    #   transition.perform(false)                       # => Only sets the state attribute
+    #   transition.perform(run_action: false)           # => Only sets the state attribute
+    #   transition.perform(Time.now)                    # => Passes in additional arguments and runs the +save+ action
+    #   transition.perform(Time.now, false)             # => Passes in additional arguments and only sets the state attribute
+    #   transition.perform(Time.now, run_action: false) # => Passes in additional arguments and only sets the state attribute
     def perform(*args)
       run_action = true
 
