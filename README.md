@@ -1,4 +1,5 @@
 ![Build Status](https://github.com/state-machines/state_machines/actions/workflows/ruby.yml/badge.svg)
+
 # State Machines
 
 State Machines adds support for creating state machines for attributes on any Ruby class.
@@ -9,15 +10,21 @@ State Machines adds support for creating state machines for attributes on any Ru
 
 Add this line to your application's Gemfile:
 
-    gem 'state_machines'
+```ruby
+gem 'state_machines'
+```
 
 And then execute:
 
-    $ bundle
+```sh
+bundle
+```
 
 Or install it yourself as:
 
-    $ gem install state_machines
+```sh
+gem install state_machines
+```
 
 ## Usage
 
@@ -38,7 +45,7 @@ Class definition:
 
 ```ruby
 class Vehicle
-  attr_accessor :seatbelt_on, :time_used, :auto_shop_busy
+  attr_accessor :seatbelt_on, :time_used, :auto_shop_busy, :parking_meter_number
 
   state_machine :state, initial: :parked do
     before_transition parked: any - :parked, do: :put_on_seatbelt
@@ -59,6 +66,18 @@ class Vehicle
 
     event :park do
       transition [:idling, :first_gear] => :parked
+    end
+
+    before_transition on: :park do |vehicle, transition|
+      # If using Rails:
+      # options = transition.args.extract_options!
+
+      options = transition.args.last.is_a?(Hash) ? transition.args.pop : {}
+      meter_number = options[:meter_number]
+
+      unless meter_number.nil?
+        vehicle.parking_meter_number = meter_number
+      end
     end
 
     event :ignite do
@@ -130,6 +149,7 @@ class Vehicle
     @seatbelt_on = false
     @time_used = 0
     @auto_shop_busy = true
+    @parking_meter_number = nil
     super() # NOTE: This *must* be called, otherwise states won't get initialized
   end
 
@@ -199,6 +219,11 @@ vehicle.park!                   # => StateMachines:InvalidTransition: Cannot tra
 # Generic state predicates can raise exceptions if the value does not exist
 vehicle.state?(:parked)         # => false
 vehicle.state?(:invalid)        # => IndexError: :invalid is an invalid name
+
+# Transition callbacks can receive arguments
+vehicle.park(meter_number: '12345') # => true
+vehicle.parked?                     # => true
+vehicle.parking_meter_number        # => "12345"
 
 # Namespaced machines have uniquely-generated methods
 vehicle.alarm_state             # => 1
@@ -790,7 +815,7 @@ For RSpec testing, use the custom RSpec matchers:
 
 ## Contributing
 
-1. Fork it ( https://github.com/state-machines/state_machines/fork )
+1. Fork it ( <https://github.com/state-machines/state_machines/fork> )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
