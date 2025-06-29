@@ -77,7 +77,7 @@ module StateMachines
     # which match the given set of nodes.  Matchers can be used so that the
     # context can get added once and evaluated after multiple adds.
     def context(nodes, &block)
-      nodes = StateMachines.matcher?(nodes.first) ? nodes.first : WhitelistMatcher.new(nodes)
+      nodes = matcher?(nodes.first) ? nodes.first : WhitelistMatcher.new(nodes)
       @contexts << context = { nodes: nodes, block: block }
 
       # Evaluate the new context for existing nodes

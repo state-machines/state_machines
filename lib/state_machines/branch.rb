@@ -49,8 +49,8 @@ module StateMachines
 
         # Implicit from/to requirements specified
         @state_requirements = options.collect do |from, to|
-          from = WhitelistMatcher.new(from) unless StateMachines.matcher?(from)
-          to = WhitelistMatcher.new(to) unless StateMachines.matcher?(to)
+          from = WhitelistMatcher.new(from) unless matcher?(from)
+          to = WhitelistMatcher.new(to) unless matcher?(to)
           { from: from, to: to }
         end
       end
@@ -139,10 +139,10 @@ module StateMachines
 
       if options.include?(whitelist_option)
         value = options[whitelist_option]
-        StateMachines.matcher?(value) ? value : WhitelistMatcher.new(value)
+        matcher?(value) ? value : WhitelistMatcher.new(value)
       elsif options.include?(blacklist_option)
         value = options[blacklist_option]
-        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if StateMachines.matcher?(value)
+        raise ArgumentError, ":#{blacklist_option} option cannot use matchers; use :#{whitelist_option} instead" if matcher?(value)
 
         BlacklistMatcher.new(value)
       else

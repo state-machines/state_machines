@@ -41,3 +41,7 @@ require 'state_machines/machine'
 require 'state_machines/machine_collection'
 
 require 'state_machines/macro_methods'
+require 'state_machines/inline_matcher'
+
+# Apply inline matcher optimization after all classes are loaded
+StateMachines::InlineMatcher.apply!

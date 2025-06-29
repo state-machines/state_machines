@@ -45,7 +45,7 @@ module StateMachines
         # that gets added
         @states.context(names, &) if block_given?
 
-        if StateMachines.matcher?(names.first)
+        if matcher?(names.first)
           # Add any states referenced in the matcher.  When matchers are used,
           # states are not allowed to be configured.
           raise ArgumentError, "Cannot configure states when using matchers (using #{options.inspect})" if options.any?

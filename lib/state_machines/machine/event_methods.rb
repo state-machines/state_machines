@@ -13,7 +13,7 @@ module StateMachines
         # that gets added
         @events.context(names, &) if block_given?
 
-        if StateMachines.matcher?(names.first)
+        if matcher?(names.first)
           # Add any events referenced in the matcher.  When matchers are used,
           # events are not allowed to be configured.
           raise ArgumentError, "Cannot configure events when using matchers (using #{options.inspect})" if options.any?
