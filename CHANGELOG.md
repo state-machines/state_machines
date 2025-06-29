@@ -3,6 +3,20 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.30.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.30.0...state_machines/v0.30.1) (2025-06-29)
+
+
+### Features
+
+* modernize codebase with Ruby 3.2+ features ([#134](https://github.com/state-machines/state_machines/issues/134)) ([b3ab92d](https://github.com/state-machines/state_machines/commit/b3ab92de9c90826a521097a863a137fd2cb429c2))
+* respect ignore_method_conflicts in State#add_predicate ([#139](https://github.com/state-machines/state_machines/issues/139)) ([d897c50](https://github.com/state-machines/state_machines/commit/d897c5042aa4b6160da80b73fc352da0f2aacd8e)), closes [#135](https://github.com/state-machines/state_machines/issues/135)
+
+
+### Bug Fixes
+
+* Add run_action as a hash option ([#137](https://github.com/state-machines/state_machines/issues/137)) ([d213cd0](https://github.com/state-machines/state_machines/commit/d213cd0fa1e5ba51dce81816672ed0532ee364b0))
+* Passing event arguments to guards ([#132](https://github.com/state-machines/state_machines/issues/132)) ([4e21b79](https://github.com/state-machines/state_machines/commit/4e21b79a16d2ea3ef6fcb3e882fb2b6288f0c132))
+
 ## [0.30.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.20.0...state_machines/v0.30.0) (2025-06-19)
 
 
