@@ -289,9 +289,9 @@ module StateMachines
       predicate_method = "#{qualified_name}?"
 
       if machine.send(:owner_class_ancestor_has_method?, :instance, predicate_method)
-        warn "Instance method #{predicate_method.inspect} is already defined in #{machine.owner_class.ancestors.first.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+        warn_about_method_conflict(predicate_method, machine.owner_class.ancestors.first)
       elsif machine.send(:owner_class_has_method?, :instance, predicate_method)
-        warn "Instance method #{predicate_method.inspect} is already defined in #{machine.owner_class.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+        warn_about_method_conflict(predicate_method, machine.owner_class)
       else
         machine.define_helper(:instance, predicate_method) do |machine, object|
           machine.states.matches?(object, name)
@@ -302,6 +302,12 @@ module StateMachines
     # Generates the name of the method containing the actual implementation
     def context_name_for(method)
       :"__#{machine.name}_#{name}_#{method}_#{@context.object_id}__"
+    end
+
+    def warn_about_method_conflict(method, defined_in)
+      return if StateMachines::Machine.ignore_method_conflicts
+
+      warn "Instance method #{method.inspect} is already defined in #{defined_in.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
     end
   end
 end
