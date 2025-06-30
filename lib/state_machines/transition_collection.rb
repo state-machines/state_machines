@@ -209,6 +209,11 @@ module StateMachines
           transition.machine.write(object, :event, nil)
           transition.machine.write(object, :event_transition, nil)
         end
+        
+        # Clear stored transitions hash for new cycle (issue #91)
+        if !empty? && (obj = first.object)
+          obj.instance_variable_set(:@_state_machine_event_transitions, nil)
+        end
 
         # Rollback only if exceptions occur during before callbacks
         begin
@@ -222,7 +227,16 @@ module StateMachines
         # Persists transitions on the object if partial transition was successful.
         # This allows us to reference them later to complete the transition with
         # after callbacks.
-        each { |transition| transition.machine.write(object, :event_transition, transition) } if skip_after && success?
+        if skip_after && success?
+          each { |transition| transition.machine.write(object, :event_transition, transition) }
+          
+          # Store transitions in a hash by machine name to avoid overwriting (issue #91)
+          if !empty?
+            transitions_by_machine = object.instance_variable_get(:@_state_machine_event_transitions) || {}
+            each { |transition| transitions_by_machine[transition.machine.name] = transition }
+            object.instance_variable_set(:@_state_machine_event_transitions, transitions_by_machine)
+          end
+        end
       else
         super
       end

@@ -117,19 +117,27 @@ module StateMachines
       return unless machine.action
 
       # TODO, simplify
-      machine.read(object, :event_transition) || if event_name = machine.read(object, :event)
-                                                   if event = self[event_name.to_sym, :name]
-                                                     event.transition_for(object) || begin
-                                                       # No valid transition: invalidate
-                                                       machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
-                                                       false
-                                                     end
-                                                   else
-                                                     # Event is unknown: invalidate
-                                                     machine.invalidate(object, :event, :invalid) if invalidate
-                                                     false
-                                                   end
-                                                 end
+      # First try the regular event_transition
+      transition = machine.read(object, :event_transition)
+      
+      # If not found and we have stored transitions by machine (issue #91)
+      if !transition && (transitions_by_machine = object.instance_variable_get(:@_state_machine_event_transitions))
+        transition = transitions_by_machine[machine.name]
+      end
+      
+      transition || if event_name = machine.read(object, :event)
+                      if event = self[event_name.to_sym, :name]
+                        event.transition_for(object) || begin
+                          # No valid transition: invalidate
+                          machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
+                          false
+                        end
+                      else
+                        # Event is unknown: invalidate
+                        machine.invalidate(object, :event, :invalid) if invalidate
+                        false
+                      end
+                    end
     end
 
     private
