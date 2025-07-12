@@ -70,7 +70,7 @@ module StateMachines
         if_condition = binding.local_variable_get(:if) # 'if' is a keyword, need special handling
       else
         # Handle unexpected options
-        raise ArgumentError, "Unexpected positional argument: #{options.inspect}"
+        raise ArgumentError, "Unexpected positional argument in State initialize: #{options.inspect}"
       end
 
       @machine = machine
