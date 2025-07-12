@@ -12,3 +12,6 @@ gem 'rubocop', require: false
 gem 'rubocop-minitest', require: false
 
 gem 'rubocop-rake', require: false
+
+# Optional async support for testing
+gem 'async', require: false

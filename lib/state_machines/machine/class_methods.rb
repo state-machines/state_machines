@@ -30,6 +30,10 @@ module StateMachines
             machine = machine.clone
             machine.initial_state = options[:initial] if options.include?(:initial)
             machine.owner_class = owner_class
+            # Configure async mode if requested in options
+            if options.include?(:async)
+              machine.configure_async_mode!(options[:async])
+            end
           end
 
           # Evaluate DSL
