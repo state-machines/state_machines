@@ -132,8 +132,8 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       result = @station.start_loading_async.wait
       refute result, "Should not be able to start loading when life support is offline"
 
-      # Emergency stop should work (life support is offline, so guard prevents it)
-      # Wait, the guard says "unless life_support is offline", so if it IS offline, emergency_stop shouldn't work
+      # Emergency stop should NOT work (life support is offline, so guard prevents it)
+      # The guard says "unless life_support is offline", so when it IS offline, emergency_stop is blocked
       result = @station.emergency_stop_async.wait
       refute result, "Emergency stop should not work when life support is offline (guard protection)"
 

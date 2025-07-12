@@ -36,6 +36,7 @@ Below is an example of many of the features offered by this plugin, including:
 * Namespaced states
 * Transition callbacks
 * Conditional transitions
+* Coordinated state management guards
 * Asynchronous state machines (async: true)
 * State-driven instance behavior
 * Customized state values
