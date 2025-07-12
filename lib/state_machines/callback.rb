@@ -177,7 +177,8 @@ module StateMachines
     # order.  The callback will only halt if the resulting value from the
     # method passes the terminator.
     def run_methods(object, context = {}, index = 0, *args, &block)
-      if type == :around
+      case type
+      when :around
         current_method = @methods[index]
         if current_method
           yielded = false

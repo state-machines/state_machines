@@ -55,7 +55,8 @@ module StateMachines
     # * <tt>:human_name</tt> - The human-readable version of this state's name
     def initialize(machine, name, options = nil, initial: false, value: :__not_provided__, cache: nil, if: nil, human_name: nil, **extra_options) # :nodoc:
       # Handle both old hash style and new kwargs style for backward compatibility
-      if options.is_a?(Hash)
+      case options
+      in Hash
         # Old style: initialize(machine, name, {initial: true, value: 'foo'})
         StateMachines::OptionsValidator.assert_valid_keys!(options, :initial, :value, :cache, :if, :human_name)
         initial = options.fetch(:initial, false)
@@ -63,13 +64,13 @@ module StateMachines
         cache = options[:cache]
         if_condition = options[:if]
         human_name = options[:human_name]
-      else
+      in nil
         # New style: initialize(machine, name, initial: true, value: 'foo')
-        # options parameter should be nil in this case
-        raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
-
         StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :initial, :value, :cache, :if, :human_name) unless extra_options.empty?
         if_condition = binding.local_variable_get(:if) # 'if' is a keyword, need special handling
+      else
+        # Handle unexpected options
+        raise ArgumentError, "Unexpected positional argument: #{options.inspect}"
       end
 
       @machine = machine
