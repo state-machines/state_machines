@@ -26,4 +26,9 @@ class EventInitializeTest < StateMachinesTest
     event = StateMachines::Event.new(@machine, :ignite, nil, human_name: 'Start')
     assert_equal 'Start', event.human_name
   end
+
+  def test_should_raise_exception_if_invalid_positional_argument
+    exception = assert_raises(ArgumentError) { StateMachines::Event.new(@machine, :ignite, :invalid) }
+    assert_equal 'Unexpected positional argument in Event initialize: :invalid', exception.message
+  end
 end

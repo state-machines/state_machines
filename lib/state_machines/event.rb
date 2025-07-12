@@ -45,7 +45,7 @@ module StateMachines
         StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :human_name) unless extra_options.empty?
       else
         # Handle unexpected options
-        raise ArgumentError, "Unexpected positional argument: #{options.inspect}"
+        raise ArgumentError, "Unexpected positional argument in Event initialize: #{options.inspect}"
       end
 
       @machine = machine
