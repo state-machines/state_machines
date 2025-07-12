@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.50.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.40.0...state_machines/v0.50.0) (2025-07-12)
+
+
+### Features
+
+* Add coordinated state management guards ([#145](https://github.com/state-machines/state_machines/issues/145)) ([97eb6ef](https://github.com/state-machines/state_machines/commit/97eb6ef28958e7a6a61fed205e5e02752a95b6a4))
+
 ## [0.40.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.31.0...state_machines/v0.40.0) (2025-07-12)
 
 
