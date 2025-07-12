@@ -5,7 +5,13 @@ require File.expand_path('../../files/models/autonomous_drone', __dir__)
 
 class SpaceShipAsyncModeTest < Minitest::Test
   include StateMachines::TestHelper
+
   def setup
+    # Skip async tests on unsupported Ruby engines where gems aren't available
+    if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
+      skip "Async tests not supported on #{RUBY_ENGINE} - async gems not available on this platform"
+    end
+
     @spaceship = AutonomousDrone.new
   end
 

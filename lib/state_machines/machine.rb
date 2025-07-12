@@ -432,7 +432,6 @@ module StateMachines
     include Callbacks
     include Rendering
     include Integration
-    include AsyncExtensions
 
     # Whether to ignore any conflicts that are detected for helper methods that
     # get generated for a machine's owner class.  Default is false.

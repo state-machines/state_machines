@@ -82,30 +82,6 @@ module StateMachines
       end
     end
 
-    # Extensions that get prepended to Machine class when async is enabled globally
-    module AsyncMachineExtensions
-      # Override initialize to add async capabilities to owner class
-      def initialize(owner_class, *args, **kwargs)
-        result = super(owner_class, *args, **kwargs)
-
-        # Add async capabilities to the owner class
-        owner_class.include(StateMachines::AsyncMode::ThreadSafeState)
-        owner_class.include(StateMachines::AsyncMode::AsyncEvents)
-
-        # Enable async mode for this machine by default
-        configure_async_mode!(true)
-
-        result
-      end
-
-      # Thread-safe state initialization for async-enabled machines
-      def initialize_state(object, options = {})
-        object.state_machine_mutex.with_write_lock do
-          super(object, options)
-        end
-      end
-    end
-
     # Include async extensions by default (but only load AsyncMode when requested)
     include AsyncExtensions
   end

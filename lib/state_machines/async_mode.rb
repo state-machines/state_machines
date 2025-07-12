@@ -53,7 +53,6 @@ module StateMachines
   #     task = drone.power_up_async!               # => Async::Task
   #   end
   #
-  # @since 0.31.0
   module AsyncMode
     # All components are loaded from separate files:
     # - ThreadSafeState: Mutex-based thread safety
