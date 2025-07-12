@@ -35,15 +35,17 @@ module StateMachines
     # * <tt>:human_name</tt> - The human-readable version of this event's name
     def initialize(machine, name, options = nil, human_name: nil, **extra_options) # :nodoc:
       # Handle both old hash style and new kwargs style for backward compatibility
-      if options.is_a?(Hash)
+      case options
+      in Hash
         # Old style: initialize(machine, name, {human_name: 'Custom Name'})
         StateMachines::OptionsValidator.assert_valid_keys!(options, :human_name)
         human_name = options[:human_name]
-      else
+      in nil
         # New style: initialize(machine, name, human_name: 'Custom Name')
-        raise ArgumentError, "Unexpected positional argument: #{options.inspect}" unless options.nil?
-
         StateMachines::OptionsValidator.assert_valid_keys!(extra_options, :human_name) unless extra_options.empty?
+      else
+        # Handle unexpected options
+        raise ArgumentError, "Unexpected positional argument in Event initialize: #{options.inspect}"
       end
 
       @machine = machine

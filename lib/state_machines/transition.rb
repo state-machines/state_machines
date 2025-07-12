@@ -160,12 +160,13 @@ module StateMachines
     #   transition.perform(Time.now, false)             # => Passes in additional arguments and only sets the state attribute
     #   transition.perform(Time.now, run_action: false) # => Passes in additional arguments and only sets the state attribute
     def perform(*args)
-      run_action = true
-
-      if [true, false].include?(args.last)
-        run_action = args.pop
-      elsif args.last.is_a?(Hash) && args.last.key?(:run_action)
-        run_action = args.last.delete(:run_action)
+      run_action = case args.last
+      in true | false
+        args.pop
+      in { run_action: }
+        args.last.delete(:run_action)
+      else
+        true
       end
 
       self.args = args
