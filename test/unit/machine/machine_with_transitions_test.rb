@@ -15,7 +15,7 @@ class MachineWithTransitionsTest < StateMachinesTest
 
   def test_should_not_allow_except_on_option
     exception = assert_raises(ArgumentError) { @machine.transition(except_on: :ignite, on: :ignite) }
-    assert_equal 'Unknown key: :except_on. Valid keys are: :from, :to, :except_from, :except_to, :if, :unless', exception.message
+    assert_equal 'Unknown key: :except_on. Valid keys are: :from, :to, :except_from, :except_to, :if, :unless, :if_state, :unless_state, :if_all_states, :unless_all_states, :if_any_state, :unless_any_state', exception.message
   end
 
   def test_should_allow_transitioning_without_a_to_state
