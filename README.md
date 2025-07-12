@@ -36,6 +36,7 @@ Below is an example of many of the features offered by this plugin, including:
 * Namespaced states
 * Transition callbacks
 * Conditional transitions
+* Asynchronous state machines (async: true)
 * State-driven instance behavior
 * Customized state values
 * Parallel events
@@ -244,6 +245,206 @@ vehicle.state_name                              # => :first_gear
 vehicle.alarm_state_name                        # => :active
 
 vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidParallelTransition: Cannot run events in parallel: ignite, enable_alarm
+
+# Coordinated State Management
+
+State machines can coordinate with each other using state guards, allowing transitions to depend on the state of other state machines within the same object. This enables complex system modeling where components are interdependent.
+
+## State Guard Options
+
+### Single State Guards
+
+* `:if_state` - Transition only if another state machine is in a specific state.
+* `:unless_state` - Transition only if another state machine is NOT in a specific state.
+
+```ruby
+class TorpedoSystem
+  state_machine :bay_doors, initial: :closed do
+    event :open do
+      transition closed: :open
+    end
+
+    event :close do
+      transition open: :closed
+    end
+  end
+
+  state_machine :torpedo_status, initial: :loaded do
+    event :fire_torpedo do
+      # Can only fire torpedo if bay doors are open
+      transition loaded: :fired, if_state: { bay_doors: :open }
+    end
+
+    event :reload do
+      # Can only reload if bay doors are closed (for safety)
+      transition fired: :loaded, unless_state: { bay_doors: :open }
+    end
+  end
+end
+
+system = TorpedoSystem.new
+system.fire_torpedo  # => false (bay doors are closed)
+
+system.open_bay_doors!
+system.fire_torpedo  # => true (bay doors are now open)
+```
+
+### Multiple State Guards
+
+* `:if_all_states` - Transition only if ALL specified state machines are in their respective states.
+* `:unless_all_states` - Transition only if NOT ALL specified state machines are in their respective states.
+* `:if_any_state` - Transition only if ANY of the specified state machines are in their respective states.
+* `:unless_any_state` - Transition only if NONE of the specified state machines are in their respective states.
+
+```ruby
+class StarshipBridge
+  state_machine :shields, initial: :down
+  state_machine :weapons, initial: :offline
+  state_machine :warp_core, initial: :stable
+
+  state_machine :alert_status, initial: :green do
+    event :red_alert do
+      # Red alert if ANY critical system needs attention
+      transition green: :red, if_any_state: { warp_core: :critical, shields: :down }
+    end
+
+    event :battle_stations do
+      # Battle stations only if ALL combat systems are ready
+      transition green: :battle, if_all_states: { shields: :up, weapons: :armed }
+    end
+  end
+end
+```
+
+## Error Handling
+
+State guards provide comprehensive error checking:
+
+```ruby
+# Referencing a non-existent state machine
+event :invalid, if_state: { nonexistent_machine: :some_state }
+# => ArgumentError: State machine 'nonexistent_machine' is not defined for StarshipBridge
+
+# Referencing a non-existent state
+event :another_invalid, if_state: { shields: :nonexistent_state }
+# => ArgumentError: State 'nonexistent_state' is not defined in state machine 'shields'
+```
+
+# Asynchronous State Machines
+
+State machines can operate asynchronously for high-performance applications. This is ideal for I/O-bound tasks, such as in web servers or other concurrent environments, where you don't want a long-running state transition (like one involving a network call) to block the entire thread.
+
+This feature is powered by the [async](https://github.com/socketry/async) gem and uses `concurrent-ruby` for enterprise-grade thread safety.
+
+## Platform Compatibility
+
+**Supported Platforms:**
+* MRI Ruby (CRuby) 3.2+
+* Other Ruby engines with full Fiber scheduler support
+
+**Unsupported Platforms:**
+* JRuby - Falls back to synchronous mode with warnings
+* TruffleRuby - Falls back to synchronous mode with warnings
+
+## Basic Async Usage
+
+Enable async mode by adding `async: true` to your state machine declaration:
+
+```ruby
+class AutonomousDrone < StarfleetShip
+  # Async-enabled state machine for autonomous operation
+  state_machine :status, async: true, initial: :docked do
+    event :launch do
+      transition docked: :flying
+    end
+
+    event :land do
+      transition flying: :docked
+    end
+  end
+
+  # Mixed configuration: some machines async, others sync
+  state_machine :teleporter_status, async: true, initial: :offline do
+    event :power_up do
+      transition offline: :charging
+    end
+
+    event :teleport do
+      transition ready: :teleporting
+    end
+  end
+
+  # Weapons remain synchronous for safety
+  state_machine :weapons, initial: :disarmed do
+    event :arm do
+      transition disarmed: :armed
+    end
+  end
+end
+```
+
+## Async Event Methods
+
+Async-enabled machines automatically generate async versions of event methods:
+
+```ruby
+drone = AutonomousDrone.new
+
+# Within an Async context
+Async do
+  # Async event firing - returns Async::Task
+  task = drone.launch_async
+  result = task.wait  # => true
+
+  # Bang methods for strict error handling
+  drone.power_up_async!  # => Async::Task (raises on failure)
+
+  # Generic async event firing
+  drone.fire_event_async(:teleport)  # => Async::Task
+end
+
+# Outside Async context - raises error
+drone.launch_async  # => RuntimeError: launch_async must be called within an Async context
+```
+
+## Thread Safety
+
+Async state machines use enterprise-grade thread safety with `concurrent-ruby`:
+
+```ruby
+# Concurrent operations are automatically thread-safe
+threads = []
+10.times do
+  threads << Thread.new do
+    Async do
+      drone.launch_async.wait
+      drone.land_async.wait
+    end
+  end
+end
+threads.each(&:join)
+```
+
+## Performance Considerations
+
+* **Thread Safety**: Uses `Concurrent::ReentrantReadWriteLock` for optimal read/write performance.
+* **Memory**: Each async-enabled object gets its own mutex (lazy-loaded).
+* **Marshalling**: Objects with async state machines can be serialized (mutex excluded/recreated).
+* **Mixed Mode**: You can mix async and sync state machines in the same class.
+
+## Dependencies
+
+Async functionality requires:
+
+```ruby
+# Gemfile (automatically scoped to MRI Ruby)
+platform :ruby do
+  gem 'async', '>= 2.25.0'
+  gem 'concurrent-ruby', '>= 1.3.5'
+end
+```
+
+*Note: These gems are only installed on supported platforms. JRuby/TruffleRuby won't attempt installation.*
 
 # Human-friendly names can be accessed for states/events
 Vehicle.human_state_name(:first_gear)               # => "first gear"

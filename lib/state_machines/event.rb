@@ -104,7 +104,7 @@ module StateMachines
 
       # Only a certain subset of explicit options are allowed for transition
       # requirements
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless) if (options.keys - %i[from to on except_from except_to except_on if unless]).empty?
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless, :if_state, :unless_state, :if_all_states, :unless_all_states, :if_any_state, :unless_any_state) if (options.keys - %i[from to on except_from except_to except_on if unless if_state unless_state if_all_states unless_all_states if_any_state unless_any_state]).empty?
 
       branches << branch = Branch.new(options.merge(on: name))
       @known_states |= branch.known_states

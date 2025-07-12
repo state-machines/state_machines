@@ -34,6 +34,12 @@ module StateMachines
       # Build conditionals
       @if_condition = options.delete(:if)
       @unless_condition = options.delete(:unless)
+      @if_state_condition = options.delete(:if_state)
+      @unless_state_condition = options.delete(:unless_state)
+      @if_all_states_condition = options.delete(:if_all_states)
+      @unless_all_states_condition = options.delete(:unless_all_states)
+      @if_any_state_condition = options.delete(:if_any_state)
+      @unless_any_state_condition = options.delete(:unless_any_state)
 
       # Build event requirement
       @event_requirement = build_matcher(options, :on, :except_on)
@@ -182,21 +188,56 @@ module StateMachines
     # Verifies that the conditionals for this branch evaluate to true for the
     # given object. Event arguments are passed to guards that accept multiple parameters.
     def matches_conditions?(object, query, event_args = [])
-      case [query[:guard], if_condition, unless_condition]
-      in [false, _, _]
-        true
-      in [_, nil, nil]
-        true
-      in [_, if_conds, nil] if if_conds
-        Array(if_conds).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
-      in [_, nil, unless_conds] if unless_conds
-        Array(unless_conds).none? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
-      in [_, if_conds, unless_conds] if if_conds || unless_conds
-        Array(if_conds).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) } &&
-          Array(unless_conds).none? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
-      else
-        true
+      return true if query[:guard] == false
+
+      # Evaluate original if/unless conditions
+      if_passes = !if_condition || Array(if_condition).all? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
+      unless_passes = !unless_condition || Array(unless_condition).none? { |condition| evaluate_method_with_event_args(object, condition, event_args) }
+
+      return false unless if_passes && unless_passes
+
+      # Consolidate all state guards
+      state_guards = {
+        if_state: @if_state_condition,
+        unless_state: @unless_state_condition,
+        if_all_states: @if_all_states_condition,
+        unless_all_states: @unless_all_states_condition,
+        if_any_state: @if_any_state_condition,
+        unless_any_state: @unless_any_state_condition
+      }.compact
+
+      return true if state_guards.empty?
+
+      validate_and_check_state_guards(object, state_guards)
+    end
+
+    private
+
+    def validate_and_check_state_guards(object, guards)
+      guards.all? do |guard_type, conditions|
+        case guard_type
+        when :if_state, :if_all_states
+          conditions.all? { |machine, state| check_state(object, machine, state) }
+        when :unless_state
+          conditions.none? { |machine, state| check_state(object, machine, state) }
+        when :if_any_state
+          conditions.any? { |machine, state| check_state(object, machine, state) }
+        when :unless_all_states
+          !conditions.all? { |machine, state| check_state(object, machine, state) }
+        when :unless_any_state
+          conditions.none? { |machine, state| check_state(object, machine, state) }
+        end
       end
+    end
+
+    def check_state(object, machine_name, state_name)
+      machine = object.class.state_machines[machine_name]
+      raise ArgumentError, "State machine '#{machine_name}' is not defined for #{object.class.name}" unless machine
+
+      state = machine.states[state_name]
+      raise ArgumentError, "State '#{state_name}' is not defined in state machine '#{machine_name}'" unless state
+
+      state.matches?(object.send(machine_name))
     end
   end
 end
