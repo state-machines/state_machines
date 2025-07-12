@@ -14,6 +14,7 @@ require_relative 'machine/event_methods'
 require_relative 'machine/callbacks'
 require_relative 'machine/rendering'
 require_relative 'machine/integration'
+require_relative 'machine/async_extensions'
 require_relative 'syntax_validator'
 
 module StateMachines

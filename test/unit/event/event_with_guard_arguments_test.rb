@@ -154,8 +154,8 @@ class EventWithGuardArgumentsTest < StateMachinesTest
   def test_complex_use_case_from_github_issue
     # Test the exact use case from GitHub issue #39
     @machine.event :start do
-      transition :uninitialized => :trial, if: ->(subscription, *args) { 
-        subscription.trial_enabled? && (args.empty? || args[0] != true) 
+      transition :uninitialized => :trial, if: ->(subscription, *args) {
+        subscription.trial_enabled? && (args.empty? || args[0] != true)
       }
       transition [:uninitialized, :trial] => :active
     end

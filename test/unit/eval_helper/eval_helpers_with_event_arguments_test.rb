@@ -18,7 +18,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
 
   def test_single_parameter_proc_only_receives_object
     proc = ->(obj) { obj.valid? }
-    
+
     # Should call with only object, ignoring event args
     assert evaluate_method_with_event_args(@object, proc, [:arg1, :arg2])
   end
@@ -26,7 +26,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
   def test_splat_parameter_proc_receives_object_and_event_args
     result_args = nil
     proc = ->(obj, *args) { result_args = args; obj.valid? }
-    
+
     # Should call with object + event args
     assert evaluate_method_with_event_args(@object, proc, [:arg1, :arg2])
     assert_equal [:arg1, :arg2], result_args
@@ -37,7 +37,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
     result_arg1 = nil
     result_arg2 = nil
     proc = ->(obj, arg1, arg2) { result_obj = obj; result_arg1 = arg1; result_arg2 = arg2; true }
-    
+
     # Should call with object + first two event args
     assert evaluate_method_with_event_args(@object, proc, [:first, :second, :third])
     assert_equal @object, result_obj
@@ -48,7 +48,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
   def test_zero_parameter_proc_receives_no_arguments
     called = false
     proc = -> { called = true; true }
-    
+
     # Should call with no arguments
     assert evaluate_method_with_event_args(@object, proc, [:arg1, :arg2])
     assert called
@@ -66,7 +66,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
 
   def test_method_object_with_single_arity
     method = @object.method(:valid?)
-    
+
     # Should call with only object for arity 0 methods
     assert evaluate_method_with_event_args(@object, method, [:arg1, :arg2])
   end
@@ -76,28 +76,28 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
     def @object.check_args(obj, arg1, arg2)
       obj == self && arg1 == :first && arg2 == :second
     end
-    
+
     method = @object.method(:check_args)
-    
+
     # Should call with event args for multi-arity methods
     assert evaluate_method_with_event_args(@object, method, [:first, :second])
   end
 
   def test_proc_arity_detection
     # Test various arity scenarios
-    
+
     # Arity 0
     proc_0 = -> { true }
     assert evaluate_method_with_event_args(@object, proc_0, [:ignored])
-    
-    # Arity 1 
+
+    # Arity 1
     proc_1 = ->(obj) { obj.valid? }
     assert evaluate_method_with_event_args(@object, proc_1, [:ignored])
-    
+
     # Arity 2
     proc_2 = ->(obj, arg) { obj.valid? && arg == :test }
     assert evaluate_method_with_event_args(@object, proc_2, [:test])
-    
+
     # Arity -1 (splat)
     proc_splat = ->(obj, *args) { obj.valid? && args.include?(:test) }
     assert evaluate_method_with_event_args(@object, proc_splat, [:test, :other])
@@ -106,7 +106,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
   def test_backward_compatibility_with_no_event_args
     # Should work when no event args are provided
     proc = ->(obj, *args) { obj.valid? && args.empty? }
-    
+
     assert evaluate_method_with_event_args(@object, proc)
     assert evaluate_method_with_event_args(@object, proc, [])
   end
@@ -114,7 +114,7 @@ class EvalHelpersWithEventArgumentsTest < StateMachinesTest
   def test_fallback_to_standard_evaluate_method
     # Unknown method types should fallback to standard evaluation and raise appropriate error
     custom_object = Object.new
-    
+
     # Should fallback to standard evaluate_method and raise the same error
     assert_raises(ArgumentError) do
       evaluate_method_with_event_args(@object, custom_object, [:any])
