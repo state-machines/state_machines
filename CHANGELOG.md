@@ -3,6 +3,19 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.40.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.31.0...state_machines/v0.40.0) (2025-07-12)
+
+
+### Features
+
+* add async support with declarative async: true parameter ([#144](https://github.com/state-machines/state_machines/issues/144)) ([5fcbbd7](https://github.com/state-machines/state_machines/commit/5fcbbd72cd7c43c6e946afd242e85b0d9c781251))
+
+
+### Bug Fixes
+
+* prevent event_transition overwriting with multiple state machines ([fab957e](https://github.com/state-machines/state_machines/commit/fab957e6c4deb5486f5f817f98e410d17d2a45bf))
+* prevent event_transition overwriting with multiple state machines ([a8c6017](https://github.com/state-machines/state_machines/commit/a8c60175bd0f7b8c0ea65c5f50229be94bc314c5))
+
 ## [0.31.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.30.0...state_machines/v0.31.0) (2025-06-29)
 
 
