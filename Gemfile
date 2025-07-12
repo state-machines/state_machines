@@ -13,5 +13,8 @@ gem 'rubocop-minitest', require: false
 
 gem 'rubocop-rake', require: false
 
-# Optional async support for testing
+# Async support dependencies (MRI Ruby only)
+# These gems are required for StateMachines::AsyncMode functionality
+# and are loaded conditionally based on Ruby engine compatibility
 gem 'async', require: false
+gem 'concurrent-ruby', require: false

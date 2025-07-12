@@ -460,6 +460,334 @@ module StateMachines
       _assert_transition_callback(:after, machine_or_class, options, message)
     end
 
+    # === Sync Mode Assertions ===
+
+    # Assert that a state machine is operating in synchronous mode
+    #
+    # @param object [Object] The object with state machines
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If the machine has async mode enabled
+    #
+    # @example
+    #   user = User.new
+    #   assert_sm_sync_mode(user)                           # Uses default :state machine
+    #   assert_sm_sync_mode(user, :status)                  # Uses :status machine
+    def assert_sm_sync_mode(object, machine_name = :state, message = nil)
+      machine = object.class.state_machines[machine_name]
+      raise ArgumentError, "No state machine '#{machine_name}' found" unless machine
+
+      async_enabled = machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
+      default_message = "Expected state machine '#{machine_name}' to be in sync mode, but async mode is enabled"
+
+      if defined?(::Minitest)
+        refute async_enabled, message || default_message
+      elsif defined?(::RSpec)
+        expect(async_enabled).to be_falsy, message || default_message
+      elsif async_enabled
+        raise default_message
+      end
+    end
+
+    # Assert that async methods are not available on a sync-only object
+    #
+    # @param object [Object] The object with state machines
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If async methods are available
+    #
+    # @example
+    #   sync_only_car = Car.new  # Car has no async: true machines
+    #   assert_sm_no_async_methods(sync_only_car)
+    def assert_sm_no_async_methods(object, message = nil)
+      async_methods = %i[fire_event_async fire_events_async fire_event_async! async_fire_event]
+      available_async_methods = async_methods.select { |method| object.respond_to?(method) }
+
+      default_message = "Expected no async methods to be available, but found: #{available_async_methods.inspect}"
+
+      if defined?(::Minitest)
+        assert_empty available_async_methods, message || default_message
+      elsif defined?(::RSpec)
+        expect(available_async_methods).to be_empty, message || default_message
+      elsif available_async_methods.any?
+        raise default_message
+      end
+    end
+
+    # Assert that an object has no async-enabled state machines
+    #
+    # @param object [Object] The object with state machines
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If any machine has async mode enabled
+    #
+    # @example
+    #   sync_only_vehicle = Vehicle.new  # All machines are sync-only
+    #   assert_sm_all_sync(sync_only_vehicle)
+    def assert_sm_all_sync(object, message = nil)
+      async_machines = []
+
+      object.class.state_machines.each do |name, machine|
+        if machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
+          async_machines << name
+        end
+      end
+
+      default_message = "Expected all state machines to be sync-only, but these have async enabled: #{async_machines.inspect}"
+
+      if defined?(::Minitest)
+        assert_empty async_machines, message || default_message
+      elsif defined?(::RSpec)
+        expect(async_machines).to be_empty, message || default_message
+      elsif async_machines.any?
+        raise default_message
+      end
+    end
+
+    # Assert that synchronous event execution works correctly
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event to trigger
+    # @param expected_state [Symbol] The expected state after transition
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If sync execution fails
+    #
+    # @example
+    #   car = Car.new
+    #   assert_sm_sync_execution(car, :start, :running)
+    #   assert_sm_sync_execution(car, :turn_on, :active, :alarm)
+    def assert_sm_sync_execution(object, event, expected_state, machine_name = :state, message = nil)
+      # Store initial state
+      initial_state = object.send(machine_name)
+
+      # Execute event synchronously
+      result = object.send("#{event}!")
+
+      # Verify immediate state change (no async delay)
+      final_state = object.send(machine_name)
+
+      # Check that transition succeeded
+      state_changed = initial_state != final_state
+      correct_final_state = final_state.to_s == expected_state.to_s
+
+      default_message = "Expected sync execution of '#{event}' to change #{machine_name} from '#{initial_state}' to '#{expected_state}', but got '#{final_state}'"
+
+      if defined?(::Minitest)
+        assert result, "Event #{event} should return true on success"
+        assert state_changed, "State should change from #{initial_state}"
+        assert correct_final_state, message || default_message
+      elsif defined?(::RSpec)
+        expect(result).to be_truthy, "Event #{event} should return true on success"
+        expect(state_changed).to be_truthy, "State should change from #{initial_state}"
+        expect(correct_final_state).to be_truthy, message || default_message
+      else
+        raise "Event #{event} should return true on success" unless result
+        raise "State should change from #{initial_state}" unless state_changed
+        raise default_message unless correct_final_state
+      end
+    end
+
+    # Assert that event execution is immediate (no async delay)
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event to trigger
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If execution appears to be async
+    #
+    # @example
+    #   car = Car.new
+    #   assert_sm_immediate_execution(car, :start)
+    def assert_sm_immediate_execution(object, event, machine_name = :state, message = nil)
+      initial_state = object.send(machine_name)
+
+      # Record start time and execute
+      start_time = Time.now
+      object.send("#{event}!")
+      execution_time = Time.now - start_time
+
+      final_state = object.send(machine_name)
+      state_changed = initial_state != final_state
+
+      # Should complete very quickly (under 10ms for sync operations)
+      is_immediate = execution_time < 0.01
+
+      default_message = "Expected immediate sync execution of '#{event}', but took #{execution_time}s (likely async)"
+
+      if defined?(::Minitest)
+        assert state_changed, "Event should trigger state change"
+        assert is_immediate, message || default_message
+      elsif defined?(::RSpec)
+        expect(state_changed).to be_truthy, "Event should trigger state change"
+        expect(is_immediate).to be_truthy, message || default_message
+      else
+        raise "Event should trigger state change" unless state_changed
+        raise default_message unless is_immediate
+      end
+    end
+
+    # === Async Mode Assertions ===
+
+    # Assert that a state machine is operating in asynchronous mode
+    #
+    # @param object [Object] The object with state machines
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If the machine doesn't have async mode enabled
+    #
+    # @example
+    #   drone = AutonomousDrone.new
+    #   assert_sm_async_mode(drone)                         # Uses default :state machine
+    #   assert_sm_async_mode(drone, :teleporter_status)     # Uses :teleporter_status machine
+    def assert_sm_async_mode(object, machine_name = :state, message = nil)
+      machine = object.class.state_machines[machine_name]
+      raise ArgumentError, "No state machine '#{machine_name}' found" unless machine
+
+      async_enabled = machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
+      default_message = "Expected state machine '#{machine_name}' to have async mode enabled, but it's in sync mode"
+
+      if defined?(::Minitest)
+        assert async_enabled, message || default_message
+      elsif defined?(::RSpec)
+        expect(async_enabled).to be_truthy, message || default_message
+      else
+        raise default_message unless async_enabled
+      end
+    end
+
+    # Assert that async methods are available on an async-enabled object
+    #
+    # @param object [Object] The object with state machines
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If async methods are not available
+    #
+    # @example
+    #   drone = AutonomousDrone.new  # Has async: true machines
+    #   assert_sm_async_methods(drone)
+    def assert_sm_async_methods(object, message = nil)
+      async_methods = %i[fire_event_async fire_events_async fire_event_async! async_fire_event]
+      available_async_methods = async_methods.select { |method| object.respond_to?(method) }
+
+      default_message = "Expected async methods to be available, but found none"
+
+      if defined?(::Minitest)
+        refute_empty available_async_methods, message || default_message
+      elsif defined?(::RSpec)
+        expect(available_async_methods).not_to be_empty, message || default_message
+      elsif available_async_methods.empty?
+        raise default_message
+      end
+    end
+
+    # Assert that an object has async-enabled state machines
+    #
+    # @param object [Object] The object with state machines
+    # @param machine_names [Array<Symbol>] Expected async machine names
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If expected machines don't have async mode
+    #
+    # @example
+    #   drone = AutonomousDrone.new
+    #   assert_sm_has_async(drone, [:status, :teleporter_status, :shields])
+    def assert_sm_has_async(object, machine_names = nil, message = nil)
+      if machine_names
+        # Check specific machines
+        non_async_machines = machine_names.reject do |name|
+          machine = object.class.state_machines[name]
+          machine&.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
+        end
+
+        default_message = "Expected machines #{machine_names.inspect} to have async enabled, but these don't: #{non_async_machines.inspect}"
+
+        if defined?(::Minitest)
+          assert_empty non_async_machines, message || default_message
+        elsif defined?(::RSpec)
+          expect(non_async_machines).to be_empty, message || default_message
+        elsif non_async_machines.any?
+          raise default_message
+        end
+      else
+        # Check that at least one machine has async
+        async_machines = object.class.state_machines.select do |name, machine|
+          machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
+        end
+
+        default_message = "Expected at least one state machine to have async enabled, but none found"
+
+        if defined?(::Minitest)
+          refute_empty async_machines, message || default_message
+        elsif defined?(::RSpec)
+          expect(async_machines).not_to be_empty, message || default_message
+        elsif async_machines.empty?
+          raise default_message
+        end
+      end
+    end
+
+    # Assert that individual async event methods are available
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event name
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If async event methods are not available
+    #
+    # @example
+    #   drone = AutonomousDrone.new
+    #   assert_sm_async_event_methods(drone, :launch)  # Checks launch_async and launch_async!
+    def assert_sm_async_event_methods(object, event, message = nil)
+      async_method = "#{event}_async".to_sym
+      async_bang_method = "#{event}_async!".to_sym
+
+      has_async = object.respond_to?(async_method)
+      has_async_bang = object.respond_to?(async_bang_method)
+
+      default_message = "Expected async event methods #{async_method} and #{async_bang_method} to be available for event :#{event}"
+
+      if defined?(::Minitest)
+        assert has_async, "Missing #{async_method} method"
+        assert has_async_bang, "Missing #{async_bang_method} method"
+      elsif defined?(::RSpec)
+        expect(has_async).to be_truthy, "Missing #{async_method} method"
+        expect(has_async_bang).to be_truthy, "Missing #{async_bang_method} method"
+      else
+        raise "Missing #{async_method} method" unless has_async
+        raise "Missing #{async_bang_method} method" unless has_async_bang
+      end
+    end
+
+    # Assert that an object has thread-safe state methods when async is enabled
+    #
+    # @param object [Object] The object with state machines
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If thread-safe methods are not available
+    #
+    # @example
+    #   drone = AutonomousDrone.new
+    #   assert_sm_thread_safe_methods(drone)
+    def assert_sm_thread_safe_methods(object, message = nil)
+      thread_safe_methods = %i[state_machine_mutex read_state_safely write_state_safely]
+      missing_methods = thread_safe_methods.reject { |method| object.respond_to?(method) }
+
+      default_message = "Expected thread-safe methods to be available, but missing: #{missing_methods.inspect}"
+
+      if defined?(::Minitest)
+        assert_empty missing_methods, message || default_message
+      elsif defined?(::RSpec)
+        expect(missing_methods).to be_empty, message || default_message
+      elsif missing_methods.any?
+        raise default_message
+      end
+    end
+
     # RSpec-style aliases for event triggering (for consistency with RSpec expectations)
     alias expect_to_trigger_event assert_sm_triggers_event
     alias have_triggered_event assert_sm_triggers_event

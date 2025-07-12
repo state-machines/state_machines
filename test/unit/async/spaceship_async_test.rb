@@ -3,39 +3,31 @@
 require File.expand_path('../../test_helper', __dir__)
 require File.expand_path('../../files/models/autonomous_drone', __dir__)
 
-# Async gem is required - no conditional loading
-require 'state_machines/async_mode'
-
 class SpaceShipAsyncModeTest < Minitest::Test
+  include StateMachines::TestHelper
   def setup
     @spaceship = AutonomousDrone.new
   end
 
   def test_async_mode_configuration
+    # Test that specific machines have async mode enabled
+    assert_sm_async_mode(@spaceship, :status)
+    assert_sm_async_mode(@spaceship, :shields)
+    assert_sm_async_mode(@spaceship, :teleporter_status)
 
-    # Check which machines have async mode enabled
-    status_machine = @spaceship.class.state_machine(:status)
-    weapons_machine = @spaceship.class.state_machine(:weapons)
-    shields_machine = @spaceship.class.state_machine(:shields)
-    teleporter_machine = @spaceship.class.state_machine(:teleporter_status)
+    # Test that weapons machine is sync-only
+    assert_sm_sync_mode(@spaceship, :weapons)
 
-    assert status_machine.async_mode_enabled?, "Status machine should have async mode enabled"
-    refute weapons_machine.async_mode_enabled?, "Weapons machine should NOT have async mode enabled"
-    assert shields_machine.async_mode_enabled?, "Shields machine should have async mode enabled"
-    assert teleporter_machine.async_mode_enabled?, "Teleporter machine should have async mode enabled"
+    # Test bulk async machine checking
+    assert_sm_has_async(@spaceship, [:status, :teleporter_status, :shields])
   end
 
   def test_thread_safe_methods_included_for_async_machines
-
     # AsyncMode machines should have thread-safe methods
-    assert @spaceship.respond_to?(:state_machine_mutex)
-    assert @spaceship.respond_to?(:read_state_safely)
-    assert @spaceship.respond_to?(:write_state_safely)
+    assert_sm_thread_safe_methods(@spaceship)
 
     # Async event methods should be available
-    assert @spaceship.respond_to?(:async_fire_event)
-    assert @spaceship.respond_to?(:fire_event_async)
-    assert @spaceship.respond_to?(:fire_events_async)
+    assert_sm_async_methods(@spaceship)
   end
 
   def test_spaceship_launch_sequence_sync
@@ -271,16 +263,10 @@ class SpaceShipAsyncModeTest < Minitest::Test
   end
 
   def test_individual_event_async_methods_are_generated
-
     # Check that async versions of individual events are generated for async machines
-    assert @spaceship.respond_to?(:launch_async), "Should have launch_async method"
-    assert @spaceship.respond_to?(:launch_async!), "Should have launch_async! method"
-    assert @spaceship.respond_to?(:enter_warp_async), "Should have enter_warp_async method"
-    assert @spaceship.respond_to?(:enter_warp_async!), "Should have enter_warp_async! method"
-
-    # Shields machine is async-enabled
-    assert @spaceship.respond_to?(:raise_shields_async), "Should have raise_shields_async method"
-    assert @spaceship.respond_to?(:raise_shields_async!), "Should have raise_shields_async! method"
+    assert_sm_async_event_methods(@spaceship, :launch)
+    assert_sm_async_event_methods(@spaceship, :enter_warp)
+    assert_sm_async_event_methods(@spaceship, :raise_shields)
 
     # Weapons machine is sync-only, so should NOT have async versions
     refute @spaceship.respond_to?(:arm_weapons_async), "Should NOT have arm_weapons_async method (weapons is sync-only)"
@@ -288,7 +274,6 @@ class SpaceShipAsyncModeTest < Minitest::Test
   end
 
   def test_async_mode_enables_per_machine_not_globally
-
     # Create a spaceship class without any async mode
     sync_only_spaceship_class = Class.new do
       attr_accessor :status
@@ -306,47 +291,13 @@ class SpaceShipAsyncModeTest < Minitest::Test
     sync_ship = sync_only_spaceship_class.new
 
     # This machine should NOT have async mode enabled
-    refute sync_ship.class.state_machine(:status).async_mode_enabled?
+    assert_sm_sync_mode(sync_ship, :status)
 
     # Should not have async methods
-    refute sync_ship.respond_to?(:fire_event_async)
-    refute sync_ship.respond_to?(:async_fire_event)
+    assert_sm_no_async_methods(sync_ship)
+    assert_sm_all_sync(sync_ship)
 
     # But regular sync methods should work
-    assert_equal 'docked', sync_ship.status
-    result = sync_ship.launch
-    assert_equal true, result
-    assert_equal 'flying', sync_ship.status
-  end
-end
-
-# Test graceful fallback when AsyncMode is not available
-class SpaceShipFallbackTest < Minitest::Test
-  def test_spaceship_works_without_async_mode
-    # Test that spaceships work fine without AsyncMode
-    spaceship_class = Class.new do
-      attr_accessor :status
-      state_machine :status, initial: :docked do
-        event :launch do
-          transition docked: :flying
-        end
-      end
-      def initialize
-        super
-      end
-    end
-
-    spaceship = spaceship_class.new
-
-    # Basic functionality should work
-    assert_equal 'docked', spaceship.status
-
-    result = spaceship.launch
-    assert_equal true, result
-    assert_equal 'flying', spaceship.status
-
-    # AsyncMode methods should not be available
-    refute spaceship.respond_to?(:fire_event_async)
-    refute spaceship.respond_to?(:async_fire_event)
+    assert_sm_sync_execution(sync_ship, :launch, :flying, :status)
   end
 end

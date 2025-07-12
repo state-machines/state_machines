@@ -1,566 +1,65 @@
 # frozen_string_literal: true
 
-begin
-  require 'async'
-rescue LoadError
-  raise LoadError, 'The async gem is required for StateMachines::AsyncMode functionality. Add `gem "async"` to your Gemfile.'
+# Ruby Engine Compatibility Check
+# The async gem requires native extensions and Fiber scheduler support
+# which are not available on JRuby or TruffleRuby
+if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
+  raise LoadError, <<~ERROR
+    StateMachines::AsyncMode is not available on #{RUBY_ENGINE}.
+
+    The async gem requires native extensions (io-event) and Fiber scheduler support
+    which are not implemented in #{RUBY_ENGINE}. AsyncMode is only supported on:
+
+    • MRI Ruby (CRuby) 3.2+
+    • Other Ruby engines with full Fiber scheduler support
+
+    If you need async support on #{RUBY_ENGINE}, consider using:
+    • java.util.concurrent classes (JRuby)
+    • Native threading libraries for your platform
+    • Or stick with synchronous state machines
+  ERROR
 end
 
-require 'thread'
+# Load required gems with version constraints
+gem 'async', '>= 2.25.0'
+gem 'concurrent-ruby', '>= 1.3.5'  # Security is not negotiable - enterprise-grade thread safety required
+
+require 'async'
+require 'concurrent-ruby'
+
+# Load all async mode components
+require_relative 'async_mode/thread_safe_state'
+require_relative 'async_mode/async_events'
+require_relative 'async_mode/async_event_extensions'
+require_relative 'async_mode/async_machine'
+require_relative 'async_mode/async_transition_collection'
 
 module StateMachines
-  # Provides async and thread-safe functionality for state machines
-  # This module extends the existing state_machines gem with concurrent capabilities
-  # while maintaining full backward compatibility.
+  # AsyncMode provides asynchronous state machine capabilities using the async gem
+  # This module enables concurrent, thread-safe state operations for high-performance applications
   #
-  # Requires the 'async' gem to be installed and available.
+  # @example Basic usage
+  #   class AutonomousDrone < StarfleetShip
+  #     state_machine :teleporter_status, async: true do
+  #       event :power_up do
+  #         transition offline: :charging
+  #       end
+  #     end
+  #   end
+  #
+  #   drone = AutonomousDrone.new
+  #   Async do
+  #     result = drone.fire_event_async(:power_up)  # => true
+  #     task = drone.power_up_async!               # => Async::Task
+  #   end
+  #
+  # @since 0.31.0
   module AsyncMode
-    # Thread-safe state operations for objects with state machines
-    module ThreadSafeState
-      # Gets or creates a mutex for thread-safe state operations on an object
-      # Each object gets its own mutex to avoid global locking
-      def state_machine_mutex
-        @_state_machine_mutex ||= Mutex.new
-      end
-
-      # Thread-safe version of state reading
-      # Ensures atomic read operations across concurrent threads
-      def read_state_safely(machine, attribute, ivar = false)
-        state_machine_mutex.synchronize do
-          machine.read(self, attribute, ivar)
-        end
-      end
-
-      # Thread-safe version of state writing
-      # Ensures atomic write operations across concurrent threads
-      def write_state_safely(machine, attribute, value, ivar = false)
-        state_machine_mutex.synchronize do
-          machine.write(self, attribute, value, ivar)
-        end
-      end
-
-      # Handle marshalling by excluding the mutex (will be recreated when needed)
-      def marshal_dump
-        # Get instance variables excluding the mutex
-        vars = instance_variables.reject { |var| var == :@_state_machine_mutex }
-        vars.map { |var| [var, instance_variable_get(var)] }
-      end
-
-      # Restore marshalled object, mutex will be lazily recreated when needed
-      def marshal_load(data)
-        data.each do |var, value|
-          instance_variable_set(var, value)
-        end
-        # Don't set @_state_machine_mutex - let it be lazily created
-      end
-    end
-
-    # Async-aware event firing capabilities using the async gem
-    module AsyncEvents
-      # Fires an event asynchronously using Async
-      # Returns an Async::Task that can be awaited for the result
-      #
-      # Example:
-      #   Async do
-      #     task = vehicle.async_fire_event(:ignite)
-      #     result = task.wait # => true/false
-      #   end
-      def async_fire_event(event_name, *args)
-        # Find the machine that has this event
-        machine = self.class.state_machines.values.find { |m| m.events[event_name] }
-
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
-
-        # Must be called within an Async context
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "async_fire_event must be called within an Async context. Use: Async { vehicle.async_fire_event(:event) }"
-        end
-
-        Async do
-          machine.events[event_name].fire(self, *args)
-        end
-      end
-
-      # Fires multiple events asynchronously across different state machines
-      # Returns an array of Async::Tasks for concurrent execution
-      #
-      # Example:
-      #   Async do
-      #     tasks = vehicle.async_fire_events(:ignite, :buy_insurance)
-      #     results = tasks.map(&:wait) # => [true, true]
-      #   end
-      def async_fire_events(*event_names)
-        event_names.map { |event_name| async_fire_event(event_name) }
-      end
-
-      # Fires an event asynchronously and waits for completion
-      # This is a convenience method that creates and waits for the task
-      #
-      # Example:
-      #   result = vehicle.fire_event_async(:ignite) # => true/false
-      def fire_event_async(event_name, *args)
-        raise NoMethodError, "undefined method `fire_event_async' for #{self}" unless has_async_machines?
-        # Find the machine that has this event
-        machine = self.class.state_machines.values.find { |m| m.events[event_name] }
-
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
-
-        if defined?(::Async::Task) && ::Async::Task.current?
-          # Already in async context, just fire directly
-          machine.events[event_name].fire(self, *args)
-        else
-          # Create async context and wait for result
-          Async do
-            machine.events[event_name].fire(self, *args)
-          end.wait
-        end
-      end
-
-      # Fires multiple events asynchronously and waits for all to complete
-      # Returns results in the same order as the input events
-      #
-      # Example:
-      #   results = vehicle.fire_events_async(:ignite, :buy_insurance) # => [true, true]
-      def fire_events_async(*event_names)
-        raise NoMethodError, "undefined method `fire_events_async' for #{self}" unless has_async_machines?
-        if defined?(::Async::Task) && ::Async::Task.current?
-          # Already in async context, run concurrently
-          tasks = event_names.map { |event_name| async_fire_event(event_name) }
-          tasks.map(&:wait)
-        else
-          # Create async context and run all events
-          Async do
-            tasks = event_names.map { |event_name| async_fire_event(event_name) }
-            tasks.map(&:wait)
-          end.wait
-        end
-      end
-
-      # Fires an event asynchronously using Async and raises exceptions on failure
-      # Returns an Async::Task that raises StateMachines::InvalidTransition when awaited if transition fails
-      #
-      # Example:
-      #   Async do
-      #     task = vehicle.async_fire_event!(:ignite)
-      #     begin
-      #       result = task.wait # raises exception if transition invalid
-      #       puts "Event fired successfully!"
-      #     rescue StateMachines::InvalidTransition => e
-      #       puts "Transition failed: #{e.message}"
-      #     end
-      #   end
-      def async_fire_event!(event_name, *args)
-        # Find the machine that has this event
-        machine = self.class.state_machines.values.find { |m| m.events[event_name] }
-
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
-
-        # Must be called within an Async context
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "async_fire_event! must be called within an Async context. Use: Async { vehicle.async_fire_event!(:event) }"
-        end
-
-        Async do
-          # Use the bang version which raises exceptions on failure
-          machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
-        end
-      end
-
-      # Fires an event asynchronously and waits for result, raising exceptions on failure
-      # This is a convenience method that creates and waits for the task
-      #
-      # Example:
-      #   begin
-      #     result = vehicle.fire_event_async!(:ignite) # raises exception if invalid
-      #     puts "Event fired successfully!"
-      #   rescue StateMachines::InvalidTransition => e
-      #     puts "Transition failed: #{e.message}"
-      #   end
-      def fire_event_async!(event_name, *args)
-        raise NoMethodError, "undefined method `fire_event_async!' for #{self}" unless has_async_machines?
-        # Find the machine that has this event
-        machine = self.class.state_machines.values.find { |m| m.events[event_name] }
-
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
-
-        if defined?(::Async::Task) && ::Async::Task.current?
-          # Already in async context, just fire directly with bang behavior
-          machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
-        else
-          # Create async context and wait for result (may raise exception)
-          Async do
-            machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
-          end.wait
-        end
-      end
-
-      # Dynamically handle individual event async methods
-      # This provides launch_async, launch_async!, arm_weapons_async, etc.
-      def method_missing(method_name, *args, **kwargs, &block)
-        method_str = method_name.to_s
-
-        # Check if this is an async event method
-        if method_str.end_with?('_async!')
-          # Remove the _async! suffix to get the base event method
-          base_method = method_str.chomp('_async!').to_sym
-
-          # Check if the base method exists and this machine is async-enabled
-          if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async_bang(base_method, *args, **kwargs)
-          end
-        elsif method_str.end_with?('_async')
-          # Remove the _async suffix to get the base event method
-          base_method = method_str.chomp('_async').to_sym
-
-          # Check if the base method exists and this machine is async-enabled
-          if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async(base_method, *args, **kwargs)
-          end
-        end
-
-        # If not an async method, call the original method_missing
-        super
-      end
-
-      # Check if we should respond to async methods for this event
-      def respond_to_missing?(method_name, include_private = false)
-        # Only provide async methods if this object has async-enabled machines
-        return super unless has_async_machines?
-
-        method_str = method_name.to_s
-
-        if method_str.end_with?('_async!') || method_str.end_with?('_async')
-          base_method = method_str.chomp('_async!').chomp('_async').to_sym
-          return respond_to?(base_method) && async_method_for_event?(base_method)
-        end
-
-        super
-      end
-
-      # Check if this object has any async-enabled state machines
-      def has_async_machines?
-        self.class.state_machines.any? { |name, machine| machine.async_mode_enabled? }
-      end
-
-      private
-
-      # Check if this event method should have async versions
-      def async_method_for_event?(event_method)
-        # Find which machine contains this event
-        self.class.state_machines.each do |name, machine|
-          if machine.async_mode_enabled?
-            # Check if this event method belongs to this machine
-            machine.events.each do |event|
-              qualified_name = event.qualified_name
-              if qualified_name.to_sym == event_method || "#{qualified_name}!".to_sym == event_method
-                return true
-              end
-            end
-          end
-        end
-        false
-      end
-
-      # Handle individual event async methods (returns task)
-      def handle_individual_event_async(event_method, *args, **kwargs)
-
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "#{event_method}_async must be called within an Async context"
-        end
-
-        Async do
-          send(event_method, *args, **kwargs)
-        end
-      end
-
-      # Handle individual event async bang methods (returns task, raises on failure)
-      def handle_individual_event_async_bang(event_method, *args, **kwargs)
-        # Extract event name from method and use bang version
-        bang_method = "#{event_method}!".to_sym
-
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "#{event_method}_async! must be called within an Async context"
-        end
-
-        Async do
-          send(bang_method, *args, **kwargs)
-        end
-      end
-
-      # Extract event name from method name, handling namespaced events
-      def extract_event_name(method_name)
-        method_str = method_name.to_s
-
-        # Find the machine and event for this method
-        self.class.state_machines.each do |name, machine|
-          machine.events.each do |event|
-            qualified_name = event.qualified_name
-            if qualified_name.to_s == method_str || "#{qualified_name}!".to_s == method_str
-              return event.name
-            end
-          end
-        end
-
-        # Fallback: assume the method name is the event name
-        method_str.chomp('!').to_sym
-      end
-
-      public
-
-      # Fires multiple events concurrently within an async context
-      # This method should be called from within an Async block
-      #
-      # Example:
-      #   Async do
-      #     results = vehicle.fire_events_concurrent(:ignite, :buy_insurance)
-      #   end
-      def fire_events_concurrent(*event_names)
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "fire_events_concurrent must be called within an Async context"
-        end
-
-        tasks = async_fire_events(*event_names)
-        tasks.map(&:wait)
-      end
-    end
-
-    # Extensions to Event class for async bang methods
-    module AsyncEventExtensions
-      # Generate async bang methods for events when async mode is enabled
-      def define_helper(scope, method, *args, &block)
-        result = super
-
-        # If this is an async-enabled machine and we're defining an event method
-        if scope == :instance && method !~ /_async[!]?$/ && machine.async_mode_enabled?
-          qualified_name = method.to_s
-
-          # Create async version that returns a task
-          machine.define_helper(scope, "#{qualified_name}_async") do |machine, object, *method_args, **kwargs|
-            # Find the machine that has this event
-            target_machine = object.class.state_machines.values.find { |m| m.events[name] }
-
-            unless defined?(::Async::Task) && ::Async::Task.current?
-              raise RuntimeError, "#{qualified_name}_async must be called within an Async context"
-            end
-
-            Async do
-              target_machine.events[name].fire(object, *method_args, **kwargs)
-            end
-          end
-
-          # Create async bang version that raises exceptions when awaited
-          machine.define_helper(scope, "#{qualified_name}_async!") do |machine, object, *method_args, **kwargs|
-            # Find the machine that has this event
-            target_machine = object.class.state_machines.values.find { |m| m.events[name] }
-
-            unless defined?(::Async::Task) && ::Async::Task.current?
-              raise RuntimeError, "#{qualified_name}_async! must be called within an Async context"
-            end
-
-            Async do
-              # Use fire method which will raise exceptions on invalid transitions
-              target_machine.events[name].fire(object, *method_args, **kwargs) || raise(StateMachines::InvalidTransition.new(object, target_machine, name))
-            end
-          end
-        end
-
-        result
-      end
-    end
-
-    # Enhanced machine class with async capabilities
-    module AsyncMachine
-      # Thread-safe state reading for machines
-      def read_safely(object, attribute, ivar = false)
-        if object.respond_to?(:read_state_safely)
-          object.read_state_safely(self, attribute, ivar)
-        else
-          read(object, attribute, ivar)
-        end
-      end
-
-      # Thread-safe state writing for machines
-      def write_safely(object, attribute, value, ivar = false)
-        if object.respond_to?(:write_state_safely)
-          object.write_state_safely(self, attribute, value, ivar)
-        else
-          write(object, attribute, value, ivar)
-        end
-      end
-
-      # Fires an event asynchronously on the given object
-      # Returns an Async::Task for concurrent execution
-      def async_fire_event(object, event_name, *args)
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "async_fire_event must be called within an Async context"
-        end
-
-        Async do
-          events[event_name].fire(object, *args)
-        end
-      end
-
-      # Creates an async-aware transition collection
-      # Supports concurrent transition execution with proper synchronization
-      def create_async_transition_collection(transitions, options = {})
-        AsyncTransitionCollection.new(transitions, options)
-      end
-
-      # Fires multiple events asynchronously and returns results
-      def fire_events_async(object, *event_names)
-        if defined?(::Async::Task) && ::Async::Task.current?
-          tasks = event_names.map { |name| async_fire_event(object, name) }
-          tasks.map(&:wait)
-        else
-          Async do
-            tasks = event_names.map { |name| async_fire_event(object, name) }
-            tasks.map(&:wait)
-          end.wait
-        end
-      end
-    end
-
-    # Error class for async-specific transition failures
-    class AsyncTransitionError < Error
-      def initialize(object, machines, failed_events)
-        @object = object
-        @machines = machines
-        @failed_events = failed_events
-        super("Failed to perform async transitions: #{failed_events.join(', ')}")
-      end
-
-      attr_reader :object, :machines, :failed_events
-    end
-
-    # Async-aware transition collection that can execute transitions concurrently
-    class AsyncTransitionCollection < TransitionCollection
-      # Performs transitions asynchronously using Async
-      # Provides better concurrency for I/O-bound operations
-      def perform_async(&block)
-        reset
-
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          return Async do
-            perform_async(&block)
-          end.wait
-        end
-
-        if valid?
-          # Create async tasks for each transition
-          tasks = map do |transition|
-            Async do
-              if use_event_attributes? && !block_given?
-                transition.transient = true
-                transition.machine.write_safely(object, :event_transition, transition)
-                run_actions
-              else
-                within_transaction do
-                  catch(:halt) { run_callbacks(&block) }
-                  rollback unless success?
-                end
-              end
-              transition
-            end
-          end
-
-          # Wait for all tasks to complete
-          completed_transitions = []
-          tasks.each do |task|
-            begin
-              result = task.wait
-              completed_transitions << result if result
-            rescue StandardError => e
-              # Handle individual transition failures
-              rollback
-              raise AsyncTransitionError.new(object, map(&:machine), [e.message])
-            end
-          end
-
-          # Check if all transitions succeeded
-          @success = completed_transitions.length == length
-        end
-
-        success?
-      end
-
-      # Performs transitions concurrently using threads
-      # Better for CPU-bound operations but requires more careful synchronization
-      def perform_threaded(&block)
-        reset
-
-        if valid?
-          # Use basic thread approach
-          threads = []
-          results = []
-          results_mutex = Mutex.new
-
-          each do |transition|
-            threads << Thread.new do
-              begin
-                result = if use_event_attributes? && !block_given?
-                          transition.transient = true
-                          transition.machine.write_safely(object, :event_transition, transition)
-                          run_actions
-                          transition
-                        else
-                          within_transaction do
-                            catch(:halt) { run_callbacks(&block) }
-                            rollback unless success?
-                          end
-                          transition
-                        end
-
-                results_mutex.synchronize { results << result }
-              rescue StandardError => e
-                # Handle individual transition failures
-                rollback
-                raise AsyncTransitionError.new(object, [transition.machine], [e.message])
-              end
-            end
-          end
-
-          # Wait for all threads to complete
-          threads.each(&:join)
-          @success = results.length == length
-        end
-
-        success?
-      end
-
-      private
-
-      # Override run_actions to be thread-safe
-      def run_actions
-        catch_exceptions do
-          @success = if block_given?
-                      result = yield
-                      actions.each { |action| results[action] = result }
-                      !!result
-                    else
-                      actions.compact.each do |action|
-                        next if skip_actions
-
-                        # Use thread-safe write for results
-                        if object.respond_to?(:state_machine_mutex)
-                          object.state_machine_mutex.synchronize do
-                            results[action] = object.send(action)
-                          end
-                        else
-                          results[action] = object.send(action)
-                        end
-                      end
-                      results.values.all?
-                    end
-        end
-      end
-    end
+    # All components are loaded from separate files:
+    # - ThreadSafeState: Mutex-based thread safety
+    # - AsyncEvents: Async event firing methods
+    # - AsyncEventExtensions: Event method generation
+    # - AsyncMachine: Machine-level async capabilities
+    # - AsyncTransitionCollection: Concurrent transition execution
   end
 end
