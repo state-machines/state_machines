@@ -42,7 +42,9 @@ module StateMachines
       @machine = machine
       @args = []
       @transient = false
-      @resume_block = nil
+      @paused_fiber = nil
+      @resuming = false
+      @continuation_block = nil
 
       @event = machine.events.fetch(event)
       @from_state = machine.states.fetch(from_name)
@@ -161,13 +163,13 @@ module StateMachines
     #   transition.perform(Time.now, run_action: false) # => Passes in additional arguments and only sets the state attribute
     def perform(*args)
       run_action = case args.last
-      in true | false
-        args.pop
-      in { run_action: }
-        args.last.delete(:run_action)
-      else
-        true
-      end
+                   in true | false
+                     args.pop
+                   in { run_action: }
+                     args.last.delete(:run_action)
+                   else
+                     true
+                   end
 
       self.args = args
 
@@ -195,14 +197,25 @@ module StateMachines
     # callbacks will not have an effect on the result.
     def run_callbacks(options = {}, &block)
       options = { before: true, after: true }.merge(options)
-      @success = false
 
-      halted = pausable { before(options[:after], &block) } if options[:before]
+      # Check if we're resuming from a pause
+      if @paused_fiber&.alive? && options[:after]
+        # Resume the paused fiber
+        # Don't reset @success when resuming - preserve the state from the pause
+        # Store the block for later execution
+        @continuation_block = block if block_given?
+        halted = pausable { true }
+      else
+        @success = false
+        # For normal execution (not pause/resume), default to success
+        # The action block will override this if needed
+        halted = pausable { before(options[:after], &block) } if options[:before]
+      end
 
       # After callbacks are only run if:
-      # * An around callback didn't halt after yielding
+      # * An around callback didn't halt after yielding OR the run failed
       # * They're enabled or the run didn't succeed
-      after if !(@before_run && halted) && (options[:after] || !@success)
+      after if (!(@before_run && halted) || !@success) && (options[:after] || !@success)
 
       @before_run
     end
@@ -266,7 +279,9 @@ module StateMachines
     # the state has already been persisted
     def reset
       @before_run = @persisted = @after_run = false
-      @paused_block = nil
+      @paused_fiber = nil
+      @resuming = false
+      @continuation_block = nil
     end
 
     # Determines equality of transitions by testing whether the object, states,
@@ -299,19 +314,42 @@ module StateMachines
     # This will return true if the given block halts for a reason other than
     # getting paused.
     def pausable
-      begin
-        halted = !catch(:halt) do
-          yield
+      if @paused_fiber
+        # Resume the paused fiber
+        @resuming = true
+        result = @paused_fiber.resume
+        @resuming = false
+        # Check if fiber is still alive after resume
+        if @paused_fiber.alive?
+          # Still paused, keep the fiber
           true
+        else
+          # Fiber completed
+          @paused_fiber = nil
+          result == :halted
         end
-      rescue StandardError => e
-        raise unless @resume_block
-      end
-
-      if @resume_block
-        @resume_block.call(halted, e)
       else
-        halted
+        # Create a new fiber to run the block
+        fiber = Fiber.new do
+          halted = !catch(:halt) do
+            yield
+            true
+          end
+          halted ? :halted : :completed
+        end
+
+        # Run the fiber
+        result = fiber.resume
+
+        # Save if paused
+        if fiber.alive?
+          @paused_fiber = fiber
+          # Return true to indicate paused (treated as halted for flow control)
+          true
+        else
+          # Fiber completed, return whether it was halted
+          result == :halted
+        end
       end
     end
 
@@ -321,32 +359,24 @@ module StateMachines
     def pause
       raise ArgumentError, 'around_transition callbacks cannot be called in multiple execution contexts in java implementations of Ruby. Use before/after_transitions instead.' unless self.class.pause_supported?
 
-      return if @resume_block
+      # Don't pause if we're in the middle of resuming
+      return if @resuming
 
-      require 'continuation' unless defined?(callcc)
-      callcc do |block|
-        @paused_block = block
-        throw :halt, true
-      end
+      Fiber.yield
+
+      # When we resume from the pause, execute the continuation block if present
+      return unless @continuation_block && !@result
+
+      action = { success: true }.merge(@continuation_block.call)
+      @result = action[:result]
+      @success = action[:success]
+      @continuation_block = nil
     end
 
     # Resumes the execution of a previously paused callback execution.  Once
     # the paused callbacks complete, the current execution will continue.
     def resume
-      if @paused_block
-        halted, error = callcc do |block|
-          @resume_block = block
-          @paused_block.call
-        end
-
-        @resume_block = @paused_block = nil
-
-        raise error if error
-
-        !halted
-      else
-        true
-      end
+      @paused_fiber&.alive?
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only
@@ -356,36 +386,51 @@ module StateMachines
     # Once the callbacks are run, they cannot be run again until this transition
     # is reset.
     def before(complete = true, index = 0, &block)
-      unless @before_run
-        while callback = machine.callbacks[:before][index]
-          index += 1
+      return if @before_run
 
+      callback = machine.callbacks[:before][index]
+
+      if callback
+        # Check if callback matches this transition using branch
+        if callback.branch.matches?(object, context)
           if callback.type == :around
             # Around callback: need to handle recursively.  Execution only gets
             # paused if:
             # * The block fails and the callback doesn't run on failures OR
             # * The block succeeds, but after callbacks are disabled (in which
             #   case a continuation is stored for later execution)
-            return if catch(:cancel) do
-              callback.call(object, context, self) do
-                before(complete, index, &block)
+            callback.call(object, context, self) do
+              before(complete, index + 1, &block)
 
-                pause if @success && !complete
-                throw :cancel, true unless @success
-              end
+              pause if @success && !complete
+
+              # If the block failed (success is false), we should halt
+              # the around callback from continuing
+              throw :halt unless @success
             end
           else
             # Normal before callback
             callback.call(object, context, self)
+            # Continue with next callback
+            before(complete, index + 1, &block)
           end
+        else
+          # Skip to next callback if it doesn't match
+          before(complete, index + 1, &block)
+        end
+      else
+        # No more callbacks, execute the action block if at the end
+        if block_given?
+          action = { success: true }.merge(yield)
+          @result = action[:result]
+          @success = action[:success]
+        else
+          # No action block provided, default to success
+          @success = true
         end
 
         @before_run = true
       end
-
-      action = { success: true }.merge(block_given? ? yield : {})
-      @result = action[:result]
-      @success = action[:success]
     end
 
     # Runs the machine's +after+ callbacks for this transition.  Only
@@ -404,12 +449,9 @@ module StateMachines
     def after
       return if @after_run
 
-      # First resume previously paused callbacks
-      if resume
-        catch(:halt) do
-          type = @success ? :after : :failure
-          machine.callbacks[type].each { |callback| callback.call(object, context, self) }
-        end
+      catch(:halt) do
+        type = @success ? :after : :failure
+        machine.callbacks[type].each { |callback| callback.call(object, context, self) }
       end
 
       @after_run = true

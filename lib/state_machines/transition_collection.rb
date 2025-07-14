@@ -26,9 +26,9 @@ module StateMachines
 
       # Determine the validity of the transitions as a whole
       @valid = all?
-      reject! { |transition| !transition }
+      reject!(&:!)
 
-      attributes = map { |transition| transition.attribute }.uniq
+      attributes = map(&:attribute).uniq
       raise ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
       StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions)
@@ -36,6 +36,12 @@ module StateMachines
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
       @use_transactions = options[:use_transactions]
+
+      # Reset transitions when creating a new collection
+      # But preserve paused transitions to allow resuming
+      each do |transition|
+        transition.reset unless transition.instance_variable_get(:@paused_fiber)&.alive?
+      end
     end
 
     # Runs each of the collection's transitions in parallel.
@@ -61,6 +67,11 @@ module StateMachines
 
           run_actions
         else
+          # Check if any transitions are paused before running callbacks
+          if any? { |t| t.instance_variable_get(:@paused_fiber)&.alive? }
+            @success = true # Consider paused transitions as successful
+          end
+
           within_transaction do
             catch(:halt) { run_callbacks(&block) }
             rollback unless success?
@@ -104,7 +115,7 @@ module StateMachines
     # Gets the list of actions to run.  If configured to skip actions, then
     # this will return an empty collection.
     def actions
-      empty? ? [nil] : map { |transition| transition.action }.uniq
+      empty? ? [nil] : map(&:action).uniq
     end
 
     # Determines whether an event attribute be used to trigger the transitions
@@ -127,7 +138,7 @@ module StateMachines
     #
     # If any transition fails to run its callbacks, :halt will be thrown.
     def run_callbacks(index = 0, &block)
-      if transition = self[index]
+      if (transition = self[index])
         throw :halt unless transition.run_callbacks(after: !skip_after) do
           run_callbacks(index + 1, &block)
           { result: results[transition.action], success: success? }
@@ -141,7 +152,7 @@ module StateMachines
     # Transitions the current value of the object's states to those specified by
     # each transition
     def persist
-      each { |transition| transition.persist }
+      each(&:persist)
     end
 
     # Runs the actions for each transition.  If a block is given method, then it
@@ -163,7 +174,7 @@ module StateMachines
 
     # Rolls back changes made to the object's states via each transition
     def rollback
-      each { |transition| transition.rollback }
+      each(&:rollback)
     end
 
     # Wraps the given block with a rescue handler so that any exceptions that
@@ -202,14 +213,14 @@ module StateMachines
     # Hooks into running transition callbacks so that event / event transition
     # attributes can be properly updated
     def run_callbacks(index = 0)
-      if index == 0
+      if index.zero?
         # Clears any traces of the event attribute to prevent it from being
         # evaluated multiple times if actions are nested
         each do |transition|
           transition.machine.write(object, :event, nil)
           transition.machine.write(object, :event_transition, nil)
         end
-        
+
         # Clear stored transitions hash for new cycle (issue #91)
         if !empty? && (obj = first.object)
           obj.instance_variable_set(:@_state_machine_event_transitions, nil)
@@ -229,9 +240,9 @@ module StateMachines
         # after callbacks.
         if skip_after && success?
           each { |transition| transition.machine.write(object, :event_transition, transition) }
-          
+
           # Store transitions in a hash by machine name to avoid overwriting (issue #91)
-          if !empty?
+          unless empty?
             transitions_by_machine = object.instance_variable_get(:@_state_machine_event_transitions) || {}
             each { |transition| transitions_by_machine[transition.machine.name] = transition }
             object.instance_variable_set(:@_state_machine_event_transitions, transitions_by_machine)
