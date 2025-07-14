@@ -198,6 +198,10 @@ module StateMachines
     def run_callbacks(options = {}, &block)
       options = { before: true, after: true }.merge(options)
 
+      # If we have a paused fiber and we're not trying to resume (after: false),
+      # this is an idempotent call on an already-paused transition. Just return true.
+      return true if @paused_fiber&.alive? && !options[:after]
+
       # Check if we're resuming from a pause
       if @paused_fiber&.alive? && options[:after]
         # Resume the paused fiber
@@ -305,6 +309,38 @@ module StateMachines
       "#<#{self.class} #{%w[attribute event from from_name to to_name].map { |attr| "#{attr}=#{send(attr).inspect}" } * ' '}>"
     end
 
+    # Checks whether this transition is currently paused.
+    # Returns true if there is a paused fiber, false otherwise.
+    def paused?
+      @paused_fiber&.alive? || false
+    end
+
+    # Checks whether this transition has a paused fiber that can be resumed.
+    # Returns true if there is a paused fiber, false otherwise.
+    #
+    # Note: The actual resuming happens automatically when run_callbacks is called
+    # again on a transition with a paused fiber.
+    def resumable?
+      paused?
+    end
+
+    # Manually resumes the execution of a previously paused callback.
+    # Returns true if the transition was successfully resumed and completed,
+    # false if there was no paused fiber, and raises an exception if the
+    # transition was halted.
+    def resume!(&block)
+      return false unless paused?
+
+      # Store continuation block if provided
+      @continuation_block = block if block_given?
+
+      # Run the pausable block which will resume the fiber
+      halted = pausable { true }
+
+      # Return whether the transition completed successfully
+      !halted
+    end
+
     private
 
     # Runs a block that may get paused.  If the block doesn't pause, then
@@ -317,16 +353,36 @@ module StateMachines
       if @paused_fiber
         # Resume the paused fiber
         @resuming = true
-        result = @paused_fiber.resume
-        @resuming = false
-        # Check if fiber is still alive after resume
-        if @paused_fiber.alive?
-          # Still paused, keep the fiber
-          true
-        else
-          # Fiber completed
+        begin
+          result = @paused_fiber.resume
+        rescue StandardError => e
+          # Clean up on exception
+          @resuming = false
           @paused_fiber = nil
-          result == :halted
+          raise e
+        end
+        @resuming = false
+
+        # Handle different result types
+        case result
+        when Array
+          # Exception occurred inside the fiber
+          if result[0] == :error
+            # Clean up state before re-raising
+            @paused_fiber = nil
+            raise result[1]
+          end
+        else
+          # Normal flow
+          # Check if fiber is still alive after resume
+          if @paused_fiber.alive?
+            # Still paused, keep the fiber
+            true
+          else
+            # Fiber completed
+            @paused_fiber = nil
+            result == :halted
+          end
         end
       else
         # Create a new fiber to run the block
@@ -336,19 +392,34 @@ module StateMachines
             true
           end
           halted ? :halted : :completed
+        rescue StandardError => e
+          # Store the exception for re-raising
+          [:error, e]
         end
 
         # Run the fiber
         result = fiber.resume
 
-        # Save if paused
-        if fiber.alive?
-          @paused_fiber = fiber
-          # Return true to indicate paused (treated as halted for flow control)
-          true
+        # Handle different result types
+        case result
+        when Array
+          # Exception occurred
+          if result[0] == :error
+            # Clean up state before re-raising
+            @paused_fiber = nil
+            raise result[1]
+          end
         else
-          # Fiber completed, return whether it was halted
-          result == :halted
+          # Normal flow
+          # Save if paused
+          if fiber.alive?
+            @paused_fiber = fiber
+            # Return true to indicate paused (treated as halted for flow control)
+            true
+          else
+            # Fiber completed, return whether it was halted
+            result == :halted
+          end
         end
       end
     end
@@ -371,12 +442,6 @@ module StateMachines
       @result = action[:result]
       @success = action[:success]
       @continuation_block = nil
-    end
-
-    # Resumes the execution of a previously paused callback execution.  Once
-    # the paused callbacks complete, the current execution will continue.
-    def resume
-      @paused_fiber&.alive?
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only

@@ -40,7 +40,7 @@ module StateMachines
       # Reset transitions when creating a new collection
       # But preserve paused transitions to allow resuming
       each do |transition|
-        transition.reset unless transition.instance_variable_get(:@paused_fiber)&.alive?
+        transition.reset unless transition.paused?
       end
     end
 
@@ -67,11 +67,6 @@ module StateMachines
 
           run_actions
         else
-          # Check if any transitions are paused before running callbacks
-          if any? { |t| t.instance_variable_get(:@paused_fiber)&.alive? }
-            @success = true # Consider paused transitions as successful
-          end
-
           within_transaction do
             catch(:halt) { run_callbacks(&block) }
             rollback unless success?
@@ -139,10 +134,16 @@ module StateMachines
     # If any transition fails to run its callbacks, :halt will be thrown.
     def run_callbacks(index = 0, &block)
       if (transition = self[index])
-        throw :halt unless transition.run_callbacks(after: !skip_after) do
+        callback_result = transition.run_callbacks(after: !skip_after) do
           run_callbacks(index + 1, &block)
           { result: results[transition.action], success: success? }
         end
+
+        # If we're skipping after callbacks and the transition is paused,
+        # consider it successful (the pause was intentional)
+        @success = true if skip_after && transition.paused?
+
+        throw :halt unless callback_result
       else
         persist
         run_actions(&block)
