@@ -9,7 +9,7 @@ class MachineWithStaticInitialStateTest < StateMachinesTest
   end
 
   def test_should_not_have_dynamic_initial_state
-    refute @machine.dynamic_initial_state?
+    refute_predicate @machine, :dynamic_initial_state?
   end
 
   def test_should_have_an_initial_state

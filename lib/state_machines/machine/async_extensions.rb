@@ -30,7 +30,7 @@ module StateMachines
 
             owner_class.include(StateMachines::AsyncMode::ThreadSafeState)
             owner_class.include(StateMachines::AsyncMode::AsyncEvents)
-            self.extend(StateMachines::AsyncMode::AsyncMachine)
+            extend(StateMachines::AsyncMode::AsyncMachine)
 
             # Extend events to generate async versions
             events.each do |event|

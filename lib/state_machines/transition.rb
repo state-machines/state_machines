@@ -30,12 +30,6 @@ module StateMachines
     # Whether the transition is only existing temporarily for the object
     attr_writer :transient
 
-    # Determines whether the current ruby implementation supports pausing and
-    # resuming transitions
-    def self.pause_supported?
-      %w[ruby maglev].include?(RUBY_ENGINE)
-    end
-
     # Creates a new, specific transition
     def initialize(object, machine, event, from_name, to_name, read_state = true) # :nodoc:
       @object = object
@@ -428,8 +422,6 @@ module StateMachines
     # around callbacks when the remainder of the callback will be executed at
     # a later point in time.
     def pause
-      raise ArgumentError, 'around_transition callbacks cannot be called in multiple execution contexts in java implementations of Ruby. Use before/after_transitions instead.' unless self.class.pause_supported?
-
       # Don't pause if we're in the middle of resuming
       return if @resuming
 

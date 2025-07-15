@@ -13,7 +13,7 @@ class StateNotFinalTest < StateMachinesTest
       transition parked: :idling
     end
 
-    refute @state.final?
+    refute_predicate @state, :final?
   end
 
   def test_should_not_be_final_with_outgoing_all_transitions
@@ -21,7 +21,7 @@ class StateNotFinalTest < StateMachinesTest
       transition all => :idling
     end
 
-    refute @state.final?
+    refute_predicate @state, :final?
   end
 
   def test_should_not_be_final_with_outgoing_blacklist_transitions
@@ -29,6 +29,6 @@ class StateNotFinalTest < StateMachinesTest
       transition all - :first_gear => :idling
     end
 
-    refute @state.final?
+    refute_predicate @state, :final?
   end
 end

@@ -10,6 +10,6 @@ class StateNotInitialTest < StateMachinesTest
 
   def test_should_not_be_initial
     refute @state.initial
-    refute @state.initial?
+    refute_predicate @state, :initial?
   end
 end

@@ -8,9 +8,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
 
   def setup
     # Skip async tests on unsupported Ruby engines where gems aren't available
-    if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
-      skip "Async tests not supported on #{RUBY_ENGINE} - async gems not available on this platform"
-    end
+    skip "Async tests not supported on #{RUBY_ENGINE} - async gems not available on this platform" if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
 
     @spaceship = AutonomousDrone.new
   end
@@ -25,7 +23,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
     assert_sm_sync_mode(@spaceship, :weapons)
 
     # Test bulk async machine checking
-    assert_sm_has_async(@spaceship, [:status, :teleporter_status, :shields])
+    assert_sm_has_async(@spaceship, %i[status teleporter_status shields])
   end
 
   def test_thread_safe_methods_included_for_async_machines
@@ -37,7 +35,6 @@ class SpaceShipAsyncModeTest < Minitest::Test
   end
 
   def test_spaceship_launch_sequence_sync
-
     # Standard synchronous operation still works
     assert_equal 'docked', @spaceship.status
     assert_equal 'standby', @spaceship.weapons
@@ -45,16 +42,19 @@ class SpaceShipAsyncModeTest < Minitest::Test
 
     # Launch sequence
     result = @spaceship.launch
+
     assert_equal true, result
     assert_equal 'flying', @spaceship.status
 
     # Arm weapons (sync only machine)
     result = @spaceship.arm_weapons!
+
     assert_equal true, result
     assert_equal 'armed', @spaceship.weapons
 
     # Raise shields
     result = @spaceship.raise_shields
+
     assert_equal true, result
     assert_equal 'up', @spaceship.shields
   end
@@ -66,16 +66,19 @@ class SpaceShipAsyncModeTest < Minitest::Test
       # Test async launch sequence
       assert_equal 'docked', @spaceship.status
       result = @spaceship.fire_event_async(:launch)
+
       assert_equal true, result
       assert_equal 'flying', @spaceship.status
 
       # Test async shield raising
       result = @spaceship.fire_event_async(:raise_shields)
+
       assert_equal true, result
       assert_equal 'up', @spaceship.shields
 
       # Weapons system is sync-only, so should use regular method
       result = @spaceship.arm_weapons!
+
       assert_equal true, result
       assert_equal 'armed', @spaceship.weapons
     end
@@ -95,6 +98,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
 
       # Wait for all launches to complete
       results = launch_tasks.map(&:wait)
+
       assert_equal [true, true, true], results
 
       # All ships should be flying
@@ -108,6 +112,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
       end
 
       shield_results = shield_tasks.map(&:wait)
+
       assert_equal [true, true, true], shield_results
 
       # All shields should be up
@@ -118,7 +123,6 @@ class SpaceShipAsyncModeTest < Minitest::Test
   end
 
   def test_thread_safety_with_multiple_spaceships
-
     # Test thread safety with multiple threads accessing same spaceship
     threads = []
     results = []
@@ -127,15 +131,13 @@ class SpaceShipAsyncModeTest < Minitest::Test
     # Multiple threads trying to launch the same spaceship
     5.times do |i|
       threads << Thread.new do
-        begin
-          result = @spaceship.fire_event_async(:launch)
-          results_mutex.synchronize do
-            results << { thread: i, result: result, status: @spaceship.status }
-          end
-        rescue => e
-          results_mutex.synchronize do
-            results << { thread: i, error: e.message }
-          end
+        result = @spaceship.fire_event_async(:launch)
+        results_mutex.synchronize do
+          results << { thread: i, result: result, status: @spaceship.status }
+        end
+      rescue StandardError => e
+        results_mutex.synchronize do
+          results << { thread: i, error: e.message }
         end
       end
     end
@@ -144,128 +146,135 @@ class SpaceShipAsyncModeTest < Minitest::Test
 
     # Only one thread should successfully launch, others should fail
     successful_launches = results.count { |r| r[:result] == true }
-    assert_equal 1, successful_launches, "Only one thread should successfully launch"
+
+    assert_equal 1, successful_launches, 'Only one thread should successfully launch'
     assert_equal 'flying', @spaceship.status
   end
 
   def test_callbacks_work_with_async_mode
-
-    assert_equal [], @spaceship.callback_log
+    assert_empty @spaceship.callback_log
 
     # Test that callbacks work with async operations
     result = @spaceship.fire_event_async(:launch)
+
     assert_equal true, result
     assert_equal 'flying', @spaceship.status
 
     # Check that callbacks were executed
-    assert_includes @spaceship.callback_log, "Autonomous flight sequence initiated..."
-    assert_includes @spaceship.callback_log, "Drone airborne - autonomous navigation active!"
+    assert_includes @spaceship.callback_log, 'Autonomous flight sequence initiated...'
+    assert_includes @spaceship.callback_log, 'Drone airborne - autonomous navigation active!'
   end
 
   def test_mixed_sync_and_async_operations
-
     # Launch (async-enabled machine)
     launch_result = @spaceship.fire_event_async(:launch)
+
     assert_equal true, launch_result
     assert_equal 'flying', @spaceship.status
 
     # Arm weapons (sync-only machine) - should work normally
     weapons_result = @spaceship.arm_weapons!
+
     assert_equal true, weapons_result
     assert_equal 'armed', @spaceship.weapons
 
     # Raise shields (async-enabled machine)
     shields_result = @spaceship.fire_event_async(:raise_shields)
+
     assert_equal true, shields_result
     assert_equal 'up', @spaceship.shields
   end
 
   def test_spaceship_emergency_procedures
-
     require 'async'
-      # Get to warping state first
-      @spaceship.launch!
-      @spaceship.enter_warp!
-      assert_equal 'warping', @spaceship.status
-      Async do
-        # Exit warp should work async
-        emergency_task = @spaceship.async_fire_event(:exit_warp)
-        result = emergency_task.wait
-          assert_equal true, result
-        assert_equal 'flying', @spaceship.status
-      end
+    # Get to warping state first
+    @spaceship.launch!
+    @spaceship.enter_warp!
 
+    assert_equal 'warping', @spaceship.status
+    Async do
+      # Exit warp should work async
+      emergency_task = @spaceship.async_fire_event(:exit_warp)
+      result = emergency_task.wait
+
+      assert_equal true, result
+      assert_equal 'flying', @spaceship.status
+    end
   end
 
   def test_backward_compatibility_not_broken
-
     # All standard sync methods should still work exactly as before
     assert_equal 'docked', @spaceship.status
 
     # Launch using regular sync method
     result = @spaceship.launch!
+
     assert_equal true, result
     assert_equal 'flying', @spaceship.status
 
     # Enter warp using regular sync method
     result = @spaceship.enter_warp!
+
     assert_equal true, result
     assert_equal 'warping', @spaceship.status
 
     # Land using regular sync method
     result = @spaceship.exit_warp!
+
     assert_equal true, result
     assert_equal 'flying', @spaceship.status
 
     result = @spaceship.land!
+
     assert_equal true, result
     assert_equal 'docked', @spaceship.status
   end
 
   def test_async_bang_methods_raise_exceptions_on_invalid_transitions
-
     require 'async'
-      # Try to launch from flying state (invalid transition)
-      @spaceship.launch! # First get to flying state
-      assert_equal 'flying', @spaceship.status
-      Async do
-        # This should raise an exception when awaited because launch is invalid from flying
-        begin
-          task = @spaceship.launch_async!
-          task.wait # This should raise StateMachines::InvalidTransition
-          flunk "Expected StateMachines::InvalidTransition to be raised"
-        rescue StateMachines::InvalidTransition => e
-          assert_match(/launch/, e.message)
-          assert_includes e.message, 'flying'
-        end
-          # Test that fire_event_async! also raises exceptions
-        begin
-          @spaceship.fire_event_async!(:launch)
-          flunk "Expected StateMachines::InvalidTransition to be raised"
-        rescue StateMachines::InvalidTransition => e
-          assert_match(/launch/, e.message)
-        end
-      end
+    # Try to launch from flying state (invalid transition)
+    @spaceship.launch! # First get to flying state
 
+    assert_equal 'flying', @spaceship.status
+    Async do
+      # This should raise an exception when awaited because launch is invalid from flying
+      begin
+        task = @spaceship.launch_async!
+        task.wait # This should raise StateMachines::InvalidTransition
+
+        flunk 'Expected StateMachines::InvalidTransition to be raised'
+      rescue StateMachines::InvalidTransition => e
+        assert_match(/launch/, e.message)
+        assert_includes e.message, 'flying'
+      end
+      # Test that fire_event_async! also raises exceptions
+      begin
+        @spaceship.fire_event_async!(:launch)
+
+        flunk 'Expected StateMachines::InvalidTransition to be raised'
+      rescue StateMachines::InvalidTransition => e
+        assert_match(/launch/, e.message)
+      end
+    end
   end
 
   def test_async_bang_methods_succeed_on_valid_transitions
-
     require 'async'
-      # Test valid transitions don't raise exceptions
-      assert_equal 'docked', @spaceship.status
-      Async do
-        # Valid transition should work fine
-        task = @spaceship.launch_async!
-        result = task.wait
-        assert_equal true, result
-        assert_equal 'flying', @spaceship.status
-          # Test fire_event_async! with valid transition
-        result = @spaceship.fire_event_async!(:enter_warp)
-        assert_equal true, result
-        assert_equal 'warping', @spaceship.status
-      end
+    # Test valid transitions don't raise exceptions
+    assert_equal 'docked', @spaceship.status
+    Async do
+      # Valid transition should work fine
+      task = @spaceship.launch_async!
+      result = task.wait
 
+      assert_equal true, result
+      assert_equal 'flying', @spaceship.status
+      # Test fire_event_async! with valid transition
+      result = @spaceship.fire_event_async!(:enter_warp)
+
+      assert_equal true, result
+      assert_equal 'warping', @spaceship.status
+    end
   end
 
   def test_individual_event_async_methods_are_generated
@@ -275,17 +284,18 @@ class SpaceShipAsyncModeTest < Minitest::Test
     assert_sm_async_event_methods(@spaceship, :raise_shields)
 
     # Weapons machine is sync-only, so should NOT have async versions
-    refute @spaceship.respond_to?(:arm_weapons_async), "Should NOT have arm_weapons_async method (weapons is sync-only)"
-    refute @spaceship.respond_to?(:arm_weapons_async!), "Should NOT have arm_weapons_async! method (weapons is sync-only)"
+    refute_respond_to @spaceship, :arm_weapons_async, 'Should NOT have arm_weapons_async method (weapons is sync-only)'
+    refute_respond_to @spaceship, :arm_weapons_async!, 'Should NOT have arm_weapons_async! method (weapons is sync-only)'
   end
 
   def test_async_mode_enables_per_machine_not_globally
     # Create a spaceship class without any async mode
     sync_only_spaceship_class = Class.new do
       attr_accessor :status
+
       state_machine :status, initial: :docked do
         # No async: true parameter
-          event :launch do
+        event :launch do
           transition docked: :flying
         end
       end

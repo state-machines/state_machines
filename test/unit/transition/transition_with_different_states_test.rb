@@ -15,6 +15,6 @@ class TransitionWithDifferentStatesTest < StateMachinesTest
   end
 
   def test_should_not_be_loopback
-    refute @transition.loopback?
+    refute_predicate @transition, :loopback?
   end
 end

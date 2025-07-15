@@ -6,9 +6,7 @@ require File.expand_path('../../test_helper', __dir__)
 class GuardsAsyncIntegrationTest < Minitest::Test
   def setup
     # Skip async tests on unsupported Ruby engines where gems aren't available
-    if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
-      skip "Guards + Async integration tests not supported on #{RUBY_ENGINE} - async gems not available on this platform"
-    end
+    skip "Guards + Async integration tests not supported on #{RUBY_ENGINE} - async gems not available on this platform" if RUBY_ENGINE == 'jruby' || RUBY_ENGINE == 'truffleruby'
 
     @space_station_class = Class.new do
       # Life support system (sync for safety)
@@ -62,7 +60,7 @@ class GuardsAsyncIntegrationTest < Minitest::Test
 
         event :emergency_stop do
           # Emergency stop unless life support is offline
-          transition [:loading, :unloading] => :idle, unless_state: {
+          transition %i[loading unloading] => :idle, unless_state: {
             life_support: :offline
           }
         end
@@ -80,14 +78,14 @@ class GuardsAsyncIntegrationTest < Minitest::Test
 
         event :critical_alert do
           # Critical alert if life support is down
-          transition [:green, :yellow] => :red, if_state: {
+          transition %i[green yellow] => :red, if_state: {
             life_support: :offline
           }
         end
 
         event :all_clear do
           # All clear only if everything is safe
-          transition [:yellow, :red] => :green, if_all_states: {
+          transition %i[yellow red] => :green, if_all_states: {
             life_support: :active,
             docking_bay: :closed,
             cargo_system: :idle
@@ -104,15 +102,18 @@ class GuardsAsyncIntegrationTest < Minitest::Test
     Async do
       # Open docking bay (should work - life support active)
       result = @station.open_bay_async.wait
-      assert result, "Should be able to open bay when life support is active"
+
+      assert result, 'Should be able to open bay when life support is active'
 
       # Start loading (should work - bay open, life support active)
       result = @station.start_loading_async.wait
-      assert result, "Should be able to start loading when conditions are met"
+
+      assert result, 'Should be able to start loading when conditions are met'
 
       # Raise alert (should work - bay is open)
       result = @station.raise_alert_async.wait
-      assert result, "Should raise alert when bay is open"
+
+      assert result, 'Should raise alert when bay is open'
     end
   end
 
@@ -121,25 +122,30 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       # Open bay and start loading
       @station.open_bay_async.wait
       @station.start_loading_async.wait
+
       assert_equal 'loading', @station.cargo_system
 
       # Emergency shutdown of life support
       @station.emergency_shutdown!
+
       assert_equal 'offline', @station.life_support
 
       # Try to start new loading operation (should fail - life support offline)
-      @station.complete_loading_async.wait  # Complete current loading first
+      @station.complete_loading_async.wait # Complete current loading first
       result = @station.start_loading_async.wait
-      refute result, "Should not be able to start loading when life support is offline"
+
+      refute result, 'Should not be able to start loading when life support is offline'
 
       # Emergency stop should NOT work (life support is offline, so guard prevents it)
       # The guard says "unless life_support is offline", so when it IS offline, emergency_stop is blocked
       result = @station.emergency_stop_async.wait
-      refute result, "Emergency stop should not work when life support is offline (guard protection)"
+
+      refute result, 'Emergency stop should not work when life support is offline (guard protection)'
 
       # Critical alert should trigger
       result = @station.critical_alert_async.wait
-      assert result, "Critical alert should trigger when life support is offline"
+
+      assert result, 'Critical alert should trigger when life support is offline'
     end
   end
 
@@ -149,6 +155,7 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       @station.open_bay_async.wait
       @station.start_loading_async.wait
       @station.complete_loading_async.wait
+
       assert_equal 'loaded', @station.cargo_system
 
       # Close bay - this should allow all_clear to work later
@@ -156,14 +163,16 @@ class GuardsAsyncIntegrationTest < Minitest::Test
 
       # Start unloading (should fail - bay is closed)
       result = @station.start_unloading_async.wait
-      refute result, "Should not be able to unload when bay is closed"
+
+      refute result, 'Should not be able to unload when bay is closed'
 
       # Open bay again
       @station.open_bay_async.wait
 
       # Now unloading should work
       result = @station.start_unloading_async.wait
-      assert result, "Should be able to unload when bay is open and life support active"
+
+      assert result, 'Should be able to unload when bay is open and life support active'
 
       # Complete unloading and close bay
       @station.complete_unloading_async.wait
@@ -174,7 +183,7 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       if @station.alert_status == 'green'
         # Temporarily open bay to trigger alert, then close it
         @station.open_bay_async.wait
-        @station.raise_alert_async.wait  # This should put us in yellow
+        @station.raise_alert_async.wait # This should put us in yellow
         @station.close_bay_async.wait
       end
 
@@ -182,7 +191,7 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       result = @station.all_clear_async.wait
       # If it's already green, the transition won't work, so let's check the current state
       if @station.alert_status == 'green'
-        assert true, "Alert status is already green, which is the desired state"
+        assert true, 'Alert status is already green, which is the desired state'
       else
         assert result, "All clear should work when all systems are safe (alert_status: #{@station.alert_status})"
       end
@@ -198,14 +207,16 @@ class GuardsAsyncIntegrationTest < Minitest::Test
     Async do
       # Async operation should respect sync machine state
       result = @station.open_bay_async.wait
-      refute result, "Async machine should respect sync machine guard"
+
+      refute result, 'Async machine should respect sync machine guard'
 
       # Restore life support (sync)
       @station.restore!
 
       # Now async operation should work
       result = @station.open_bay_async.wait
-      assert result, "Async machine should work when sync machine state allows it"
+
+      assert result, 'Async machine should work when sync machine state allows it'
     end
   end
 
@@ -237,7 +248,8 @@ class GuardsAsyncIntegrationTest < Minitest::Test
       # Multiple evaluations should use cached state machines
       100.times do
         result = branch.matches?(@station)
-        assert result, "All states should match initially"
+
+        assert result, 'All states should match initially'
       end
 
       # Change one state
@@ -245,7 +257,8 @@ class GuardsAsyncIntegrationTest < Minitest::Test
 
       # Should now fail
       result = branch.matches?(@station)
-      refute result, "Should fail when docking_bay is not closed"
+
+      refute result, 'Should fail when docking_bay is not closed'
     end
   end
 end

@@ -55,7 +55,7 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
   end
 
   def test_should_not_run_before_callbacks
-    refute @callbacks.include?(:before)
+    refute_includes @callbacks, :before
   end
 
   def test_should_not_persist_states
@@ -63,14 +63,14 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
   end
 
   def test_should_not_run_after_callbacks
-    refute @callbacks.include?(:after)
+    refute_includes @callbacks, :after
   end
 
   def test_should_not_run_around_callbacks_before_yield
-    refute @callbacks.include?(:around_before)
+    refute_includes @callbacks, :around_before
   end
 
   def test_should_not_run_around_callbacks_after_yield
-    refute @callbacks.include?(:around_after)
+    refute_includes @callbacks, :around_after
   end
 end

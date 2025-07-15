@@ -45,6 +45,6 @@ class NodeCollectionAfterBeingCopiedTest < StateMachinesTest
   def test_should_copy_contexts
     @copied_collection << Node.new(:parked)
 
-    refute @contexts_run.empty?
+    refute_empty @contexts_run
   end
 end

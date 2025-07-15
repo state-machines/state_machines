@@ -10,7 +10,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
       def initialize
         @state1 = 'parked'
         @state2 = 'off'
-        super()
+        super
       end
 
       state_machine :state1, initial: :parked do
@@ -90,7 +90,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if_all_states: { state1: :idling, state2: :on })
 
     # Assert: The branch should match.
-    assert branch.matches?(@object), "Branch should match when all required states are met"
+    assert branch.matches?(@object), 'Branch should match when all required states are met'
   end
 
   def test_if_all_states_prevents_transition_when_one_state_does_not_match
@@ -102,7 +102,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if_all_states: { state1: :idling, state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when not all required states are met"
+    refute branch.matches?(@object), 'Branch should not match when not all required states are met'
   end
 
   # --- :unless_all_states ---
@@ -115,7 +115,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(unless_all_states: { state1: :idling, state2: :on })
 
     # Assert: The branch should match.
-    assert branch.matches?(@object), "Branch should match when not all specified states are met"
+    assert branch.matches?(@object), 'Branch should match when not all specified states are met'
   end
 
   def test_unless_all_states_prevents_transition_when_all_states_match
@@ -127,7 +127,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(unless_all_states: { state1: :idling, state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when all specified states are met"
+    refute branch.matches?(@object), 'Branch should not match when all specified states are met'
   end
 
   # --- :if_any_state ---
@@ -140,7 +140,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if_any_state: { state1: :idling, state2: :on })
 
     # Assert: The branch should match.
-    assert branch.matches?(@object), "Branch should match when at least one required state is met"
+    assert branch.matches?(@object), 'Branch should match when at least one required state is met'
   end
 
   def test_if_any_state_prevents_transition_when_no_states_match
@@ -152,7 +152,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if_any_state: { state1: :idling, state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when no required states are met"
+    refute branch.matches?(@object), 'Branch should not match when no required states are met'
   end
 
   # --- :unless_any_state ---
@@ -165,7 +165,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(unless_any_state: { state1: :idling, state2: :on })
 
     # Assert: The branch should match.
-    assert branch.matches?(@object), "Branch should match when none of the specified states are met"
+    assert branch.matches?(@object), 'Branch should match when none of the specified states are met'
   end
 
   def test_unless_any_state_prevents_transition_when_one_state_matches
@@ -177,7 +177,7 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(unless_any_state: { state1: :idling, state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when at least one specified state is met"
+    refute branch.matches?(@object), 'Branch should not match when at least one specified state is met'
   end
 
   # --- Combination with :if ---
@@ -189,29 +189,29 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if: :condition_met?, if_state: { state2: :on })
 
     # Assert: The branch should match.
-    assert branch.matches?(@object), "Branch should match when both :if and :if_state conditions are met"
+    assert branch.matches?(@object), 'Branch should match when both :if and :if_state conditions are met'
   end
 
   def test_prevents_transition_when_if_is_met_but_if_state_is_not
     # Setup: The standard :if condition is true BUT the :if_state condition is NOT met.
-    @object.state2 = 'off'  # This does NOT meet the :if_state condition
+    @object.state2 = 'off' # This does NOT meet the :if_state condition
 
     # Action: Create a branch with both :if and :if_state guards.
     branch = StateMachines::Branch.new(if: :condition_met?, if_state: { state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when :if is met but :if_state is not"
+    refute branch.matches?(@object), 'Branch should not match when :if is met but :if_state is not'
   end
 
   def test_prevents_transition_when_if_state_is_met_but_if_is_not
     # Setup: The :if_state condition is met BUT the standard :if condition is false.
-    @object.state2 = 'on'  # This meets the :if_state condition
+    @object.state2 = 'on' # This meets the :if_state condition
 
     # Action: Create a branch with both :if and :if_state guards where :if returns false.
     branch = StateMachines::Branch.new(if: proc { false }, if_state: { state2: :on })
 
     # Assert: The branch should NOT match.
-    refute branch.matches?(@object), "Branch should not match when :if_state is met but :if is not"
+    refute branch.matches?(@object), 'Branch should not match when :if_state is met but :if is not'
   end
 
   # --- Error Handling ---
@@ -247,17 +247,17 @@ class BranchWithStateGuardsTest < StateMachinesTest
 
     branch = StateMachines::Branch.new(
       if_state: { state1: :idling },
-      unless_state: { state2: :off }  # state2 is 'on', so this should pass
+      unless_state: { state2: :off } # state2 is 'on', so this should pass
     )
 
-    assert branch.matches?(@object), "Multiple guard types should work together"
+    assert branch.matches?(@object), 'Multiple guard types should work together'
   end
 
   def test_empty_state_guards_always_match
     # Test that when no state guards are specified, the branch matches
     branch = StateMachines::Branch.new({})
 
-    assert branch.matches?(@object), "Branch with no guards should always match"
+    assert branch.matches?(@object), 'Branch with no guards should always match'
   end
 
   def test_guard_false_bypasses_state_guards
@@ -265,6 +265,6 @@ class BranchWithStateGuardsTest < StateMachinesTest
     branch = StateMachines::Branch.new(if_state: { nonexistent_machine: :some_state })
 
     # This should not raise an error because guard: false bypasses the checks
-    assert branch.matches?(@object, guard: false), "guard: false should bypass state guard validation"
+    assert branch.matches?(@object, guard: false), 'guard: false should bypass state guard validation'
   end
 end

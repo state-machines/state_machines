@@ -114,22 +114,9 @@ module StateMachines
         # Input validation for string evaluation
         validate_eval_string(str)
 
-        case [block_given?, StateMachines::Transition.pause_supported?]
-        in [true, true]
+        if block_given?
           eval(str, object.instance_eval { binding }, &block)
-        in [true, false]
-          # Support for JRuby and Truffle Ruby, which don't support binding blocks
-          # Need to check with @headius, if jruby 10 does now.
-          eigen = class << object; self; end
-          eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-                def __temp_eval_method__(*args, &b)
-                  #{str}
-                end
-          RUBY
-          result = object.__temp_eval_method__(*args, &block)
-          eigen.send(:remove_method, :__temp_eval_method__)
-          result
-        in [false, _]
+        else
           eval(str, object.instance_eval { binding })
         end
       else

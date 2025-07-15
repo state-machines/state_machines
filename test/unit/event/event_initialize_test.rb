@@ -19,11 +19,13 @@ class EventInitializeTest < StateMachinesTest
 
   def test_should_set_human_name_from_options
     event = StateMachines::Event.new(@machine, :ignite, human_name: 'Start')
+
     assert_equal 'Start', event.human_name
   end
 
   def test_should_set_human_name_from_kwargs
     event = StateMachines::Event.new(@machine, :ignite, nil, human_name: 'Start')
+
     assert_equal 'Start', event.human_name
   end
 

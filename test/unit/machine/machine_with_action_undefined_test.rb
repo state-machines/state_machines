@@ -26,10 +26,10 @@ class MachineWithActionUndefinedTest < StateMachinesTest
   end
 
   def test_should_not_define_action
-    refute @object.respond_to?(:save)
+    refute_respond_to @object, :save
   end
 
   def test_should_not_mark_action_hook_as_defined
-    refute @machine.action_hook?
+    refute_predicate @machine, :action_hook?
   end
 end

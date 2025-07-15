@@ -34,7 +34,7 @@ class MachineByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_have_any_events
-    refute @machine.events.any?
+    refute_predicate @machine.events, :any?
   end
 
   def test_should_not_have_any_before_callbacks
@@ -108,19 +108,19 @@ class MachineByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_define_an_event_attribute_reader
-    refute @object.respond_to?(:state_event)
+    refute_respond_to @object, :state_event
   end
 
   def test_should_not_define_an_event_attribute_writer
-    refute @object.respond_to?(:state_event=)
+    refute_respond_to @object, :state_event=
   end
 
   def test_should_not_define_an_event_transition_attribute_reader
-    refute @object.respond_to?(:state_event_transition)
+    refute_respond_to @object, :state_event_transition
   end
 
   def test_should_not_define_an_event_transition_attribute_writer
-    refute @object.respond_to?(:state_event_transition=)
+    refute_respond_to @object, :state_event_transition=
   end
 
   def test_should_define_a_human_attribute_name_reader_for_the_attribute
@@ -132,19 +132,19 @@ class MachineByDefaultTest < StateMachinesTest
   end
 
   def test_should_not_define_singular_with_scope
-    refute @klass.respond_to?(:with_state)
+    refute_respond_to @klass, :with_state
   end
 
   def test_should_not_define_singular_without_scope
-    refute @klass.respond_to?(:without_state)
+    refute_respond_to @klass, :without_state
   end
 
   def test_should_not_define_plural_with_scope
-    refute @klass.respond_to?(:with_states)
+    refute_respond_to @klass, :with_states
   end
 
   def test_should_not_define_plural_without_scope
-    refute @klass.respond_to?(:without_states)
+    refute_respond_to @klass, :without_states
   end
 
   def test_should_extend_owner_class_with_class_methods

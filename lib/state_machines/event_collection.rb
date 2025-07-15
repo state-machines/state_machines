@@ -119,12 +119,12 @@ module StateMachines
       # TODO, simplify
       # First try the regular event_transition
       transition = machine.read(object, :event_transition)
-      
+
       # If not found and we have stored transitions by machine (issue #91)
       if !transition && (transitions_by_machine = object.instance_variable_get(:@_state_machine_event_transitions))
         transition = transitions_by_machine[machine.name]
       end
-      
+
       transition || if event_name = machine.read(object, :event)
                       if event = self[event_name.to_sym, :name]
                         event.transition_for(object) || begin

@@ -104,8 +104,6 @@ class TransitionWithFiberExceptionsTest < StateMachinesTest
   end
 
   def test_should_catch_and_reraise_exception_when_resuming_paused_transition
-    skip('test not supported in this Ruby Engine') unless StateMachines::Transition.pause_supported?
-
     @exception = RuntimeError.new('resume error')
 
     @machine.around_transition do |block|

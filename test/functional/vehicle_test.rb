@@ -9,7 +9,7 @@ class VehicleTest < Minitest::Test
   end
 
   def test_should_not_allow_access_to_subclass_events
-    refute @vehicle.respond_to?(:reverse)
+    refute_respond_to @vehicle, :reverse
   end
 
   def test_should_have_human_state_names

@@ -25,7 +25,7 @@ class PathWithAvailableTransitionsTest < StateMachinesTest
   end
 
   def test_should_not_be_complete
-    refute @path.complete?
+    refute_predicate @path, :complete?
   end
 
   def test_should_walk_each_available_transition

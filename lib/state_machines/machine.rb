@@ -565,8 +565,6 @@ module StateMachines
           end
         end
       else
-        # Validate string input before eval if method is a string
-        validate_eval_string(method) if method.is_a?(String)
         helper_module.class_eval(method, __FILE__, __LINE__)
       end
     end

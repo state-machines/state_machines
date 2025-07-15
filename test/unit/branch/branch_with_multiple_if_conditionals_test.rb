@@ -10,16 +10,16 @@ class BranchWithMultipleIfConditionalsTest < StateMachinesTest
   def test_should_match_if_all_are_true
     branch = StateMachines::Branch.new(if: [-> { true }, -> { true }])
 
-    assert branch.match(@object)
+    assert_match branch, @object
   end
 
   def test_should_not_match_if_any_are_false
     branch = StateMachines::Branch.new(if: [-> { true }, -> { false }])
 
-    refute branch.match(@object)
+    refute_match branch, @object
 
     branch = StateMachines::Branch.new(if: [-> { false }, -> { true }])
 
-    refute branch.match(@object)
+    refute_match branch, @object
   end
 end

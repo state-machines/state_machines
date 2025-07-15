@@ -44,7 +44,7 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
 
     machine = StateMachines::Machine.new(@klass)
 
-    refute((class << machine; ancestors; end).include?(MachineWithCustomIntegrationTest::Custom))
+    refute_includes(class << machine; ancestors; end, MachineWithCustomIntegrationTest::Custom)
   end
 
   def test_should_not_be_extended_by_the_integration_if_implicit_but_not_matched
@@ -57,7 +57,7 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
 
     machine = StateMachines::Machine.new(@klass)
 
-    refute((class << machine; ancestors; end).include?(MachineWithCustomIntegrationTest::Custom))
+    refute_includes(class << machine; ancestors; end, MachineWithCustomIntegrationTest::Custom)
   end
 
   def test_should_be_extended_by_the_integration_if_implicit_and_available_and_matches
@@ -69,12 +69,12 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
   def test_should_not_be_extended_by_the_integration_if_nil
     machine = StateMachines::Machine.new(@klass, integration: nil)
 
-    refute((class << machine; ancestors; end).include?(MachineWithCustomIntegrationTest::Custom))
+    refute_includes(class << machine; ancestors; end, MachineWithCustomIntegrationTest::Custom)
   end
 
   def test_should_not_be_extended_by_the_integration_if_false
     machine = StateMachines::Machine.new(@klass, integration: false)
 
-    refute((class << machine; ancestors; end).include?(MachineWithCustomIntegrationTest::Custom))
+    refute_includes(class << machine; ancestors; end, MachineWithCustomIntegrationTest::Custom)
   end
 end

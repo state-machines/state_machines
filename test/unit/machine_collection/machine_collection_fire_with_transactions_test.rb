@@ -36,7 +36,7 @@ class MachineCollectionFireAttributesWithValidationsTest < StateMachinesTest
     @object.state_event = 'invalid'
     @machines.transitions(@object, :save)
 
-    refute @object.errors.empty?
+    refute_empty @object.errors
   end
 
   def test_should_invalidate_if_no_transition_exists
@@ -44,7 +44,7 @@ class MachineCollectionFireAttributesWithValidationsTest < StateMachinesTest
     @object.state_event = 'ignite'
     @machines.transitions(@object, :save)
 
-    refute @object.errors.empty?
+    refute_empty @object.errors
   end
 
   def test_should_not_invalidate_if_transition_exists

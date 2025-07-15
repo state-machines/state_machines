@@ -16,18 +16,17 @@ class AutonomousDrone < StarfleetShip
     }.merge(attributes)
 
     attributes.each { |attr, value| send("#{attr}=", value) }
-    super(attributes)
+    super
   end
 
   # Override main status machine to be async (autonomous operation)
   state_machine :status, async: true do
-
     before_transition any => :flying do |drone|
-      drone.callback_log << "Autonomous flight sequence initiated..."
+      drone.callback_log << 'Autonomous flight sequence initiated...'
     end
 
     after_transition any => :flying do |drone|
-      drone.callback_log << "Drone airborne - autonomous navigation active!"
+      drone.callback_log << 'Drone airborne - autonomous navigation active!'
     end
 
     event :launch do
@@ -50,21 +49,21 @@ class AutonomousDrone < StarfleetShip
   # Teleporter system with async capabilities (takes 1 second to turn on)
   state_machine :teleporter_status, initial: :offline, async: true do
     before_transition offline: :charging do |drone|
-      drone.callback_log << "Initializing quantum teleporter matrix..."
+      drone.callback_log << 'Initializing quantum teleporter matrix...'
       drone.teleporter_charge_level = 0
     end
 
     after_transition charging: :ready do |drone|
-      drone.callback_log << "Teleporter matrix stabilized and ready!"
+      drone.callback_log << 'Teleporter matrix stabilized and ready!'
       drone.teleporter_charge_level = 100
     end
 
     before_transition ready: :teleporting do |drone|
-      drone.callback_log << "Engaging quantum teleportation beam..."
+      drone.callback_log << 'Engaging quantum teleportation beam...'
     end
 
     after_transition teleporting: :ready do |drone|
-      drone.callback_log << "Quantum teleportation sequence complete!"
+      drone.callback_log << 'Quantum teleportation sequence complete!'
     end
 
     event :power_up do
@@ -84,7 +83,7 @@ class AutonomousDrone < StarfleetShip
     end
 
     event :shutdown do
-      transition [:charging, :ready, :teleporting] => :offline
+      transition %i[charging ready teleporting] => :offline
     end
   end
 

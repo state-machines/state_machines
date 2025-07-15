@@ -51,9 +51,7 @@ module StateMachines
         instance_eval(&) if block_given?
 
         # Configure async mode if requested, after owner_class is set and DSL is evaluated
-        if @async_requested
-          configure_async_mode!(true)
-        end
+        configure_async_mode!(true) if @async_requested
 
         self.initial_state = options[:initial] unless sibling_machines.any?
       end

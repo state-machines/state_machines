@@ -26,7 +26,7 @@ class TransitionCollectionWithSkippedAfterCallbacksTest < StateMachinesTest
   end
 
   def test_should_not_run_after_callbacks
-    refute @callbacks.include?(:after)
+    refute_includes @callbacks, :after
   end
 
   def test_should_run_after_callbacks_on_subsequent_perform

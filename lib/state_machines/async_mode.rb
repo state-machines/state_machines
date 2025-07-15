@@ -22,7 +22,7 @@ end
 
 # Load required gems with version constraints
 gem 'async', '>= 2.25.0'
-gem 'concurrent-ruby', '>= 1.3.5'  # Security is not negotiable - enterprise-grade thread safety required
+gem 'concurrent-ruby', '>= 1.3.5' # Security is not negotiable - enterprise-grade thread safety required
 
 require 'async'
 require 'concurrent-ruby'
