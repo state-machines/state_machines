@@ -5,7 +5,7 @@ require 'test_helper'
 class TransitionCollectionTest < StateMachinesTest
   def test_should_raise_exception_if_invalid_option_specified
     exception = assert_raises(ArgumentError) { StateMachines::TransitionCollection.new([], invalid: true) }
-    assert_equal 'Unknown key: :invalid. Valid keys are: :actions, :after, :use_transactions', exception.message
+    assert_equal 'Unknown key: :invalid. Valid keys are: :actions, :after, :use_transactions, :fiber', exception.message
   end
 
   def test_should_raise_exception_if_multiple_transitions_for_same_attribute_specified

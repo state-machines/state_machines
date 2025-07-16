@@ -196,18 +196,21 @@ module StateMachines
       # this is an idempotent call on an already-paused transition. Just return true.
       return true if @paused_fiber&.alive? && !options[:after]
 
+      # Extract pausable options
+      pausable_options = options.key?(:fiber) ? { fiber: options[:fiber] } : {}
+
       # Check if we're resuming from a pause
       if @paused_fiber&.alive? && options[:after]
         # Resume the paused fiber
         # Don't reset @success when resuming - preserve the state from the pause
         # Store the block for later execution
         @continuation_block = block if block_given?
-        halted = pausable { true }
+        halted = pausable(pausable_options) { true }
       else
         @success = false
         # For normal execution (not pause/resume), default to success
         # The action block will override this if needed
-        halted = pausable { before(options[:after], &block) } if options[:before]
+        halted = pausable(pausable_options) { before(options[:after], &block) } if options[:before]
       end
 
       # After callbacks are only run if:
@@ -343,7 +346,19 @@ module StateMachines
     #
     # This will return true if the given block halts for a reason other than
     # getting paused.
-    def pausable
+    #
+    # Options:
+    # * :fiber - Whether to use fiber-based execution (default: true)
+    def pausable(options = {})
+      # If fiber is disabled, use simple synchronous execution
+      if options[:fiber] == false
+        halted = !catch(:halt) do
+          yield
+          true
+        end
+        return halted
+      end
+
       if @paused_fiber
         # Resume the paused fiber
         @resuming = true
@@ -381,14 +396,21 @@ module StateMachines
       else
         # Create a new fiber to run the block
         fiber = Fiber.new do
-          halted = !catch(:halt) do
-            yield
-            true
+          # Mark that we're inside a pausable fiber
+          Thread.current[:state_machine_fiber_pausable] = true
+          begin
+            halted = !catch(:halt) do
+              yield
+              true
+            end
+            halted ? :halted : :completed
+          rescue StandardError => e
+            # Store the exception for re-raising
+            [:error, e]
+          ensure
+            # Clean up the flag
+            Thread.current[:state_machine_fiber_pausable] = false
           end
-          halted ? :halted : :completed
-        rescue StandardError => e
-          # Store the exception for re-raising
-          [:error, e]
         end
 
         # Run the fiber
@@ -424,6 +446,10 @@ module StateMachines
     def pause
       # Don't pause if we're in the middle of resuming
       return if @resuming
+
+      # Only yield if we're actually inside a fiber created by pausable
+      # We use a thread-local variable to track this
+      return unless Thread.current[:state_machine_fiber_pausable]
 
       Fiber.yield
 

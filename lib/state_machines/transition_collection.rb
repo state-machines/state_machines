@@ -14,6 +14,9 @@ module StateMachines
     # Whether transitions should wrapped around a transaction block
     attr_reader :use_transactions
 
+    # Options passed to the collection
+    attr_reader :options
+
     # Creates a new collection of transitions that can be run in parallel.  Each
     # transition *must* be for a different attribute.
     #
@@ -31,11 +34,12 @@ module StateMachines
       attributes = map(&:attribute).uniq
       raise ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions, :fiber)
       options = { actions: true, after: true, use_transactions: true }.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
       @use_transactions = options[:use_transactions]
+      @options = options
 
       # Reset transitions when creating a new collection
       # But preserve paused transitions to allow resuming
@@ -134,7 +138,11 @@ module StateMachines
     # If any transition fails to run its callbacks, :halt will be thrown.
     def run_callbacks(index = 0, &block)
       if (transition = self[index])
-        callback_result = transition.run_callbacks(after: !skip_after) do
+        # Pass through any options that affect callback execution (e.g., fiber: false)
+        callback_options = { after: !skip_after }
+        callback_options[:fiber] = options[:fiber] if options.key?(:fiber)
+
+        callback_result = transition.run_callbacks(callback_options) do
           run_callbacks(index + 1, &block)
           { result: results[transition.action], success: success? }
         end
