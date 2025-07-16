@@ -29,23 +29,23 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_not_be_idling
-    refute @vehicle.idling?
+    refute_predicate @vehicle, :idling?
   end
 
   def test_should_not_be_first_gear
-    refute @vehicle.first_gear?
+    refute_predicate @vehicle, :first_gear?
   end
 
   def test_should_not_be_second_gear
-    refute @vehicle.second_gear?
+    refute_predicate @vehicle, :second_gear?
   end
 
   def test_should_not_be_stalled
-    refute @vehicle.stalled?
+    refute_predicate @vehicle, :stalled?
   end
 
   def test_should_not_be_able_to_park
-    refute @vehicle.can_park?
+    refute_predicate @vehicle, :can_park?
   end
 
   def test_should_not_have_a_transition_for_park
@@ -129,7 +129,7 @@ class VehicleUnsavedTest < Minitest::Test
   def test_should_be_saved_after_successful_event
     @vehicle.ignite
 
-    refute @vehicle.new_record?
+    refute_predicate @vehicle, :new_record?
   end
 
   def test_should_not_allow_idle
@@ -174,11 +174,11 @@ class VehicleUnsavedTest < Minitest::Test
   end
 
   def test_should_not_be_insurance_active
-    refute @vehicle.insurance_active?
+    refute_predicate @vehicle, :insurance_active?
   end
 
   def test_should_not_be_able_to_cancel
-    refute @vehicle.can_cancel_insurance?
+    refute_predicate @vehicle, :can_cancel_insurance?
   end
 
   def test_should_not_allow_cancelling_insurance

@@ -23,26 +23,31 @@ class TransitionPerformTest < StateMachinesTest
 
   def test_should_run_action_with_true
     @transition.perform(true)
+
     assert @object.saved
   end
 
   def test_should_not_run_action_with_false
     @transition.perform(false)
+
     refute @object.saved
   end
 
   def test_should_run_action_with_run_action_true
     @transition.perform(run_action: true)
+
     assert @object.saved
   end
 
   def test_should_not_run_action_with_run_action_false
     @transition.perform(run_action: false)
+
     refute @object.saved
   end
 
   def test_should_run_action_by_default
     @transition.perform
+
     assert @object.saved
   end
 end

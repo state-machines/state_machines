@@ -114,12 +114,10 @@ module StateMachines
         # Input validation for string evaluation
         validate_eval_string(str)
 
-        case [block_given?, StateMachines::Transition.pause_supported?]
-        in [true, true]
-          eval(str, object.instance_eval { binding }, &block)
-        in [true, false]
-          # Support for JRuby and Truffle Ruby, which don't support binding blocks
-          # Need to check with @headius, if jruby 10 does now.
+        # Evaluate the string in the object's context
+        if block_given?
+          # TruffleRuby and some other implementations need special handling for blocks
+          # Create a temporary method to evaluate the string with block support
           eigen = class << object; self; end
           eigen.class_eval <<-RUBY, __FILE__, __LINE__ + 1
                 def __temp_eval_method__(*args, &b)
@@ -129,8 +127,8 @@ module StateMachines
           result = object.__temp_eval_method__(*args, &block)
           eigen.send(:remove_method, :__temp_eval_method__)
           result
-        in [false, _]
-          eval(str, object.instance_eval { binding })
+        else
+          object.instance_eval(str, __FILE__, __LINE__)
         end
       else
         raise ArgumentError, 'Methods must be a symbol denoting the method to call, a block to be invoked, or a string to be evaluated'

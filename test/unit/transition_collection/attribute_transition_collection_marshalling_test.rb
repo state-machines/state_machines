@@ -43,24 +43,22 @@ class AttributeTransitionCollectionMarshallingTest < StateMachinesTest
     transitions.perform { true }
   end
 
-  if StateMachines::Transition.pause_supported?
-    def test_should_marshal_during_around_callbacks_before_yield
-      @machine.around_transition do |object, _transition, block|
-        Marshal.dump(object)
-        block.call
-      end
-      transitions(after: false).perform { true }
-      transitions.perform { true }
+  def test_should_marshal_during_around_callbacks_before_yield
+    @machine.around_transition do |object, _transition, block|
+      Marshal.dump(object)
+      block.call
     end
+    transitions(after: false).perform { true }
+    transitions.perform { true }
+  end
 
-    def test_should_marshal_during_around_callbacks_after_yield
-      @machine.around_transition do |object, _transition, block|
-        block.call
-        Marshal.dump(object)
-      end
-      transitions(after: false).perform { true }
-      transitions.perform { true }
+  def test_should_marshal_during_around_callbacks_after_yield
+    @machine.around_transition do |object, _transition, block|
+      block.call
+      Marshal.dump(object)
     end
+    transitions(after: false).perform { true }
+    transitions.perform { true }
   end
 
   private

@@ -28,8 +28,8 @@ class StateWithoutNameTest < StateMachinesTest
   def test_should_not_redefine_nil_predicate
     object = @klass.new
 
-    refute object.nil?
-    refute object.respond_to?('?')
+    refute_nil object
+    refute_respond_to object, '?'
   end
 
   def test_should_have_a_description

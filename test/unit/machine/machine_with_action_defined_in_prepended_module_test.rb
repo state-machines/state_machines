@@ -43,7 +43,7 @@ class MachineWithActionDefinedInPrependedModuleTest < StateMachinesTest
   end
 
   def test_should_mark_action_hook_as_defined
-    refute @machine.action_hook?
+    refute_predicate @machine, :action_hook?
   end
 
   def test_should_owner_class_ancestor_has_method_return_nil

@@ -749,7 +749,6 @@ module StateMachines
       has_async = object.respond_to?(async_method)
       has_async_bang = object.respond_to?(async_bang_method)
 
-      default_message = "Expected async event methods #{async_method} and #{async_bang_method} to be available for event :#{event}"
 
       if defined?(::Minitest)
         assert has_async, "Missing #{async_method} method"

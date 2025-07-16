@@ -94,6 +94,9 @@ module StateMachines
     def matches?(object, query = {})
       !match(object, query).nil?
     end
+    
+    # Alias for Minitest's assert_match
+    alias =~ matches?
 
     # Attempts to match the given object / query against the set of requirements
     # configured for this branch.  In addition to matching the event, from state,
