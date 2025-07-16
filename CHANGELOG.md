@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.100.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.50.0...state_machines/v0.100.0) (2025-07-16)
+
+
+### Features
+
+* replace deprecated callc with Fiber ([#147](https://github.com/state-machines/state_machines/issues/147)) ([2ca2b29](https://github.com/state-machines/state_machines/commit/2ca2b29caa13500d29b65957cecfe0578e5800ce))
+
 ## [0.50.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.40.0...state_machines/v0.50.0) (2025-07-12)
 
 
