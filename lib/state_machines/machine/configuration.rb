@@ -6,14 +6,18 @@ module StateMachines
       # Initializes a new state machine with the given configuration.
       def initialize(owner_class, *args, &)
         options = args.last.is_a?(Hash) ? args.pop : {}
-        StateMachines::OptionsValidator.assert_valid_keys!(options, :attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions, :async)
-
+        
         # Find an integration that matches this machine's owner class
         @integration = if options.include?(:integration)
                          options[:integration] && StateMachines::Integrations.find_by_name(options[:integration])
                        else
                          StateMachines::Integrations.match(owner_class)
                        end
+        
+        # Validate options including integration-specific options
+        valid_keys = [:attribute, :initial, :initialize, :action, :plural, :namespace, :integration, :messages, :use_transactions, :async]
+        valid_keys += @integration.integration_options if @integration
+        StateMachines::OptionsValidator.assert_valid_keys!(options, valid_keys)
 
         if @integration
           extend @integration
