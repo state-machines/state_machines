@@ -33,6 +33,12 @@ module StateMachines
         def matches_ancestors?(ancestors)
           (ancestors & matching_ancestors).any?
         end
+
+        # Additional options that this integration adds to the state machine.
+        # Integrations can override this method to specify additional valid options.
+        def integration_options
+          []
+        end
       end
 
       def self.included(base) # :nodoc:
