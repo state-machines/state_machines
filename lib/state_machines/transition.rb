@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module StateMachines
+  # Module to extend Fiber instances for pausable state tracking
+  module PausableFiber
+    attr_accessor :state_machine_fiber_pausable
+  end
+
   # A transition represents a state change for a specific attribute.
   #
   # Transitions consist of:
@@ -397,8 +402,8 @@ module StateMachines
         # Create a new fiber to run the block
         fiber = Fiber.new do
           # Mark that we're inside a pausable fiber
-          fiber_instance = Fiber.current
-          fiber_instance.instance_variable_set(:@state_machine_fiber_pausable, true)
+          Fiber.current.extend(StateMachines::PausableFiber)
+          Fiber.current.state_machine_fiber_pausable = true
           begin
             halted = !catch(:halt) do
               yield
@@ -410,8 +415,7 @@ module StateMachines
             [:error, e]
           ensure
             # Clean up the flag
-            fiber_instance = Fiber.current
-            fiber_instance.instance_variable_set(:@state_machine_fiber_pausable, false)
+            Fiber.current.state_machine_fiber_pausable = false
           end
         end
 
@@ -450,9 +454,9 @@ module StateMachines
       return if @resuming
 
       # Only yield if we're actually inside a fiber created by pausable
-      # We use a fiber instance variable to track this
-      fiber_instance = Fiber.current
-      return unless fiber_instance.instance_variable_get(:@state_machine_fiber_pausable)
+      # We use a module extension to track this
+      current_fiber = Fiber.current
+      return unless current_fiber.respond_to?(:state_machine_fiber_pausable) && current_fiber.state_machine_fiber_pausable
 
       Fiber.yield
 
