@@ -100,7 +100,7 @@ class VehicleUnsavedTest < Minitest::Test
   def test_should_allow_skipping_action_through_generic_event_runner
     @vehicle.fire_state_event(:ignite, false)
 
-    assert_equal false, @vehicle.saved
+    refute @vehicle.saved
   end
 
   def test_should_raise_error_with_invalid_event_through_generic_event_runer

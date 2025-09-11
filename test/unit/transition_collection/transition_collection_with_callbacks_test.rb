@@ -53,28 +53,28 @@ class TransitionCollectionWithCallbacksTest < StateMachinesTest
   def test_should_halt_if_before_callback_halted_for_first_transition
     @state.before_transition { throw :halt }
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[state_before state_around], @before_callbacks
   end
 
   def test_should_halt_if_before_callback_halted_for_second_transition
     @status.before_transition { throw :halt }
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[state_before state_around status_before status_around], @before_callbacks
   end
 
   def test_should_halt_if_around_callback_halted_before_yield_for_first_transition
     @state.around_transition { throw :halt }
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[state_before state_around], @before_callbacks
   end
 
   def test_should_halt_if_around_callback_halted_before_yield_for_second_transition
     @status.around_transition { throw :halt }
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[state_before state_around status_before status_around], @before_callbacks
   end
 
@@ -87,7 +87,7 @@ class TransitionCollectionWithCallbacksTest < StateMachinesTest
   def test_should_not_halt_if_after_callback_halted_for_first_transition
     @state.after_transition { throw :halt }
 
-    assert_equal true, @transitions.perform
+    assert @transitions.perform
     assert_equal %i[status_around status_after state_around state_after], @after_callbacks
   end
 
@@ -97,7 +97,7 @@ class TransitionCollectionWithCallbacksTest < StateMachinesTest
       throw :halt
     end
 
-    assert_equal true, @transitions.perform
+    assert @transitions.perform
     assert_equal %i[state_around state_after], @after_callbacks
   end
 

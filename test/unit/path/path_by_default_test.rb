@@ -47,10 +47,10 @@ class PathByDefaultTest < StateMachinesTest
     walked = false
     @path.walk { walked = true }
 
-    assert_equal false, walked
+    refute walked
   end
 
   def test_should_not_be_complete
-    assert_equal false, @path.complete?
+    refute_predicate @path, :complete?
   end
 end

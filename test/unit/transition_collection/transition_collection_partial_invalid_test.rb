@@ -40,7 +40,7 @@ class TransitionCollectionPartialInvalidTest < StateMachinesTest
   end
 
   def test_should_not_succeed
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
   end
 
   def test_should_not_start_transaction

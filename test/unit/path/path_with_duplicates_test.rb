@@ -13,11 +13,11 @@ class PathWithDuplicatesTest < StateMachinesTest
     @object.state = 'parked'
 
     @path = StateMachines::Path.new(@object, @machine)
-    @path.concat([
+    @path.push(
                    @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
                    @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked),
                    @ignite_again_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-                 ])
+                 )
   end
 
   def test_should_not_include_duplicates_in_from_states

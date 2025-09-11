@@ -52,11 +52,11 @@ class TransitionCollectionWithSkippedActionsTest < StateMachinesTest
   end
 
   def test_should_skip_actions
-    assert_equal true, @transitions.skip_actions
+    assert @transitions.skip_actions
   end
 
   def test_should_succeed
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_persist_states

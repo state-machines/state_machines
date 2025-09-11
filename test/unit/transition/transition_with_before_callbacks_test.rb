@@ -19,8 +19,8 @@ class TransitionWithBeforeCallbacksTest < StateMachinesTest
     @machine.before_transition { @run = true }
     result = @transition.run_callbacks
 
-    assert_equal true, result
-    assert_equal true, @run
+    assert result
+    assert @run
   end
 
   def test_should_only_run_those_that_match_transition_context
@@ -48,7 +48,7 @@ class TransitionWithBeforeCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks
 
-    assert_equal false, result
+    refute result
   end
 
   def test_should_not_catch_exceptions
@@ -90,28 +90,28 @@ class TransitionWithBeforeCallbacksTest < StateMachinesTest
   def test_should_succeed_if_block_result_is_false
     @machine.before_transition { @run = true }
 
-    assert_equal(true, @transition.run_callbacks { { result: false } })
+    assert(@transition.run_callbacks { { result: false } })
     assert @run
   end
 
   def test_should_succeed_if_block_result_is_true
     @machine.before_transition { @run = true }
 
-    assert_equal(true, @transition.run_callbacks { { result: true } })
+    assert(@transition.run_callbacks { { result: true } })
     assert @run
   end
 
   def test_should_succeed_if_block_success_is_false
     @machine.before_transition { @run = true }
 
-    assert_equal(true, @transition.run_callbacks { { success: false } })
+    assert(@transition.run_callbacks { { success: false } })
     assert @run
   end
 
   def test_should_succeed_if_block_success_is_true
     @machine.before_transition { @run = true }
 
-    assert_equal(true, @transition.run_callbacks { { success: true } })
+    assert(@transition.run_callbacks { { success: true } })
     assert @run
   end
 end

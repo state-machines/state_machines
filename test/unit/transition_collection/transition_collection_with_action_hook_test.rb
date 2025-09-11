@@ -10,7 +10,7 @@ class TransitionCollectionWithActionHookTest < TransitionCollectionWithActionHoo
   end
 
   def test_should_succeed
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_run_action

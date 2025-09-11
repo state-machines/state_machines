@@ -33,13 +33,13 @@ class EventCollectionAttributeWithMachineActionTest < StateMachinesTest
   def test_should_have_invalid_transition_if_invalid_event_specified
     @object.state_event = 'invalid'
 
-    assert_equal false, @events.attribute_transition_for(@object)
+    refute @events.attribute_transition_for(@object)
   end
 
   def test_should_have_invalid_transition_if_event_cannot_be_fired
     @object.state_event = 'ignite'
 
-    assert_equal false, @events.attribute_transition_for(@object)
+    refute @events.attribute_transition_for(@object)
   end
 
   def test_should_have_valid_transition_if_event_can_be_fired

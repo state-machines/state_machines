@@ -22,7 +22,7 @@ class AttributeTransitionCollectionWithAfterCallbackHaltTest < StateMachinesTest
   end
 
   def test_should_succeed
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_clear_event

@@ -55,13 +55,13 @@ class MachineWithIntegrationTest < StateMachinesTest
   end
 
   def test_should_use_the_default_use_transactions
-    assert_equal false, @machine.use_transactions
+    refute @machine.use_transactions
   end
 
   def test_should_use_the_custom_use_transactions_if_specified
     machine = StateMachines::Machine.new(Class.new, integration: :custom, use_transactions: true)
 
-    assert_equal true, machine.use_transactions
+    assert machine.use_transactions
   end
 
   def test_should_define_a_singular_and_plural_with_scope

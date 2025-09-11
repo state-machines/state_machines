@@ -13,10 +13,10 @@ class PathWithTransitionsTest < StateMachinesTest
     @object.state = 'parked'
 
     @path = StateMachines::Path.new(@object, @machine)
-    @path.concat([
+    @path.push(
                    @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
                    @shift_up_transition = StateMachines::Transition.new(@object, @machine, :shift_up, :idling, :first_gear)
-                 ])
+                 )
   end
 
   def test_should_enumerate_transitions
@@ -47,10 +47,10 @@ class PathWithTransitionsTest < StateMachinesTest
     walked = false
     @path.walk { walked = true }
 
-    assert_equal false, walked
+    refute walked
   end
 
   def test_should_be_complete
-    assert_equal true, @path.complete?
+    assert @path.complete?
   end
 end

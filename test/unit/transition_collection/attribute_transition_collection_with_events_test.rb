@@ -26,7 +26,7 @@ class AttributeTransitionCollectionWithEventsTest < StateMachinesTest
   end
 
   def test_should_succeed
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_persist_states

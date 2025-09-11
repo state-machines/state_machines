@@ -10,6 +10,6 @@ class EvalHelpersProcWithBlockTest < EvalHelpersBaseTest
   end
 
   def test_should_call_method_on_object_with_block
-    assert_equal true, evaluate_method(@object, @proc, 1, 2, 3) { true }
+    assert evaluate_method(@object, @proc, 1, 2, 3) { true }
   end
 end

@@ -22,7 +22,7 @@ class AttributeTransitionCollectionWithAroundCallbackBeforeYieldHaltTest < State
   end
 
   def test_should_not_succeed
-    assert_equal false, @result
+    refute @result
   end
 
   def test_should_not_clear_event

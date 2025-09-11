@@ -43,19 +43,19 @@ class SpaceShipAsyncModeTest < Minitest::Test
     # Launch sequence
     result = @spaceship.launch
 
-    assert_equal true, result
+    assert result
     assert_equal 'flying', @spaceship.status
 
     # Arm weapons (sync only machine)
     result = @spaceship.arm_weapons!
 
-    assert_equal true, result
+    assert result
     assert_equal 'armed', @spaceship.weapons
 
     # Raise shields
     result = @spaceship.raise_shields
 
-    assert_equal true, result
+    assert result
     assert_equal 'up', @spaceship.shields
   end
 
@@ -67,19 +67,19 @@ class SpaceShipAsyncModeTest < Minitest::Test
       assert_equal 'docked', @spaceship.status
       result = @spaceship.fire_event_async(:launch)
 
-      assert_equal true, result
+      assert result
       assert_equal 'flying', @spaceship.status
 
       # Test async shield raising
       result = @spaceship.fire_event_async(:raise_shields)
 
-      assert_equal true, result
+      assert result
       assert_equal 'up', @spaceship.shields
 
       # Weapons system is sync-only, so should use regular method
       result = @spaceship.arm_weapons!
 
-      assert_equal true, result
+      assert result
       assert_equal 'armed', @spaceship.weapons
     end
   end
@@ -157,7 +157,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
     # Test that callbacks work with async operations
     result = @spaceship.fire_event_async(:launch)
 
-    assert_equal true, result
+    assert result
     assert_equal 'flying', @spaceship.status
 
     # Check that callbacks were executed
@@ -169,19 +169,19 @@ class SpaceShipAsyncModeTest < Minitest::Test
     # Launch (async-enabled machine)
     launch_result = @spaceship.fire_event_async(:launch)
 
-    assert_equal true, launch_result
+    assert launch_result
     assert_equal 'flying', @spaceship.status
 
     # Arm weapons (sync-only machine) - should work normally
     weapons_result = @spaceship.arm_weapons!
 
-    assert_equal true, weapons_result
+    assert weapons_result
     assert_equal 'armed', @spaceship.weapons
 
     # Raise shields (async-enabled machine)
     shields_result = @spaceship.fire_event_async(:raise_shields)
 
-    assert_equal true, shields_result
+    assert shields_result
     assert_equal 'up', @spaceship.shields
   end
 
@@ -197,7 +197,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
       emergency_task = @spaceship.async_fire_event(:exit_warp)
       result = emergency_task.wait
 
-      assert_equal true, result
+      assert result
       assert_equal 'flying', @spaceship.status
     end
   end
@@ -209,24 +209,24 @@ class SpaceShipAsyncModeTest < Minitest::Test
     # Launch using regular sync method
     result = @spaceship.launch!
 
-    assert_equal true, result
+    assert result
     assert_equal 'flying', @spaceship.status
 
     # Enter warp using regular sync method
     result = @spaceship.enter_warp!
 
-    assert_equal true, result
+    assert result
     assert_equal 'warping', @spaceship.status
 
     # Land using regular sync method
     result = @spaceship.exit_warp!
 
-    assert_equal true, result
+    assert result
     assert_equal 'flying', @spaceship.status
 
     result = @spaceship.land!
 
-    assert_equal true, result
+    assert result
     assert_equal 'docked', @spaceship.status
   end
 
@@ -267,12 +267,12 @@ class SpaceShipAsyncModeTest < Minitest::Test
       task = @spaceship.launch_async!
       result = task.wait
 
-      assert_equal true, result
+      assert result
       assert_equal 'flying', @spaceship.status
       # Test fire_event_async! with valid transition
       result = @spaceship.fire_event_async!(:enter_warp)
 
-      assert_equal true, result
+      assert result
       assert_equal 'warping', @spaceship.status
     end
   end

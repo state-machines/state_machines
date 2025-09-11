@@ -37,7 +37,7 @@ class TransitionCollectionWithActionFailedTest < StateMachinesTest
   end
 
   def test_should_not_succeed
-    assert_equal false, @result
+    refute @result
   end
 
   def test_should_not_persist_state

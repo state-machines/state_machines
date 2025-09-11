@@ -14,6 +14,6 @@ class TrafficLightCautionTest < Minitest::Test
   end
 
   def test_should_use_caution_capture_violations
-    assert_equal true, @light.capture_violations?
+    assert @light.capture_violations?
   end
 end

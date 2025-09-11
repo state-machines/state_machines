@@ -76,7 +76,7 @@ class TransitionTest < StateMachinesTest
   end
 
   def test_should_not_be_transient
-    assert_equal false, @transition.transient?
+    refute_predicate @transition, :transient?
   end
 
   def test_should_generate_attributes

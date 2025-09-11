@@ -26,7 +26,7 @@ class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
   end
 
   def test_should_not_override_state_predicate
-    assert_equal false, @object.parked?
+    refute_predicate @object, :parked?
   end
 
   def test_should_still_allow_super_chaining
@@ -36,7 +36,7 @@ class StateWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
       end
     end
 
-    assert_equal false, @object.parked?
+    refute_predicate @object, :parked?
   end
 
   def test_should_output_warning

@@ -18,7 +18,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
   def test_should_run_before_callbacks
     @machine.before_transition { @run = true }
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     assert @run
   end
 
@@ -26,7 +26,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @run = false
     @machine.after_transition { @run = true }
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     refute @run
   end
 
@@ -36,7 +36,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
       block.call
     end
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     assert @run
   end
 
@@ -47,7 +47,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
       @run = true
     end
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     refute @run
   end
 
@@ -65,10 +65,10 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     assert_equal %i[before_around_1 before_around_2], @callbacks
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[before_around_1 before_around_2 after_around_2 after_around_1 after], @callbacks
   end
 
@@ -87,10 +87,10 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
     assert_equal %i[before_around_1 before_around_2], @callbacks
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[before_around_1 before_around_2 after_around_2], @callbacks
   end
 
@@ -105,7 +105,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @transition.run_callbacks(after: false)
 
     2.times do
-      assert_equal true, @transition.run_callbacks
+      assert @transition.run_callbacks
       assert_equal 2, @count
     end
   end
@@ -122,7 +122,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @transition.run_callbacks(after: false)
 
     2.times do
-      assert_equal true, @transition.run_callbacks
+      assert @transition.run_callbacks
       assert_equal 1, @count
     end
   end

@@ -23,6 +23,6 @@ class MachineCollectionTransitionsWithoutTransitionTest < StateMachinesTest
   end
 
   def test_should_not_perform
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
   end
 end

@@ -18,9 +18,9 @@ class PathWithGuardedTransitionsTest < StateMachinesTest
 
   def test_should_not_walk_transitions_if_guard_enabled
     path = StateMachines::Path.new(@object, @machine)
-    path.concat([
+    path.push(
                   StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-                ])
+                )
 
     paths = []
     path.walk { |next_path| paths << next_path }
@@ -30,9 +30,9 @@ class PathWithGuardedTransitionsTest < StateMachinesTest
 
   def test_should_not_walk_transitions_if_guard_disabled
     path = StateMachines::Path.new(@object, @machine, guard: false)
-    path.concat([
+    path.push(
                   ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-                ])
+                )
 
     paths = []
     path.walk { |next_path| paths << next_path }

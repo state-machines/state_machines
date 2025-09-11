@@ -32,13 +32,13 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
   def test_should_succeed
     @transitions.perform
 
-    assert_equal true, @transitions.perform
+    assert @transitions.perform
   end
 
   def test_should_not_run_around_callbacks_after_yield
     @transitions.perform
 
-    refute @callbacks.include?(:around_after)
+    refute_includes @callbacks, :around_after
   end
 
   def test_should_run_around_callbacks_after_yield_on_subsequent_perform
@@ -53,6 +53,6 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     @callbacks = []
     StateMachines::TransitionCollection.new([@transition]).perform
 
-    refute @callbacks.include?(:around_before)
+    refute_includes @callbacks, :around_before
   end
 end

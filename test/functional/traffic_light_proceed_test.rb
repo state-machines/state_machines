@@ -14,6 +14,6 @@ class TrafficLightProceedTest < Minitest::Test
   end
 
   def test_should_use_proceed_capture_violations
-    assert_equal false, @light.capture_violations?
+    refute_predicate @light, :capture_violations?
   end
 end

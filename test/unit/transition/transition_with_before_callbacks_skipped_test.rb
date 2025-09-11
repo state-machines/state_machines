@@ -19,14 +19,14 @@ class TransitionWithBeforeCallbacksSkippedTest < StateMachinesTest
     @run = false
     @machine.before_transition { @run = true }
 
-    assert_equal false, @transition.run_callbacks(before: false)
+    refute @transition.run_callbacks(before: false)
     refute @run
   end
 
   def test_should_run_failure_callbacks
     @machine.after_failure { @run = true }
 
-    assert_equal false, @transition.run_callbacks(before: false)
+    refute @transition.run_callbacks(before: false)
     assert @run
   end
 end

@@ -24,7 +24,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.before_transition { @callbacks << :before_2 }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[before_1 around before_2], @callbacks
   end
 
@@ -37,7 +37,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after_3 }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[after_2 after_1 after_3], @callbacks
   end
 
@@ -73,7 +73,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
     assert_equal %i[before_1 before_around_1 before_2], @callbacks
   end
 
@@ -95,7 +95,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
     assert_equal %i[before_1 before_around_1], @callbacks
   end
 
@@ -114,7 +114,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
     assert_equal %i[before_1 before_around_1], @callbacks
   end
 
@@ -135,7 +135,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[before_1 before_around_1 before_2 before_around_2 after_around_2 after_around_1], @callbacks
   end
 
@@ -159,7 +159,7 @@ class TransitionWithMixedCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << :after_2 }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal %i[before_1 before_around_1 before_2 before_around_2 after_around_2 after_around_1 after_1], @callbacks
   end
 end

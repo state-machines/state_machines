@@ -13,6 +13,6 @@ class EvalHelpersSymbolWithBlockTest < EvalHelpersBaseTest
   end
 
   def test_should_call_method_on_object_with_block
-    assert_equal true, evaluate_method(@object, :callback) { true }
+    assert evaluate_method(@object, :callback) { true }
   end
 end

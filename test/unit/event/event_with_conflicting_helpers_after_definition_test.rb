@@ -69,9 +69,9 @@ class EventWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
       end
     end
 
-    assert_equal false, @object.can_ignite?
+    refute_predicate @object, :can_ignite?
     assert_nil @object.ignite_transition
-    assert_equal false, @object.ignite
+    refute @object.ignite
     assert_raises(StateMachines::InvalidTransition) { @object.ignite! }
   end
 

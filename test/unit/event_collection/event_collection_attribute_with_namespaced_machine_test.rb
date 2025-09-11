@@ -27,7 +27,7 @@ class EventCollectionAttributeWithNamespacedMachineTest < StateMachinesTest
   def test_should_have_invalid_transition_if_event_cannot_be_fired
     @object.state_event = 'disable'
 
-    assert_equal false, @events.attribute_transition_for(@object)
+    refute @events.attribute_transition_for(@object)
   end
 
   def test_should_have_valid_transition_if_event_can_be_fired

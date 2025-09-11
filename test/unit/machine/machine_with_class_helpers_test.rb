@@ -140,7 +140,7 @@ class MachineWithClassHelpersTest < StateMachinesTest
     machine.define_helper(:class, :park) { true }
 
     assert_equal '', $stderr.string
-    assert_equal true, klass.park
+    assert klass.park
   ensure
     StateMachines::Machine.ignore_method_conflicts = false
     $stderr = @original_stderr

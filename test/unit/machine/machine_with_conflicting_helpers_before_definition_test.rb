@@ -154,7 +154,7 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
   end
 
   def test_should_not_redefine_event_runner
-    assert_equal true, @object.fire_state_event
+    assert @object.fire_state_event
   end
 
   def test_should_output_warning
