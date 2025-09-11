@@ -397,7 +397,8 @@ module StateMachines
         # Create a new fiber to run the block
         fiber = Fiber.new do
           # Mark that we're inside a pausable fiber
-          Thread.current[:state_machine_fiber_pausable] = true
+          fiber_instance = Fiber.current
+          fiber_instance.instance_variable_set(:@state_machine_fiber_pausable, true)
           begin
             halted = !catch(:halt) do
               yield
@@ -409,7 +410,8 @@ module StateMachines
             [:error, e]
           ensure
             # Clean up the flag
-            Thread.current[:state_machine_fiber_pausable] = false
+            fiber_instance = Fiber.current
+            fiber_instance.instance_variable_set(:@state_machine_fiber_pausable, false)
           end
         end
 
@@ -448,8 +450,9 @@ module StateMachines
       return if @resuming
 
       # Only yield if we're actually inside a fiber created by pausable
-      # We use a thread-local variable to track this
-      return unless Thread.current[:state_machine_fiber_pausable]
+      # We use a fiber instance variable to track this
+      fiber_instance = Fiber.current
+      return unless fiber_instance.instance_variable_get(:@state_machine_fiber_pausable)
 
       Fiber.yield
 
