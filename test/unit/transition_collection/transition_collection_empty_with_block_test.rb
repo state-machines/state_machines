@@ -16,7 +16,7 @@ class TransitionCollectionEmptyWithBlockTest < StateMachinesTest
   end
 
   def test_should_use_block_result_if_false
-    assert_equal(false, @transitions.perform { false })
+    refute(@transitions.perform { false })
   end
 
   def test_should_use_block_reslut_if_nil

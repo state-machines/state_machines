@@ -12,15 +12,15 @@ class PathWithoutTransitionsTest < StateMachinesTest
     @object = @klass.new
 
     @path = StateMachines::Path.new(@object, @machine)
-    @path.concat([
+    @path.push(
                    @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-                 ])
+                 )
   end
 
   def test_should_not_be_able_to_walk_anywhere
     walked = false
     @path.walk { walked = true }
 
-    assert_equal false, walked
+    refute walked
   end
 end

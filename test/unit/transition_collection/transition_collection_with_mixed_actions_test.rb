@@ -28,7 +28,7 @@ class TransitionCollectionWithMixedActionsTest < StateMachinesTest
   end
 
   def test_should_succeed
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_persist_states
@@ -37,7 +37,7 @@ class TransitionCollectionWithMixedActionsTest < StateMachinesTest
   end
 
   def test_should_store_results_in_transitions
-    assert_equal true, @state_transition.result
+    assert @state_transition.result
     assert_nil @status_transition.result
   end
 end

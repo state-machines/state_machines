@@ -32,7 +32,7 @@ class TransitionWithoutRunningActionTest < StateMachinesTest
   end
 
   def test_should_be_successful
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_change_the_current_state

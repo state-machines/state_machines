@@ -22,6 +22,6 @@ class MachineCollectionTransitionsWithoutEventsTest < StateMachinesTest
   end
 
   def test_should_perform
-    assert_equal true, @transitions.perform
+    assert @transitions.perform
   end
 end

@@ -24,6 +24,6 @@ class TrafficLightStopTest < Minitest::Test
   end
 
   def test_should_use_stop_capture_violations
-    assert_equal true, @light.capture_violations?
+    assert @light.capture_violations?
   end
 end

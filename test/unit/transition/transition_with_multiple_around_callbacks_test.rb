@@ -130,7 +130,7 @@ class TransitionWithMultipleAroundCallbacksTest < StateMachinesTest
     @machine.around_transition { |block| block.call }
     @machine.around_transition { throw :halt }
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
   end
 
   def test_should_not_continue_around_callbacks_if_before_yield_halted
@@ -145,7 +145,7 @@ class TransitionWithMultipleAroundCallbacksTest < StateMachinesTest
       @callbacks << 3
     end
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
     assert_equal [1], @callbacks
   end
 
@@ -173,7 +173,7 @@ class TransitionWithMultipleAroundCallbacksTest < StateMachinesTest
       throw :halt
     end
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_empty @callbacks
   end
 
@@ -186,7 +186,7 @@ class TransitionWithMultipleAroundCallbacksTest < StateMachinesTest
       @callbacks << 3
     end
 
-    assert_equal false, @transition.run_callbacks
+    refute @transition.run_callbacks
     assert_equal [1], @callbacks
   end
 end

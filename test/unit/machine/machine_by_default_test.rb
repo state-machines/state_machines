@@ -54,7 +54,7 @@ class MachineByDefaultTest < StateMachinesTest
   end
 
   def test_should_use_tranactions
-    assert_equal true, @machine.use_transactions
+    assert @machine.use_transactions
   end
 
   def test_should_not_have_a_namespace

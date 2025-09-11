@@ -15,6 +15,6 @@ class EvalHelpersSymbolPrivateTest < EvalHelpersBaseTest
   end
 
   def test_should_call_method_on_object_with_no_arguments
-    assert_equal true, evaluate_method(@object, :callback, 1, 2, 3)
+    assert evaluate_method(@object, :callback, 1, 2, 3)
   end
 end

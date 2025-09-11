@@ -23,9 +23,9 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
     end
     result = @transition.run_callbacks
 
-    assert_equal true, result
-    assert_equal true, @run_before
-    assert_equal true, @run_after
+    assert result
+    assert @run_before
+    assert @run_after
   end
 
   def test_should_only_run_those_that_match_transition_context
@@ -87,7 +87,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks
 
-    assert_equal false, result
+    refute result
   end
 
   def test_should_catch_after_yield_halts
@@ -98,7 +98,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks
 
-    assert_equal true, result
+    assert result
   end
 
   def test_should_not_catch_before_yield
@@ -119,7 +119,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks
 
-    assert_equal false, result
+    refute result
   end
 
   def test_should_not_be_able_to_run_twice
@@ -160,7 +160,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
       @after_run = true
     end
 
-    assert_equal(true, @transition.run_callbacks { { success: true, result: false } })
+    assert(@transition.run_callbacks { { success: true, result: false } })
     assert @before_run
     assert @after_run
   end
@@ -172,7 +172,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
       @after_run = true
     end
 
-    assert_equal(true, @transition.run_callbacks { { success: true, result: true } })
+    assert(@transition.run_callbacks { { success: true, result: true } })
     assert @before_run
     assert @after_run
   end
@@ -185,7 +185,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
       @after_run = true
     end
 
-    assert_equal(true, @transition.run_callbacks { { success: false } })
+    assert(@transition.run_callbacks { { success: false } })
     assert @before_run
     refute @after_run
   end
@@ -197,7 +197,7 @@ class TransitionWithAroundCallbacksTest < StateMachinesTest
       @after_run = true
     end
 
-    assert_equal(true, @transition.run_callbacks { { success: true } })
+    assert(@transition.run_callbacks { { success: true } })
     assert @before_run
     assert @after_run
   end

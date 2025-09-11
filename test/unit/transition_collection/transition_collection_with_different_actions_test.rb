@@ -35,7 +35,7 @@ class TransitionCollectionWithDifferentActionsTest < StateMachinesTest
   end
 
   def test_should_succeed
-    assert_equal true, @transitions.perform
+    assert @transitions.perform
   end
 
   def test_should_persist_states
@@ -68,7 +68,7 @@ class TransitionCollectionWithDifferentActionsTest < StateMachinesTest
       end
     end
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[save_state save_status], @object.actions
   end
 
@@ -82,7 +82,7 @@ class TransitionCollectionWithDifferentActionsTest < StateMachinesTest
       end
     end
 
-    assert_equal false, @transitions.perform
+    refute @transitions.perform
     assert_equal %i[save_state save_status], @object.actions
   end
 

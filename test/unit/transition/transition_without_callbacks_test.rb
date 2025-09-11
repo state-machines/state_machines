@@ -16,11 +16,11 @@ class TransitionWithoutCallbacksTest < StateMachinesTest
   end
 
   def test_should_succeed
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
   end
 
   def test_should_succeed_if_after_callbacks_skipped
-    assert_equal true, @transition.run_callbacks(after: false)
+    assert @transition.run_callbacks(after: false)
   end
 
   def test_should_call_block_if_provided

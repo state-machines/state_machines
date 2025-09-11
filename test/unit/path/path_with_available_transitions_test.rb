@@ -19,9 +19,9 @@ class PathWithAvailableTransitionsTest < StateMachinesTest
     @object.state = 'parked'
 
     @path = StateMachines::Path.new(@object, @machine)
-    @path.concat([
+    @path.push(
                    @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
-                 ])
+                 )
   end
 
   def test_should_not_be_complete

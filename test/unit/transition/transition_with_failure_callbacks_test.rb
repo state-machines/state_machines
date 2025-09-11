@@ -55,7 +55,7 @@ class TransitionWithFailureCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks { { success: false } }
 
-    assert_equal true, result
+    assert result
   end
 
   def test_should_not_catch_exceptions

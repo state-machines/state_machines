@@ -32,7 +32,7 @@ class TransitionWithMultipleAfterCallbacksTest < StateMachinesTest
     end
     @machine.after_transition { @callbacks << 2 }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
     assert_equal [1], @callbacks
   end
 
@@ -40,6 +40,6 @@ class TransitionWithMultipleAfterCallbacksTest < StateMachinesTest
     @machine.after_transition { true }
     @machine.after_transition { throw :halt }
 
-    assert_equal true, @transition.run_callbacks
+    assert @transition.run_callbacks
   end
 end

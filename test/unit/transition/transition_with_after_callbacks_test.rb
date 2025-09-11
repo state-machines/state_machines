@@ -19,8 +19,8 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
     @machine.after_transition { |_object| @run = true }
     result = @transition.run_callbacks
 
-    assert_equal true, result
-    assert_equal true, @run
+    assert result
+    assert @run
   end
 
   def test_should_only_run_those_that_match_transition_context
@@ -64,7 +64,7 @@ class TransitionWithAfterCallbacksTest < StateMachinesTest
 
     result = @transition.run_callbacks
 
-    assert_equal true, result
+    assert result
   end
 
   def test_should_not_catch_exceptions

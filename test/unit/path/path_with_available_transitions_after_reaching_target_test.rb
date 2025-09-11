@@ -21,14 +21,14 @@ class PathWithAvailableTransitionsAfterReachingTargetTest < StateMachinesTest
     @object.state = 'parked'
 
     @path = StateMachines::Path.new(@object, @machine, target: :parked)
-    @path.concat([
+    @path.push(
                    @ignite_transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling),
                    @park_transition = StateMachines::Transition.new(@object, @machine, :park, :idling, :parked)
-                 ])
+                 )
   end
 
   def test_should_be_complete
-    assert_equal true, @path.complete?
+    assert @path.complete?
   end
 
   def test_should_be_able_to_walk

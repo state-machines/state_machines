@@ -18,7 +18,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     @machine.define_helper(:instance, :park) {}
 
-    assert_equal true, @object.park
+    assert @object.park
   end
 
   def test_should_not_redefine_existing_protected_methods
@@ -31,7 +31,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     @machine.define_helper(:instance, :park) {}
 
-    assert_equal true, @object.send(:park)
+    assert @object.send(:park)
   end
 
   def test_should_not_redefine_existing_private_methods
@@ -44,7 +44,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     @machine.define_helper(:instance, :park) {}
 
-    assert_equal true, @object.send(:park)
+    assert @object.send(:park)
   end
 
   def test_should_warn_if_defined_in_superclass
@@ -138,7 +138,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
     machine.define_helper(:instance, :park) { true }
 
     assert_equal '', $stderr.string
-    assert_equal true, klass.new.park
+    assert klass.new.park
   ensure
     StateMachines::Machine.ignore_method_conflicts = false
     $stderr = @original_stderr
@@ -147,7 +147,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
   def test_should_define_nonexistent_methods
     @machine.define_helper(:instance, :park) { false }
 
-    assert_equal false, @object.park
+    refute @object.park
   end
 
   def test_should_warn_if_defined_multiple_times
@@ -186,6 +186,6 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
         false
       end
     END_EVAL
-    assert_equal false, @object.park
+    refute @object.park
   end
 end

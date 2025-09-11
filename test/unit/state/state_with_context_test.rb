@@ -34,7 +34,7 @@ class StateWithContextTest < StateMachinesTest
   end
 
   def test_should_return_true
-    assert_equal true, @result
+    assert @result
   end
 
   def test_should_include_new_module_in_owner_class

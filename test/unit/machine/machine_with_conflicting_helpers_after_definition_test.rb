@@ -153,7 +153,7 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
   end
 
   def test_should_not_redefine_event_runner
-    assert_equal true, @object.fire_state_event
+    assert @object.fire_state_event
   end
 
   def test_should_allow_super_chaining
@@ -233,13 +233,13 @@ class MachineWithConflictingHelpersAfterDefinitionTest < StateMachinesTest
 
     assert_equal 'idling', @object.state
     assert_nil @object.status
-    assert_equal false, @object.state?(:parked)
+    refute @object.state?(:parked)
     assert_equal :idling, @object.state_name
     assert_equal 'idling', @object.human_state_name
     assert_empty @object.state_events
     assert_empty @object.state_transitions
     assert_empty @object.state_paths
-    assert_equal false, @object.fire_state_event(:ignite)
+    refute @object.fire_state_event(:ignite)
   end
 
   def test_should_not_output_warning
