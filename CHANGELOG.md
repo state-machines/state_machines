@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.100.2](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.1...state_machines/v0.100.2) (2025-09-11)
+
+
+### Features
+
+* Fix Thread.current/Fiber deadlock in pausable transitions ([#152](https://github.com/state-machines/state_machines/issues/152)) ([#153](https://github.com/state-machines/state_machines/issues/153)) ([7472b51](https://github.com/state-machines/state_machines/commit/7472b51c2d8d0dd7fe2e0f8044cc55d9119d536d))
+
 ## [0.100.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.0...state_machines/v0.100.1) (2025-07-25)
 
 
