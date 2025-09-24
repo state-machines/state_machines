@@ -201,7 +201,8 @@ module StateMachines
       # this is an idempotent call on an already-paused transition. Just return true.
       return true if @paused_fiber&.alive? && !options[:after]
 
-      # Extract pausable options
+      # Always use fibers for compatibility with existing pause/resume functionality
+      # The fiber argument can still be used to explicitly control fiber usage
       pausable_options = options.key?(:fiber) ? { fiber: options[:fiber] } : {}
 
       # Check if we're resuming from a pause
@@ -399,8 +400,19 @@ module StateMachines
           end
         end
       else
+        # Capture current fiber's Thread.current storage to preserve object identity
+        # This is needed for compatibility but has limitations with dynamic assignments
+        parent_fiber_locals = Thread.current.keys.each_with_object({}) do |key, storage|
+          storage[key] = Thread.current[key]
+        end
+
         # Create a new fiber to run the block
         fiber = Fiber.new do
+          # Restore parent's Thread.current storage with exact same object references
+          parent_fiber_locals.each do |key, value|
+            Thread.current[key] = value
+          end
+
           # Mark that we're inside a pausable fiber
           Fiber.current.extend(StateMachines::PausableFiber)
           Fiber.current.state_machine_fiber_pausable = true
