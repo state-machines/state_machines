@@ -44,6 +44,7 @@ module StateMachines
       @paused_fiber = nil
       @resuming = false
       @continuation_block = nil
+      @original_thread_storage = nil
 
       @event = machine.events.fetch(event)
       @from_state = machine.states.fetch(from_name)
@@ -288,6 +289,7 @@ module StateMachines
       @paused_fiber = nil
       @resuming = false
       @continuation_block = nil
+      @original_thread_storage = nil
     end
 
     # Determines equality of transitions by testing whether the object, states,
@@ -365,10 +367,10 @@ module StateMachines
       end
 
       if @paused_fiber
-        # Resume the paused fiber
+        # Resume the paused fiber with the stored thread storage
         @resuming = true
         begin
-          result = @paused_fiber.resume
+          result = @paused_fiber.resume(@original_thread_storage)
         rescue StandardError => e
           # Clean up on exception
           @resuming = false
@@ -409,7 +411,12 @@ module StateMachines
               yield
               true
             end
-            halted ? :halted : :completed
+            
+            # Export the final thread storage state along with the result
+            thread_storage = {}
+            Thread.current.keys.each { |key| thread_storage[key] = Thread.current[key] }
+            
+            [halted ? :halted : :completed, thread_storage]
           rescue StandardError => e
             # Store the exception for re-raising
             [:error, e]
@@ -425,23 +432,30 @@ module StateMachines
         # Handle different result types
         case result
         when Array
-          # Exception occurred
           if result[0] == :error
-            # Clean up state before re-raising
+            # Exception occurred
             @paused_fiber = nil
             raise result[1]
+          else
+            # Normal completion - check if we have thread storage
+            if result.length == 2 && result[1].is_a?(Hash)
+              @original_thread_storage = result[1]
+            end
+            result_value = result[0]
           end
         else
-          # Normal flow
-          # Save if paused
-          if fiber.alive?
-            @paused_fiber = fiber
-            # Return true to indicate paused (treated as halted for flow control)
-            true
-          else
-            # Fiber completed, return whether it was halted
-            result == :halted
-          end
+          # Direct result value (shouldn't happen with our new code)
+          result_value = result
+        end
+
+        # Save if paused
+        if fiber.alive?
+          @paused_fiber = fiber
+          # Return true to indicate paused (treated as halted for flow control)
+          true
+        else
+          # Fiber completed, return whether it was halted
+          result_value == :halted
         end
       end
     end
@@ -458,7 +472,13 @@ module StateMachines
       current_fiber = Fiber.current
       return unless current_fiber.respond_to?(:state_machine_fiber_pausable) && current_fiber.state_machine_fiber_pausable
 
-      Fiber.yield
+      # Yield and wait for resume, potentially receiving thread storage to restore
+      resume_data = Fiber.yield
+      
+      # If we received thread storage data on resume, restore it
+      if resume_data.is_a?(Hash)
+        resume_data.each { |key, value| Thread.current[key] = value }
+      end
 
       # When we resume from the pause, execute the continuation block if present
       return unless @continuation_block && !@result
@@ -538,6 +558,12 @@ module StateMachines
     # should never halt the execution of a +perform+.
     def after
       return if @after_run
+
+      # Restore the original thread storage to ensure consistency
+      # This is crucial to preserve Thread.current state between before and after callbacks
+      if @original_thread_storage
+        @original_thread_storage.each { |key, value| Thread.current[key] = value }
+      end
 
       catch(:halt) do
         type = @success ? :after : :failure
