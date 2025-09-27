@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.100.3](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.2...state_machines/v0.100.3) (2025-09-27)
+
+
+### Bug Fixes
+
+* preserve Thread.current storage object identity across Fiber boundaries ([#152](https://github.com/state-machines/state_machines/issues/152)) ([#156](https://github.com/state-machines/state_machines/issues/156)) ([ff79cd4](https://github.com/state-machines/state_machines/commit/ff79cd4742b9cb9b48ac9091eeb89a5aabf75a6f)), closes [#157](https://github.com/state-machines/state_machines/issues/157)
+
 ## [0.100.2](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.1...state_machines/v0.100.2) (2025-09-11)
 
 
