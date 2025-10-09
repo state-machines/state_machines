@@ -1,0 +1,23 @@
+# Automatically generated context index for Utopia::Project guides.
+# Do not edit then files in this directory directly, instead edit the guides and then run `bake utopia:project:agent:context:update`.
+---
+description: Application instrumentation and tracing.
+metadata:
+  documentation_uri: https://socketry.github.io/traces/
+  source_code_uri: https://github.com/socketry/traces.git
+files:
+- path: getting-started.md
+  title: Getting Started
+  description: This guide explains how to use `traces` for tracing code execution.
+- path: context-propagation.md
+  title: Context Propagation
+  description: This guide explains how to propagate trace context between different
+    execution contexts within your application using `Traces.current_context` and
+    `Traces.with_context`.
+- path: testing.md
+  title: Testing
+  description: This guide explains how to test traces in your code.
+- path: capture.md
+  title: Capture
+  description: This guide explains how to use `traces` for exporting traces from your
+    application. This can be used to document all possible traces.

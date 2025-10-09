@@ -1,0 +1,72 @@
+---
+AllCops:
+  NewCops: enable
+
+inherit_from: .rubocop_todo.yml
+
+Layout:
+  Enabled: true
+
+Layout/MultilineOperationIndentation:
+  EnforcedStyle: indented
+
+Lint:
+  Enabled: true
+
+Metrics:
+  Severity: refactor
+  Enabled: false
+
+Layout/LineLength:
+  Severity: convention
+
+Naming:
+  Enabled: true
+
+Naming/MethodParameterName:
+  MinNameLength: 1
+
+Security:
+  Enabled: true
+
+#todo: enable
+Style:
+  Enabled: true
+
+Style/FormatStringToken:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+#todo: enable
+Style/StringLiterals:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+#todo: enable
+Style/HashSyntax:
+  Enabled: false
+
+#todo: enable
+Style/FormatString:
+  Enabled: false
+
+#todo: enable
+Style/ClassVars:
+  Enabled: false
+
+#todo: enable
+Style/Alias:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Bundler:
+  Enabled: true
+
+Gemspec:
+  Enabled: true

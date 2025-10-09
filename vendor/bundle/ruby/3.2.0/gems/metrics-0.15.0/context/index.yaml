@@ -1,0 +1,19 @@
+# Automatically generated context index for Utopia::Project guides.
+# Do not edit then files in this directory directly, instead edit the guides and then run `bake utopia:project:agent:context:update`.
+---
+description: Application metrics and instrumentation.
+metadata:
+  documentation_uri: https://socketry.github.io/metrics/
+  source_code_uri: https://github.com/socketry/metrics.git
+files:
+- path: getting-started.md
+  title: Getting Started
+  description: This guide explains how to use `metrics` for capturing run-time metrics.
+- path: capture.md
+  title: Capture
+  description: This guide explains how to use `metrics` for exporting metric definitions
+    from your application.
+- path: testing.md
+  title: Testing
+  description: This guide explains how to write assertions in your test suite to validate
+    `metrics` are being emitted correctly.
