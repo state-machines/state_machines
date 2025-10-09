@@ -15,11 +15,12 @@ class ThreadStorageTest < Minitest::Test
   # https://github.com/state-machines/state_machines/issues/152#issuecomment-3329710026
   def test_should_not_change_object_id_in_thread_current
     @machine.fire_state_event :start
+
     assert_equal %i[
-        before_transition 
-        before_around_transition 
-        after_around_transition 
-        after_transition
+      before_transition
+      before_around_transition
+      after_around_transition
+      after_transition
     ], ThreadStorage.store
   end
 end

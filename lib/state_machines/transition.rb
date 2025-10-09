@@ -44,6 +44,7 @@ module StateMachines
       @paused_fiber = nil
       @resuming = false
       @continuation_block = nil
+      @fiber_thread_storage = nil
 
       @event = machine.events.fetch(event)
       @from_state = machine.states.fetch(from_name)
@@ -289,6 +290,7 @@ module StateMachines
       @paused_fiber = nil
       @resuming = false
       @continuation_block = nil
+      @fiber_thread_storage = nil
     end
 
     # Determines equality of transitions by testing whether the object, states,
@@ -381,23 +383,28 @@ module StateMachines
         # Handle different result types
         case result
         when Array
-          # Exception occurred inside the fiber
           if result[0] == :error
-            # Clean up state before re-raising
+            # Exception occurred inside the fiber
             @paused_fiber = nil
             raise result[1]
+          else
+            # Normal completion with thread storage export
+            @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
+            result_value = result[0]
           end
         else
-          # Normal flow
-          # Check if fiber is still alive after resume
-          if @paused_fiber.alive?
-            # Still paused, keep the fiber
-            true
-          else
-            # Fiber completed
-            @paused_fiber = nil
-            result == :halted
-          end
+          # Direct result value (paused or simple completion)
+          result_value = result
+        end
+
+        # Check if fiber is still alive after resume
+        if @paused_fiber.alive?
+          # Still paused, keep the fiber
+          true
+        else
+          # Fiber completed
+          @paused_fiber = nil
+          result_value == :halted
         end
       else
         # Capture current fiber's Thread.current storage to preserve object identity
@@ -421,7 +428,13 @@ module StateMachines
               yield
               true
             end
-            halted ? :halted : :completed
+
+            # Export the final thread storage state along with the result
+            thread_storage = Thread.current.keys.each_with_object({}) do |key, storage|
+              storage[key] = Thread.current[key]
+            end
+
+            [halted ? :halted : :completed, thread_storage]
           rescue StandardError => e
             # Store the exception for re-raising
             [:error, e]
@@ -437,23 +450,28 @@ module StateMachines
         # Handle different result types
         case result
         when Array
-          # Exception occurred
           if result[0] == :error
-            # Clean up state before re-raising
+            # Exception occurred
             @paused_fiber = nil
             raise result[1]
+          else
+            # Normal completion - check if we have thread storage
+            @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
+            result_value = result[0]
           end
         else
-          # Normal flow
-          # Save if paused
-          if fiber.alive?
-            @paused_fiber = fiber
-            # Return true to indicate paused (treated as halted for flow control)
-            true
-          else
-            # Fiber completed, return whether it was halted
-            result == :halted
-          end
+          # Direct result value (shouldn't happen with our new code)
+          result_value = result
+        end
+
+        # Save if paused
+        if fiber.alive?
+          @paused_fiber = fiber
+          # Return true to indicate paused (treated as halted for flow control)
+          true
+        else
+          # Fiber completed, return whether it was halted
+          result_value == :halted
         end
       end
     end
@@ -550,6 +568,10 @@ module StateMachines
     # should never halt the execution of a +perform+.
     def after
       return if @after_run
+
+      # Restore the fiber's thread storage to ensure consistency
+      # This preserves Thread.current state from before/around callbacks to after callbacks
+      @fiber_thread_storage.each { |key, value| Thread.current[key] = value } if @fiber_thread_storage
 
       catch(:halt) do
         type = @success ? :after : :failure
