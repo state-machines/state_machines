@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module StateMachines
-  VERSION = '0.100.3'
+  VERSION = '0.100.4'
 end
