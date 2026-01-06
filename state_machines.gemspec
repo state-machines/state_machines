@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '>= 1.7.6'
-  spec.add_development_dependency 'minitest', '>= 5.4'
+  spec.add_development_dependency 'minitest', '= 5.27.0'
   spec.add_development_dependency 'rake'
   spec.metadata['rubygems_mfa_required'] = 'true'
 end
