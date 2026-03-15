@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'ripper'
-
 module StateMachines
   # Cross-platform syntax validation for eval strings
   # Supports CRuby, JRuby, TruffleRuby via pluggable backends
@@ -15,12 +13,12 @@ module StateMachines
     private
 
     # Lazily pick the best backend for this platform
-    # Prefer RubyVM for performance on CRuby, fallback to Ripper for compatibility
+    # Prefer RubyVM for performance on CRuby, fallback to eval for compatibility
     def backend
       @backend ||= if RubyVmBackend.available?
                      RubyVmBackend
                    else
-                     RipperBackend
+                     UniversalBackend
                    end
     end
     module_function :backend
@@ -40,16 +38,15 @@ module StateMachines
       module_function :validate!
     end
 
-    # Universal Ruby backend via Ripper
-    module RipperBackend
+    # Universal Ruby backend
+    module UniversalBackend
       def validate!(code, filename)
-        sexp = Ripper.sexp(code)
-        if sexp.nil?
-          # Ripper.sexp returns nil on a parse error, but no exception
-          raise SyntaxError, "syntax error in #{filename}"
-        end
-
-        true
+        code = code.b
+        code.sub!(/\A(?:\xef\xbb\xbf)?(\s*\#.*$)*(\n)?/n) {
+          "#$&#{"\n" if $1 && !$2}BEGIN{throw tag, :ok}\n"
+        }
+        code = code.force_encoding(Encoding::UTF_8)
+        catch { |tag| eval(code, binding, filename, __LINE__ - 1) } == :ok
       end
       module_function :validate!
     end
