@@ -113,18 +113,10 @@ module StateMachines
         # Update all states to reflect the new initial state
         states.each { |state| state.initial = (state.name == @initial_state) }
 
-        # Output a warning if there are conflicting initial states for the machine's
-        # attribute
-        initial_state = states.detect(&:initial)
-        has_owner_default = !owner_class_attribute_default.nil?
-        has_conflicting_default = dynamic_initial_state? || !owner_class_attribute_default_matches?(initial_state)
-        return unless has_owner_default && has_conflicting_default
-
-        warn(
-          "Both #{owner_class.name} and its #{name.inspect} machine have defined " \
-          "a different default for \"#{attribute}\". Use only one or the other for " \
-          'defining defaults to avoid unexpected behaviors.'
-        )
+        # Warn if the owner class and the machine have conflicting defaults for
+        # the machine's attribute. May be deferred by integrations (e.g.
+        # ActiveRecord) to avoid touching the DB at class load time.
+        schedule_conflicting_attribute_default_check
       end
 
       # Gets the attribute name for the given machine scope.
