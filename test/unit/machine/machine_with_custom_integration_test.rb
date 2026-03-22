@@ -1,21 +1,22 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'files/models/vehicle'
 
 class MachineWithCustomIntegrationTest < StateMachinesTest
+  class BaseKlass; end
+
   module Custom
     include StateMachines::Integrations::Base
 
     def self.matching_ancestors
-      [Vehicle]
+      [MachineWithCustomIntegrationTest::BaseKlass]
     end
   end
 
   def setup
     StateMachines::Integrations.register(MachineWithCustomIntegrationTest::Custom)
 
-    @klass = Vehicle
+    @klass = Class.new(MachineWithCustomIntegrationTest::BaseKlass)
   end
 
   def teardown
@@ -23,7 +24,7 @@ class MachineWithCustomIntegrationTest < StateMachinesTest
     MachineWithCustomIntegrationTest::Custom.class_eval do
       class << self; remove_method :matching_ancestors; end
       def self.matching_ancestors
-        [Vehicle]
+        [MachineWithCustomIntegrationTest::BaseKlass]
       end
     end
   end
