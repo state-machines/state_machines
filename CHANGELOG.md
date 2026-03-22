@@ -3,6 +3,20 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.101.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.4...state_machines/v0.101.0) (2026-03-22)
+
+
+### Features
+
+* add hook to defer conflicting attribute default check ([4c0aea0](https://github.com/state-machines/state_machines/commit/4c0aea0228eba97dea55891f900189447a7b9a3c))
+* add hook to defer conflicting attribute default check ([dfc244a](https://github.com/state-machines/state_machines/commit/dfc244a227196c20bb9cfcfa6275bf326b5093d6))
+
+
+### Bug Fixes
+
+* force release ([21c5a7f](https://github.com/state-machines/state_machines/commit/21c5a7f8f88d163d1469625678b6a8d7529b026e))
+* remove bump-patch-for-minor-pre-major so feat bumps minor version ([0c384e5](https://github.com/state-machines/state_machines/commit/0c384e5fac59f221a6abb48759da94dbf6ebaebe))
+
 ## [0.100.4](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.3...state_machines/v0.100.4) (2025-10-10)
 
 
