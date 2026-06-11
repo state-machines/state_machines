@@ -17,9 +17,10 @@ module StateMachines
         end
       end
 
-      # Looks up the ancestor class that has the given method defined.  This
-      # is used to find the method owner which is used to determine where to
-      # define new methods.
+      # Determines whether there's already a helper method defined within the
+      # given scope.  This is true only if one of the owner's ancestors defines
+      # the method and is further along in the ancestor chain than this
+      # machine's helper module.
       def owner_class_ancestor_has_method?(scope, method)
         return false unless owner_class_has_method?(scope, method)
 
