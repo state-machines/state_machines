@@ -3,6 +3,14 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.200.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.101.0...state_machines/v0.200.0) (2026-06-11)
+
+
+### Features
+
+* consolidate duplicated internal logic ([c1507a0](https://github.com/state-machines/state_machines/commit/c1507a07fc37a84b5bd308be086a5c01e608f394))
+* consolidate duplicated internal logic ([20c2408](https://github.com/state-machines/state_machines/commit/20c24088092b146a977f66552b3d62f85dcf656f))
+
 ## [0.101.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.100.4...state_machines/v0.101.0) (2026-03-22)
 
 
