@@ -31,18 +31,7 @@ module StateMachines
           # Create async tasks for each transition
           tasks = map do |transition|
             Async do
-              if use_event_attributes? && !block_given?
-                transition.transient = true
-                transition.machine.write_safely(object, :event_transition, transition)
-                run_actions
-                transition
-              else
-                within_transaction do
-                  catch(:halt) { run_callbacks(&block) }
-                  rollback unless success?
-                end
-                transition
-              end
+              execute_transition(transition, &block)
             end
           end
 
@@ -80,18 +69,7 @@ module StateMachines
           each do |transition|
             threads << Thread.new do
               begin
-                result = if use_event_attributes? && !block_given?
-                          transition.transient = true
-                          transition.machine.write_safely(object, :event_transition, transition)
-                          run_actions
-                          transition
-                        else
-                          within_transaction do
-                            catch(:halt) { run_callbacks(&block) }
-                            rollback unless success?
-                          end
-                          transition
-                        end
+                result = execute_transition(transition, &block)
 
                 results_mutex.with_write_lock { results << result }
               rescue StandardError => e
@@ -111,6 +89,23 @@ module StateMachines
       end
 
       private
+
+      # Runs a single transition either via event attributes or the standard
+      # callback/transaction flow, returning the transition on completion
+      def execute_transition(transition, &block)
+        if use_event_attributes? && !block_given?
+          transition.transient = true
+          transition.machine.write_safely(object, :event_transition, transition)
+          run_actions
+        else
+          within_transaction do
+            catch(:halt) { run_callbacks(&block) }
+            rollback unless success?
+          end
+        end
+
+        transition
+      end
 
       # Override run_actions to be thread-safe when needed
       def run_actions(&block)

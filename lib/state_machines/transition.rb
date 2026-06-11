@@ -380,22 +380,7 @@ module StateMachines
         end
         @resuming = false
 
-        # Handle different result types
-        case result
-        when Array
-          if result[0] == :error
-            # Exception occurred inside the fiber
-            @paused_fiber = nil
-            raise result[1]
-          else
-            # Normal completion with thread storage export
-            @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
-            result_value = result[0]
-          end
-        else
-          # Direct result value (paused or simple completion)
-          result_value = result
-        end
+        result_value = unwrap_fiber_result(result)
 
         # Check if fiber is still alive after resume
         if @paused_fiber.alive?
@@ -447,22 +432,7 @@ module StateMachines
         # Run the fiber
         result = fiber.resume
 
-        # Handle different result types
-        case result
-        when Array
-          if result[0] == :error
-            # Exception occurred
-            @paused_fiber = nil
-            raise result[1]
-          else
-            # Normal completion - check if we have thread storage
-            @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
-            result_value = result[0]
-          end
-        else
-          # Direct result value (shouldn't happen with our new code)
-          result_value = result
-        end
+        result_value = unwrap_fiber_result(result)
 
         # Save if paused
         if fiber.alive?
@@ -474,6 +444,20 @@ module StateMachines
           result_value == :halted
         end
       end
+    end
+
+    # Unwraps a result returned from a pausable fiber, re-raising any exception
+    # captured inside the fiber and importing its exported thread storage
+    def unwrap_fiber_result(result)
+      return result unless result.is_a?(Array)
+
+      if result[0] == :error
+        @paused_fiber = nil
+        raise result[1]
+      end
+
+      @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
+      result[0]
     end
 
     # Pauses the current callback execution.  This should only occur within
