@@ -163,41 +163,25 @@ module StateMachines
         # Symbol methods currently don't support event arguments
         # This maintains backward compatibility
         evaluate_method(object, method)
-      in Proc => proc
-        arity = proc.arity
+      in Proc | Method => callable
+        arity = callable.arity
 
         # Arity-based decision for backward compatibility using pattern matching
         case arity
         in 0
-          proc.call
+          callable.call
         in 1
-          proc.call(object)
+          callable.call(object)
         in -1
           # Splat parameters: object + all event args
-          proc.call(object, *event_args)
+          callable.call(object, *event_args)
         in arity if arity > 1
           # Explicit parameters: object + limited event args
           args_needed = arity - 1 # Subtract 1 for the object parameter
-          proc.call(object, *event_args[0, args_needed])
+          callable.call(object, *event_args[0, args_needed])
         else
           # Negative arity other than -1 (unlikely but handle gracefully)
-          proc.call(object, *event_args)
-        end
-      in Method => meth
-        arity = meth.arity
-
-        case arity
-        in 0
-          meth.call
-        in 1
-          meth.call(object)
-        in -1
-          meth.call(object, *event_args)
-        in arity if arity > 1
-          args_needed = arity - 1
-          meth.call(object, *event_args[0, args_needed])
-        else
-          meth.call(object, *event_args)
+          callable.call(object, *event_args)
         end
       in String
         # String evaluation doesn't support event arguments for security

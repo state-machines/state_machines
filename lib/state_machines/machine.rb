@@ -1359,32 +1359,12 @@ module StateMachines
     #
     # As can be seen, any number of transitions can be created using various
     # combinations of configuration options.
-    def before_transition(*args, **options, &)
-      # Extract legacy positional arguments and merge with keyword options
-      parsed_options = parse_callback_arguments(args, options)
-
-      # Only validate callback-specific options, not state transition requirements
-      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
-      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
-
-      add_callback(:before, parsed_options, &)
-    end
 
     # Creates a callback that will be invoked *after* a transition is
     # performed so long as the given requirements match the transition.
     #
     # See +before_transition+ for a description of the possible configurations
     # for defining callbacks.
-    def after_transition(*args, **options, &)
-      # Extract legacy positional arguments and merge with keyword options
-      parsed_options = parse_callback_arguments(args, options)
-
-      # Only validate callback-specific options, not state transition requirements
-      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
-      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
-
-      add_callback(:after, parsed_options, &)
-    end
 
     # Creates a callback that will be invoked *around* a transition so long as
     # the given requirements match the transition.
@@ -1441,16 +1421,6 @@ module StateMachines
     #
     # See +before_transition+ for a description of the possible configurations
     # for defining callbacks.
-    def around_transition(*args, **options, &)
-      # Extract legacy positional arguments and merge with keyword options
-      parsed_options = parse_callback_arguments(args, options)
-
-      # Only validate callback-specific options, not state transition requirements
-      callback_options = parsed_options.slice(:do, :if, :unless, :bind_to_object, :terminator)
-      StateMachines::OptionsValidator.assert_valid_keys!(callback_options, :do, :if, :unless, :bind_to_object, :terminator)
-
-      add_callback(:around, parsed_options, &)
-    end
 
     # Creates a callback that will be invoked *after* a transition failures to
     # be performed so long as the given requirements match the transition.
@@ -1480,13 +1450,6 @@ module StateMachines
     #       ...
     #     end
     #   end
-    def after_failure(*args, **options, &)
-      # Extract legacy positional arguments and merge with keyword options
-      parsed_options = parse_callback_arguments(args, options)
-      StateMachines::OptionsValidator.assert_valid_keys!(parsed_options, :on, :do, :if, :unless)
-
-      add_callback(:failure, parsed_options, &)
-    end
 
     # Generates a list of the possible transition sequences that can be run on
     # the given object.  These paths can reveal all of the possible states and

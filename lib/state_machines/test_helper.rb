@@ -55,13 +55,7 @@ module StateMachines
       actual = object.send(name_method)
       default_message = "Expected #{object.class}##{machine_name} to be #{expected_state}, but was #{actual}"
 
-      if defined?(::Minitest)
-        assert_equal expected_state.to_s, actual.to_s, message || default_message
-      elsif defined?(::RSpec)
-        expect(actual.to_s).to eq(expected_state.to_s), message || default_message
-      else
-        raise "Expected #{expected_state}, but got #{actual}" unless expected_state.to_s == actual.to_s
-      end
+      _sm_assert_equal(expected_state.to_s, actual.to_s, message || default_message)
     end
 
     # Assert that an object can transition via a specific event
@@ -78,28 +72,10 @@ module StateMachines
     #   assert_sm_can_transition(user, :activate)                         # Uses default :state machine
     #   assert_sm_can_transition(user, :activate, machine_name: :status)  # Uses :status machine
     def assert_sm_can_transition(object, event, machine_name: :state, message: nil)
-      # Try different method naming patterns
-      possible_methods = [
-        "can_#{event}?",                    # Default state machine or non-namespaced
-        "can_#{event}_#{machine_name}?"     # Namespaced events
-      ]
-
-      can_method = possible_methods.find { |method| object.respond_to?(method) }
-
-      unless can_method
-        available_methods = object.methods.grep(/^can_.*\?$/).sort
-        raise ArgumentError, "No transition method found for event :#{event} on machine :#{machine_name}. Available methods: #{available_methods.first(10).inspect}"
-      end
-
+      can_method = _sm_find_can_method(object, event, machine_name)
       default_message = "Expected to be able to trigger event :#{event} on #{machine_name}, but #{can_method} returned false"
 
-      if defined?(::Minitest)
-        assert object.send(can_method), message || default_message
-      elsif defined?(::RSpec)
-        expect(object.send(can_method)).to be_truthy, message || default_message
-      else
-        raise default_message unless object.send(can_method)
-      end
+      _sm_assert(object.send(can_method), message || default_message)
     end
 
     # Assert that an object cannot transition via a specific event
@@ -116,28 +92,10 @@ module StateMachines
     #   assert_sm_cannot_transition(user, :delete)                         # Uses default :state machine
     #   assert_sm_cannot_transition(user, :delete, machine_name: :status)  # Uses :status machine
     def assert_sm_cannot_transition(object, event, machine_name: :state, message: nil)
-      # Try different method naming patterns
-      possible_methods = [
-        "can_#{event}?",                    # Default state machine or non-namespaced
-        "can_#{event}_#{machine_name}?"     # Namespaced events
-      ]
-
-      can_method = possible_methods.find { |method| object.respond_to?(method) }
-
-      unless can_method
-        available_methods = object.methods.grep(/^can_.*\?$/).sort
-        raise ArgumentError, "No transition method found for event :#{event} on machine :#{machine_name}. Available methods: #{available_methods.first(10).inspect}"
-      end
-
+      can_method = _sm_find_can_method(object, event, machine_name)
       default_message = "Expected not to be able to trigger event :#{event} on #{machine_name}, but #{can_method} returned true"
 
-      if defined?(::Minitest)
-        refute object.send(can_method), message || default_message
-      elsif defined?(::RSpec)
-        expect(object.send(can_method)).to be_falsy, message || default_message
-      elsif object.send(can_method)
-        raise default_message
-      end
+      _sm_refute(object.send(can_method), message || default_message)
     end
 
     # Assert that triggering an event changes the object to the expected state
@@ -165,26 +123,14 @@ module StateMachines
       actual_states = machine.states.map(&:name).compact
       default_message = "Expected states #{expected_states} but got #{actual_states}"
 
-      if defined?(::Minitest)
-        assert_equal expected_states.sort, actual_states.sort, message || default_message
-      elsif defined?(::RSpec)
-        expect(actual_states.sort).to eq(expected_states.sort), message || default_message
-      else
-        raise default_message unless expected_states.sort == actual_states.sort
-      end
+      _sm_assert_equal(expected_states.sort, actual_states.sort, message || default_message)
     end
 
     def refute_sm_state_defined(machine, state, message = nil)
       state_exists = machine.states.any? { |s| s.name == state }
       default_message = "Expected state #{state} to not be defined in machine"
 
-      if defined?(::Minitest)
-        refute state_exists, message || default_message
-      elsif defined?(::RSpec)
-        expect(state_exists).to be_falsy, message || default_message
-      elsif state_exists
-        raise default_message
-      end
+      _sm_refute(state_exists, message || default_message)
     end
     alias assert_sm_state_not_defined refute_sm_state_defined
 
@@ -193,13 +139,7 @@ module StateMachines
       is_initial = state_obj&.initial?
       default_message = "Expected state #{expected_state} to be the initial state"
 
-      if defined?(::Minitest)
-        assert is_initial, message || default_message
-      elsif defined?(::RSpec)
-        expect(is_initial).to be_truthy, message || default_message
-      else
-        raise default_message unless is_initial
-      end
+      _sm_assert(is_initial, message || default_message)
     end
 
     def assert_sm_final_state(machine, state, message = nil)
@@ -207,13 +147,7 @@ module StateMachines
       is_final = state_obj&.final?
       default_message = "Expected state #{state} to be final"
 
-      if defined?(::Minitest)
-        assert is_final, message || default_message
-      elsif defined?(::RSpec)
-        expect(is_final).to be_truthy, message || default_message
-      else
-        raise default_message unless is_final
-      end
+      _sm_assert(is_final, message || default_message)
     end
 
     def assert_sm_possible_transitions(machine, from:, expected_to_states:, message: nil)
@@ -223,13 +157,7 @@ module StateMachines
       end.uniq
       default_message = "Expected transitions from #{from} to #{expected_to_states} but got #{actual_transitions}"
 
-      if defined?(::Minitest)
-        assert_equal expected_to_states.sort, actual_transitions.sort, message || default_message
-      elsif defined?(::RSpec)
-        expect(actual_transitions.sort).to eq(expected_to_states.sort), message || default_message
-      else
-        raise default_message unless expected_to_states.sort == actual_transitions.sort
-      end
+      _sm_assert_equal(expected_to_states.sort, actual_transitions.sort, message || default_message)
     end
 
     def refute_sm_transition_allowed(machine, from:, to:, on:, message: nil)
@@ -237,13 +165,7 @@ module StateMachines
       is_allowed = event&.branches&.any? { |branch| branch.known_states.include?(from) && branch.to == to }
       default_message = "Expected transition from #{from} to #{to} on #{on} to not be allowed"
 
-      if defined?(::Minitest)
-        refute is_allowed, message || default_message
-      elsif defined?(::RSpec)
-        expect(is_allowed).to be_falsy, message || default_message
-      elsif is_allowed
-        raise default_message
-      end
+      _sm_refute(is_allowed, message || default_message)
     end
     alias assert_sm_transition_not_allowed refute_sm_transition_allowed
 
@@ -253,13 +175,7 @@ module StateMachines
       state_changed = initial_state != object.send(machine_name)
       default_message = "Expected event #{event} to trigger state change on #{machine_name}"
 
-      if defined?(::Minitest)
-        assert state_changed, message || default_message
-      elsif defined?(::RSpec)
-        expect(state_changed).to be_truthy, message || default_message
-      else
-        raise default_message unless state_changed
-      end
+      _sm_assert(state_changed, message || default_message)
     end
 
     def refute_sm_event_triggers(object, event, machine_name = :state, message = nil)
@@ -269,13 +185,7 @@ module StateMachines
         state_unchanged = initial_state == object.send(machine_name)
         default_message = "Expected event #{event} to not trigger state change on #{machine_name}"
 
-        if defined?(::Minitest)
-          assert state_unchanged, message || default_message
-        elsif defined?(::RSpec)
-          expect(state_unchanged).to be_truthy, message || default_message
-        else
-          raise default_message unless state_unchanged
-        end
+        _sm_assert(state_unchanged, message || default_message)
       rescue StateMachines::InvalidTransition
         # Expected behavior - transition was blocked
       end
@@ -306,13 +216,7 @@ module StateMachines
       callback_was_executed = callbacks_executed.include?(callback_name)
       default_message = "Expected callback #{callback_name} to be executed"
 
-      if defined?(::Minitest)
-        assert callback_was_executed, message || default_message
-      elsif defined?(::RSpec)
-        expect(callback_was_executed).to be_truthy, message || default_message
-      else
-        raise default_message unless callback_was_executed
-      end
+      _sm_assert(callback_was_executed, message || default_message)
     end
 
     def refute_sm_callback_executed(object, callback_name, message = nil)
@@ -320,13 +224,7 @@ module StateMachines
       callback_was_executed = callbacks_executed.include?(callback_name)
       default_message = "Expected callback #{callback_name} to not be executed"
 
-      if defined?(::Minitest)
-        refute callback_was_executed, message || default_message
-      elsif defined?(::RSpec)
-        expect(callback_was_executed).to be_falsy, message || default_message
-      elsif callback_was_executed
-        raise default_message
-      end
+      _sm_refute(callback_was_executed, message || default_message)
     end
     alias assert_sm_callback_not_executed refute_sm_callback_executed
 
@@ -351,13 +249,7 @@ module StateMachines
       actual_state = record.send(machine_name)
       default_message = "Expected persisted state #{expected} for #{machine_name} but got #{actual_state}"
 
-      if defined?(::Minitest)
-        assert_equal expected, actual_state, message || default_message
-      elsif defined?(::RSpec)
-        expect(actual_state).to eq(expected), message || default_message
-      else
-        raise default_message unless expected == actual_state
-      end
+      _sm_assert_equal(expected, actual_state, message || default_message)
     end
 
     # Assert that executing a block triggers one or more expected events
@@ -407,13 +299,7 @@ module StateMachines
           default_message += ". Missing: #{missing_events.inspect}" if missing_events.any?
           default_message += ". Extra: #{extra_events.inspect}" if extra_events.any?
 
-          if defined?(::Minitest)
-            assert false, message || default_message
-          elsif defined?(::RSpec)
-            raise message || default_message
-          else
-            raise default_message
-          end
+          _sm_flunk(message || default_message)
         end
       ensure
         # Restore original callbacks by removing the temporary one
@@ -481,13 +367,7 @@ module StateMachines
       async_enabled = machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
       default_message = "Expected state machine '#{machine_name}' to be in sync mode, but async mode is enabled"
 
-      if defined?(::Minitest)
-        refute async_enabled, message || default_message
-      elsif defined?(::RSpec)
-        expect(async_enabled).to be_falsy, message || default_message
-      elsif async_enabled
-        raise default_message
-      end
+      _sm_refute(async_enabled, message || default_message)
     end
 
     # Assert that async methods are not available on a sync-only object
@@ -506,13 +386,7 @@ module StateMachines
 
       default_message = "Expected no async methods to be available, but found: #{available_async_methods.inspect}"
 
-      if defined?(::Minitest)
-        assert_empty available_async_methods, message || default_message
-      elsif defined?(::RSpec)
-        expect(available_async_methods).to be_empty, message || default_message
-      elsif available_async_methods.any?
-        raise default_message
-      end
+      _sm_assert_empty(available_async_methods, message || default_message)
     end
 
     # Assert that an object has no async-enabled state machines
@@ -536,13 +410,7 @@ module StateMachines
 
       default_message = "Expected all state machines to be sync-only, but these have async enabled: #{async_machines.inspect}"
 
-      if defined?(::Minitest)
-        assert_empty async_machines, message || default_message
-      elsif defined?(::RSpec)
-        expect(async_machines).to be_empty, message || default_message
-      elsif async_machines.any?
-        raise default_message
-      end
+      _sm_assert_empty(async_machines, message || default_message)
     end
 
     # Assert that synchronous event execution works correctly
@@ -575,19 +443,9 @@ module StateMachines
 
       default_message = "Expected sync execution of '#{event}' to change #{machine_name} from '#{initial_state}' to '#{expected_state}', but got '#{final_state}'"
 
-      if defined?(::Minitest)
-        assert result, "Event #{event} should return true on success"
-        assert state_changed, "State should change from #{initial_state}"
-        assert correct_final_state, message || default_message
-      elsif defined?(::RSpec)
-        expect(result).to be_truthy, "Event #{event} should return true on success"
-        expect(state_changed).to be_truthy, "State should change from #{initial_state}"
-        expect(correct_final_state).to be_truthy, message || default_message
-      else
-        raise "Event #{event} should return true on success" unless result
-        raise "State should change from #{initial_state}" unless state_changed
-        raise default_message unless correct_final_state
-      end
+      _sm_assert(result, "Event #{event} should return true on success")
+      _sm_assert(state_changed, "State should change from #{initial_state}")
+      _sm_assert(correct_final_state, message || default_message)
     end
 
     # Assert that event execution is immediate (no async delay)
@@ -618,16 +476,8 @@ module StateMachines
 
       default_message = "Expected immediate sync execution of '#{event}', but took #{execution_time}s (likely async)"
 
-      if defined?(::Minitest)
-        assert state_changed, "Event should trigger state change"
-        assert is_immediate, message || default_message
-      elsif defined?(::RSpec)
-        expect(state_changed).to be_truthy, "Event should trigger state change"
-        expect(is_immediate).to be_truthy, message || default_message
-      else
-        raise "Event should trigger state change" unless state_changed
-        raise default_message unless is_immediate
-      end
+      _sm_assert(state_changed, 'Event should trigger state change')
+      _sm_assert(is_immediate, message || default_message)
     end
 
     # === Async Mode Assertions ===
@@ -651,13 +501,7 @@ module StateMachines
       async_enabled = machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
       default_message = "Expected state machine '#{machine_name}' to have async mode enabled, but it's in sync mode"
 
-      if defined?(::Minitest)
-        assert async_enabled, message || default_message
-      elsif defined?(::RSpec)
-        expect(async_enabled).to be_truthy, message || default_message
-      else
-        raise default_message unless async_enabled
-      end
+      _sm_assert(async_enabled, message || default_message)
     end
 
     # Assert that async methods are available on an async-enabled object
@@ -676,13 +520,7 @@ module StateMachines
 
       default_message = "Expected async methods to be available, but found none"
 
-      if defined?(::Minitest)
-        refute_empty available_async_methods, message || default_message
-      elsif defined?(::RSpec)
-        expect(available_async_methods).not_to be_empty, message || default_message
-      elsif available_async_methods.empty?
-        raise default_message
-      end
+      _sm_refute_empty(available_async_methods, message || default_message)
     end
 
     # Assert that an object has async-enabled state machines
@@ -706,13 +544,7 @@ module StateMachines
 
         default_message = "Expected machines #{machine_names.inspect} to have async enabled, but these don't: #{non_async_machines.inspect}"
 
-        if defined?(::Minitest)
-          assert_empty non_async_machines, message || default_message
-        elsif defined?(::RSpec)
-          expect(non_async_machines).to be_empty, message || default_message
-        elsif non_async_machines.any?
-          raise default_message
-        end
+        _sm_assert_empty(non_async_machines, message || default_message)
       else
         # Check that at least one machine has async
         async_machines = object.class.state_machines.select do |name, machine|
@@ -721,13 +553,7 @@ module StateMachines
 
         default_message = "Expected at least one state machine to have async enabled, but none found"
 
-        if defined?(::Minitest)
-          refute_empty async_machines, message || default_message
-        elsif defined?(::RSpec)
-          expect(async_machines).not_to be_empty, message || default_message
-        elsif async_machines.empty?
-          raise default_message
-        end
+        _sm_refute_empty(async_machines, message || default_message)
       end
     end
 
@@ -750,16 +576,8 @@ module StateMachines
       has_async_bang = object.respond_to?(async_bang_method)
 
 
-      if defined?(::Minitest)
-        assert has_async, "Missing #{async_method} method"
-        assert has_async_bang, "Missing #{async_bang_method} method"
-      elsif defined?(::RSpec)
-        expect(has_async).to be_truthy, "Missing #{async_method} method"
-        expect(has_async_bang).to be_truthy, "Missing #{async_bang_method} method"
-      else
-        raise "Missing #{async_method} method" unless has_async
-        raise "Missing #{async_bang_method} method" unless has_async_bang
-      end
+      _sm_assert(has_async, "Missing #{async_method} method")
+      _sm_assert(has_async_bang, "Missing #{async_bang_method} method")
     end
 
     # Assert that an object has thread-safe state methods when async is enabled
@@ -778,13 +596,7 @@ module StateMachines
 
       default_message = "Expected thread-safe methods to be available, but missing: #{missing_methods.inspect}"
 
-      if defined?(::Minitest)
-        assert_empty missing_methods, message || default_message
-      elsif defined?(::RSpec)
-        expect(missing_methods).to be_empty, message || default_message
-      elsif missing_methods.any?
-        raise default_message
-      end
+      _sm_assert_empty(missing_methods, message || default_message)
     end
 
     # RSpec-style aliases for event triggering (for consistency with RSpec expectations)
@@ -792,6 +604,80 @@ module StateMachines
     alias have_triggered_event assert_sm_triggers_event
 
     private
+
+    # Finds the can_<event>? method for the event, trying both the default and
+    # namespaced naming patterns, and raising when neither exists
+    def _sm_find_can_method(object, event, machine_name)
+      possible_methods = [
+        "can_#{event}?",                    # Default state machine or non-namespaced
+        "can_#{event}_#{machine_name}?"     # Namespaced events
+      ]
+
+      can_method = possible_methods.find { |method| object.respond_to?(method) }
+      return can_method if can_method
+
+      available_methods = object.methods.grep(/^can_.*\?$/).sort
+      raise ArgumentError, "No transition method found for event :#{event} on machine :#{machine_name}. Available methods: #{available_methods.first(10).inspect}"
+    end
+
+    # Framework dispatch helpers - route assertions to whichever test
+    # framework is loaded (Minitest, RSpec, or none)
+
+    def _sm_assert(condition, message)
+      if defined?(::Minitest)
+        assert condition, message
+      elsif defined?(::RSpec)
+        expect(condition).to be_truthy, message
+      else
+        raise message unless condition
+      end
+    end
+
+    def _sm_refute(condition, message)
+      if defined?(::Minitest)
+        refute condition, message
+      elsif defined?(::RSpec)
+        expect(condition).to be_falsy, message
+      elsif condition
+        raise message
+      end
+    end
+
+    def _sm_assert_equal(expected, actual, message)
+      if defined?(::Minitest)
+        assert_equal expected, actual, message
+      elsif defined?(::RSpec)
+        expect(actual).to eq(expected), message
+      else
+        raise message unless expected == actual
+      end
+    end
+
+    def _sm_assert_empty(collection, message)
+      if defined?(::Minitest)
+        assert_empty collection, message
+      elsif defined?(::RSpec)
+        expect(collection).to be_empty, message
+      elsif collection.any?
+        raise message
+      end
+    end
+
+    def _sm_refute_empty(collection, message)
+      if defined?(::Minitest)
+        refute_empty collection, message
+      elsif defined?(::RSpec)
+        expect(collection).not_to be_empty, message
+      elsif collection.empty?
+        raise message
+      end
+    end
+
+    def _sm_flunk(message)
+      raise message unless defined?(::Minitest)
+
+      assert false, message
+    end
 
     # Internal helper for checking transition callbacks
     def _assert_transition_callback(callback_type, machine_or_class, options, message)
@@ -883,13 +769,7 @@ module StateMachines
 
       default_message = "Expected #{callback_type}_transition callback with #{expected_parts.join(', ')} to be defined, but it was not found"
 
-      if defined?(::Minitest)
-        assert false, message || default_message
-      elsif defined?(::RSpec)
-        raise message || default_message
-      else
-        raise default_message
-      end
+      _sm_flunk(message || default_message)
     end
   end
 end
