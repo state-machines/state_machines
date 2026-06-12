@@ -257,9 +257,36 @@ module StateMachines
             object.instance_variable_set(:@_state_machine_event_transitions, transitions_by_machine)
           end
         end
+
+        # Complete any transitions that other machines generated mid-action
+        # (e.g. an event attribute set in a before callback and picked up by
+        # the validation cycle) so their after callbacks run in this same
+        # action cycle instead of leaking into the next one (issue #91)
+        complete_nested_transitions unless skip_after
       else
         super
       end
+    end
+
+    # Completes transitions that were stored for deferred completion by
+    # machines outside this collection while the action was running.  Their
+    # before callbacks and state persistence already happened mid-action;
+    # only their after callbacks remain.  Clears the stored references so
+    # they cannot leak into a later action cycle with stale data (issue #91).
+    def complete_nested_transitions
+      return if empty? || !success?
+
+      pending = object.instance_variable_get(:@_state_machine_event_transitions)
+      return unless pending
+
+      machines = map(&:machine)
+      pending.each_value do |transition|
+        next if machines.include?(transition.machine)
+
+        transition.machine.write(object, :event_transition, nil)
+        transition.complete_deferred_after_callbacks
+      end
+      object.instance_variable_set(:@_state_machine_event_transitions, nil)
     end
 
     # Tracks that before callbacks have now completed

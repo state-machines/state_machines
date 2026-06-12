@@ -346,6 +346,19 @@ module StateMachines
       !halted
     end
 
+    # Completes a transition whose before phase has already run by executing
+    # its after callbacks, resuming any paused around callbacks first.  Used
+    # to finish transitions that were stored for deferred completion (e.g.
+    # generated mid-action from an event attribute) once their action has
+    # succeeded.
+    def complete_deferred_after_callbacks
+      if paused?
+        run_callbacks(after: true)
+      else
+        after
+      end
+    end
+
     private
 
     # Runs a block that may get paused.  If the block doesn't pause, then
