@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.201.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.200.0...state_machines/v0.201.0) (2026-06-12)
+
+
+### Bug Fixes
+
+* complete nested attribute event transitions in the same action cycle ([6295cc0](https://github.com/state-machines/state_machines/commit/6295cc0f87ba8feda1e18f54947e22ba3b7860bc))
+
 ## [0.200.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.101.0...state_machines/v0.200.0) (2026-06-11)
 
 
