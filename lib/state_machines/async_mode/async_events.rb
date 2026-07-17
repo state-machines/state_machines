@@ -114,8 +114,7 @@ module StateMachines
         end
 
         Async do
-          # Use the bang version which raises exceptions on failure
-          machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
+          fire_with_bang(machine, event_name, *args)
         end
       end
 
@@ -140,11 +139,11 @@ module StateMachines
 
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, just fire directly with bang behavior
-          machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
+          fire_with_bang(machine, event_name, *args)
         else
           # Create async context and wait for result (may raise exception)
           Async do
-            machine.events[event_name].fire(self, *args) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
+            fire_with_bang(machine, event_name, *args)
           end.wait
         end
       end
@@ -198,6 +197,11 @@ module StateMachines
       end
 
       private
+
+      # Fires the event on the given machine, raising InvalidTransition on failure
+      def fire_with_bang(machine, event_name, *)
+        machine.events[event_name].fire(self, *) || raise(StateMachines::InvalidTransition.new(self, machine, event_name))
+      end
 
       # Check if this event method should have async versions
       def async_method_for_event?(event_method)

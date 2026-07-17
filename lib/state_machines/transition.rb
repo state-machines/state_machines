@@ -407,9 +407,7 @@ module StateMachines
       else
         # Capture current fiber's Thread.current storage to preserve object identity
         # This is needed for compatibility but has limitations with dynamic assignments
-        parent_fiber_locals = Thread.current.keys.each_with_object({}) do |key, storage|
-          storage[key] = Thread.current[key]
-        end
+        parent_fiber_locals = capture_thread_locals
 
         # Create a new fiber to run the block
         fiber = Fiber.new do
@@ -428,11 +426,7 @@ module StateMachines
             end
 
             # Export the final thread storage state along with the result
-            thread_storage = Thread.current.keys.each_with_object({}) do |key, storage|
-              storage[key] = Thread.current[key]
-            end
-
-            [halted ? :halted : :completed, thread_storage]
+            [halted ? :halted : :completed, capture_thread_locals]
           rescue StandardError => e
             # Store the exception for re-raising
             [:error, e]
@@ -456,6 +450,14 @@ module StateMachines
           # Fiber completed, return whether it was halted
           result_value == :halted
         end
+      end
+    end
+
+    # Snapshots the current fiber's Thread.current storage, preserving object
+    # identity of the stored values
+    def capture_thread_locals
+      Thread.current.keys.each_with_object({}) do |key, storage|
+        storage[key] = Thread.current[key]
       end
     end
 
