@@ -59,7 +59,9 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     machine.define_helper(:instance, :park) {}
 
-    assert_equal "Instance method \"park\" is already defined in #{superclass}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n", $stderr.string
+    location = superclass.instance_method(:park).source_location.join(':')
+
+    assert_equal "Instance method \"park\" is already defined in #{superclass} at #{location}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{klass}.\n", $stderr.string
   ensure
     $stderr = @original_stderr
   end
@@ -79,7 +81,9 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     machine.define_helper(:instance, :park) {}
 
-    assert_equal "Instance method \"park\" is already defined in #{superclass1}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n", $stderr.string
+    location = superclass1.instance_method(:park).source_location.join(':')
+
+    assert_equal "Instance method \"park\" is already defined in #{superclass1} at #{location}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{klass}.\n", $stderr.string
   ensure
     $stderr = @original_stderr
   end
@@ -98,7 +102,9 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
 
     machine.define_helper(:instance, :park) {}
 
-    assert_equal "Instance method \"park\" is already defined in #{mod}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n", $stderr.string
+    location = mod.instance_method(:park).source_location.join(':')
+
+    assert_equal "Instance method \"park\" is already defined in #{mod} at #{location}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{klass}.\n", $stderr.string
   ensure
     $stderr = @original_stderr
   end
@@ -157,7 +163,7 @@ class MachineWithInstanceHelpersTest < StateMachinesTest
     @machine.define_helper(:instance, :park) {}
     @machine.define_helper(:instance, :park) {}
 
-    assert_equal "Instance method \"park\" is already defined in #{@klass} :state instance helpers, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n", $stderr.string
+    assert_equal "Instance method \"park\" is already defined in #{@klass} :state instance helpers, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{@klass}.\n", $stderr.string
   ensure
     $stderr = @original_stderr
   end

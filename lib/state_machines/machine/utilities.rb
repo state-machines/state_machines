@@ -55,6 +55,33 @@ module StateMachines
         target.method_defined?(method) || target.private_method_defined?(method)
       end
 
+      # Generates the warning message for a method conflict, including where
+      # the conflicting method was defined (when it has a Ruby source
+      # location) and which class the state machine is being defined on
+      def method_conflict_message(scope, method, defined_in)
+        scope_label = scope == :class ? 'Class' : 'Instance'
+        defined_in_name = defined_in.name && !defined_in.name.empty? ? defined_in.name : defined_in.to_s
+        location = conflicting_method_location(scope, method, defined_in)
+        location_label = location ? " at #{location[0]}:#{location[1]}" : ''
+
+        "#{scope_label} method \"#{method}\" is already defined in #{defined_in_name}#{location_label}, " \
+          'use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. ' \
+          "Defining #{name.inspect} state machine on #{owner_class}."
+      end
+
+      # Looks up the source location of the conflicting method.  Returns nil
+      # for methods without a Ruby source (e.g. C-defined methods like
+      # Kernel#fail) and for the machine's own helper modules, where the
+      # location would just point inside this gem
+      def conflicting_method_location(scope, method, defined_in)
+        return if @helper_modules.value?(defined_in)
+
+        target = scope == :class && defined_in.is_a?(Class) ? defined_in.singleton_class : defined_in
+        target.instance_method(method).source_location
+      rescue NameError
+        nil
+      end
+
       # Pluralizes the given word using #pluralize (if available) or simply
       # adding an "s" to the end of the word
       def pluralize(word)

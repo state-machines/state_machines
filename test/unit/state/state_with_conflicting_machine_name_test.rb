@@ -20,7 +20,7 @@ class StateWithConflictingMachineNameTest < StateMachinesTest
     StateMachines::State.new(@state_machine, :state)
 
     assert_match(
-      /Instance method "state\?" is already defined in #<Class:.*>, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true./, $stderr.string
+      /Instance method "state\?" is already defined in #<Class:.*> :state instance helpers, use generic helper instead or set StateMachines::Machine\.ignore_method_conflicts = true\. Defining :state state machine on #<Class:.*>\./, $stderr.string
     )
   end
 end

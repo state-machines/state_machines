@@ -159,19 +159,23 @@ class MachineWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
 
   def test_should_output_warning
     expected = [
-      'Instance method "state_events"',
-      'Instance method "state_transitions"',
-      'Instance method "fire_state_event"',
-      'Instance method "state_paths"',
-      'Class method "human_state_name"',
-      'Class method "human_state_event_name"',
-      'Instance method "state_name"',
-      'Instance method "human_state_name"',
-      'Class method "with_state"',
-      'Class method "with_states"',
-      'Class method "without_state"',
-      'Class method "without_states"'
-    ].map { |method| "#{method} is already defined in #{@superclass}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n" }.join
+      %w[Instance state_events],
+      %w[Instance state_transitions],
+      %w[Instance fire_state_event],
+      %w[Instance state_paths],
+      %w[Class human_state_name],
+      %w[Class human_state_event_name],
+      %w[Instance state_name],
+      %w[Instance human_state_name],
+      %w[Class with_state],
+      %w[Class with_states],
+      %w[Class without_state],
+      %w[Class without_states]
+    ].map do |scope, method|
+      target = scope == 'Class' ? @superclass.singleton_class : @superclass
+      location = target.instance_method(method).source_location.join(':')
+      "#{scope} method \"#{method}\" is already defined in #{@superclass} at #{location}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{@klass}.\n"
+    end.join
 
     assert_equal expected, $stderr.string
   end

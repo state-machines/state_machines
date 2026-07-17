@@ -289,8 +289,8 @@ module StateMachines
     def add_predicate
       predicate_method = "#{qualified_name}?"
 
-      if machine.send(:owner_class_ancestor_has_method?, :instance, predicate_method)
-        warn_about_method_conflict(predicate_method, machine.owner_class.ancestors.first)
+      if (conflicting_ancestor = machine.send(:owner_class_ancestor_has_method?, :instance, predicate_method))
+        warn_about_method_conflict(predicate_method, conflicting_ancestor)
       elsif machine.send(:owner_class_has_method?, :instance, predicate_method)
         warn_about_method_conflict(predicate_method, machine.owner_class)
       else
@@ -308,7 +308,7 @@ module StateMachines
     def warn_about_method_conflict(method, defined_in)
       return if StateMachines::Machine.ignore_method_conflicts
 
-      warn "Instance method #{method.inspect} is already defined in #{defined_in.inspect}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true."
+      warn machine.send(:method_conflict_message, :instance, method, defined_in)
     end
   end
 end
