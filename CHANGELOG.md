@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.202.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.201.0...state_machines/v0.202.0) (2026-07-18)
+
+
+### Features
+
+* show owner class and source location in method conflict warnings ([#171](https://github.com/state-machines/state_machines/issues/171)) ([d6183d1](https://github.com/state-machines/state_machines/commit/d6183d1cd780ae5c4c9e9bc594be660e2604fd13))
+
 ## [0.201.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.200.0...state_machines/v0.201.0) (2026-06-12)
 
 
