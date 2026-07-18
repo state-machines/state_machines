@@ -27,8 +27,10 @@ class StateWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
   end
 
   def test_should_output_warning
+    location = @superclass.instance_method(:parked?).source_location.join(':')
+
     assert_match(
-      /Instance method "parked\?" is already defined in #<Class:.*>, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true./, $stderr.string
+      /Instance method "parked\?" is already defined in #<Class:.*> at #{Regexp.escape(location)}, use generic helper instead or set StateMachines::Machine\.ignore_method_conflicts = true\. Defining :state state machine on #<Class:.*>\./, $stderr.string
     )
   end
 end

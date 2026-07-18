@@ -53,7 +53,8 @@ class EventWithConflictingHelpersBeforeDefinitionTest < StateMachinesTest
 
   def test_should_output_warning
     expected = %w[can_ignite? ignite_transition ignite ignite!].map do |method|
-      "Instance method \"#{method}\" is already defined in #{@superclass}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true.\n"
+      location = @superclass.instance_method(method).source_location.join(':')
+      "Instance method \"#{method}\" is already defined in #{@superclass} at #{location}, use generic helper instead or set StateMachines::Machine.ignore_method_conflicts = true. Defining :state state machine on #{@klass}.\n"
     end.join
 
     assert_equal expected, $stderr.string
