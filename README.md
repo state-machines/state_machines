@@ -447,6 +447,7 @@ end
 
 *Note: These gems are only installed on supported platforms. JRuby/TruffleRuby won't attempt installation.*
 
+```ruby
 # Human-friendly names can be accessed for states/events
 Vehicle.human_state_name(:first_gear)               # => "first gear"
 Vehicle.human_alarm_state_name(:active)             # => "active"
