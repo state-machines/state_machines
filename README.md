@@ -340,7 +340,7 @@ This feature is powered by the [async](https://github.com/socketry/async) gem an
 ## Platform Compatibility
 
 **Supported Platforms:**
-* MRI Ruby (CRuby) 3.2+
+* MRI Ruby (CRuby) 3.4+
 * Other Ruby engines with full Fiber scheduler support
 
 **Unsupported Platforms:**
@@ -1002,7 +1002,7 @@ transitions.
 
 Ruby versions officially supported and tested:
 
-* Ruby (MRI) 3.0.0+
+* Ruby (MRI) 3.4+
 
 For graphing state machine:
 
