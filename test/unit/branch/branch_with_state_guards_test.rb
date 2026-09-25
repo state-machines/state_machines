@@ -46,6 +46,44 @@ class BranchWithStateGuardsTest < StateMachinesTest
     assert branch.matches?(@object), "Branch should match when state2 is 'on'"
   end
 
+  # --- Introspection ---
+  def test_exposes_state_guard_configuration_for_introspection
+    guards = {
+      if_state: { state1: :parked },
+      unless_state: { state2: :on },
+      if_all_states: { state1: :parked, state2: :off },
+      unless_all_states: { state1: :idling, state2: :on },
+      if_any_state: { state1: :parked, state2: :on },
+      unless_any_state: { state1: :idling, state2: :on }
+    }
+    branch = StateMachines::Branch.new(guards.dup)
+
+    assert_equal(guards, guards.to_h { |kind, _| [kind, branch.public_send(:"#{kind}_condition")] })
+  end
+
+  def test_state_guard_readers_default_to_nil
+    branch = StateMachines::Branch.new(from: :parked, to: :idling)
+    readers = %i[if_state unless_state if_all_states unless_all_states if_any_state unless_any_state]
+
+    assert_equal([nil] * readers.size, readers.map { |kind| branch.public_send(:"#{kind}_condition") })
+  end
+
+  def test_state_guard_is_a_frozen_copy_of_the_given_hash
+    guard = { state2: :on }
+    branch = StateMachines::Branch.new(if_state: guard)
+    guard[:state2] = :off
+
+    assert_predicate branch.if_state_condition, :frozen?
+    assert_equal({ state2: :on }, branch.if_state_condition)
+  end
+
+  def test_raises_error_for_non_hash_state_guard_at_definition
+    event = StateMachines::Event.new(@klass.state_machine(:state1), :shift)
+
+    error = assert_raises(ArgumentError) { event.transition(idling: :first_gear, if_state: [%i[state2 on]]) }
+    assert_match(/:if_state must be a Hash/, error.message)
+  end
+
   def test_if_state_prevents_transition_when_state_does_not_match
     # Setup: The dependent machine is NOT in the required state.
     @object.state2 = 'off'

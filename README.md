@@ -319,15 +319,25 @@ end
 
 ## Error Handling
 
-State guards provide comprehensive error checking:
+A state guard must be a Hash of state machine name => state name; anything else raises
+`ArgumentError` when the transition is defined.
+
+Machine and state names are resolved when the guard is evaluated (the referenced machine may be
+defined later in the class), so typos raise `ArgumentError` on the first `can_*?`/fire call:
 
 ```ruby
+# Wrong shape - raises at definition time
+transition green: :red, if_state: :shields
+# => ArgumentError: :if_state must be a Hash of state machine name => state name, got :shields
+
 # Referencing a non-existent state machine
-event :invalid, if_state: { nonexistent_machine: :some_state }
+transition green: :red, if_state: { nonexistent_machine: :some_state }
+StarshipBridge.new.can_red_alert?
 # => ArgumentError: State machine 'nonexistent_machine' is not defined for StarshipBridge
 
 # Referencing a non-existent state
-event :another_invalid, if_state: { shields: :nonexistent_state }
+transition green: :red, if_state: { shields: :nonexistent_state }
+StarshipBridge.new.can_red_alert?
 # => ArgumentError: State 'nonexistent_state' is not defined in state machine 'shields'
 ```
 
