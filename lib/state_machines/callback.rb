@@ -176,15 +176,15 @@ module StateMachines
     # For all other types of callbacks, this will evaluate each method in
     # order.  The callback will only halt if the resulting value from the
     # method passes the terminator.
-    def run_methods(object, context = {}, index = 0, *args, &block)
+    def run_methods(object, context = {}, index = 0, *, &)
       case type
       when :around
         current_method = @methods[index]
         if current_method
           yielded = false
-          evaluate_method(object, current_method, *args) do
+          evaluate_method(object, current_method, *) do
             yielded = true
-            run_methods(object, context, index + 1, *args, &block)
+            run_methods(object, context, index + 1, *, &)
           end
 
           throw :halt unless yielded
@@ -193,7 +193,7 @@ module StateMachines
         end
       else
         @methods.each do |method|
-          result = evaluate_method(object, method, *args)
+          result = evaluate_method(object, method, *)
           throw :halt if @terminator&.call(result)
         end
       end

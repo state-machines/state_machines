@@ -5,7 +5,7 @@ module StateMachines
     # Extensions to Event class for async bang methods
     module AsyncEventExtensions
       # Generate async bang methods for events when async mode is enabled
-      def define_helper(scope, method, *args, &block)
+      def define_helper(scope, method, *args, &)
         result = super
 
         # If this is an async-enabled machine and we're defining an event method

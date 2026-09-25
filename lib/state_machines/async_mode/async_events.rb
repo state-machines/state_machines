@@ -12,7 +12,7 @@ module StateMachines
       #     task = vehicle.async_fire_event(:ignite)
       #     result = task.wait # => true/false
       #   end
-      def async_fire_event(event_name, *args)
+      def async_fire_event(event_name, *)
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
@@ -26,7 +26,7 @@ module StateMachines
         end
 
         Async do
-          machine.events[event_name].fire(self, *args)
+          machine.events[event_name].fire(self, *)
         end
       end
 
@@ -47,7 +47,7 @@ module StateMachines
       #
       # Example:
       #   result = vehicle.fire_event_async(:ignite) # => true/false
-      def fire_event_async(event_name, *args)
+      def fire_event_async(event_name, *)
         raise NoMethodError, "undefined method `fire_event_async' for #{self}" unless has_async_machines?
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
@@ -58,11 +58,11 @@ module StateMachines
 
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, just fire directly
-          machine.events[event_name].fire(self, *args)
+          machine.events[event_name].fire(self, *)
         else
           # Create async context and wait for result
           Async do
-            machine.events[event_name].fire(self, *args)
+            machine.events[event_name].fire(self, *)
           end.wait
         end
       end
@@ -100,7 +100,7 @@ module StateMachines
       #       puts "Transition failed: #{e.message}"
       #     end
       #   end
-      def async_fire_event!(event_name, *args)
+      def async_fire_event!(event_name, *)
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
@@ -114,7 +114,7 @@ module StateMachines
         end
 
         Async do
-          fire_with_bang(machine, event_name, *args)
+          fire_with_bang(machine, event_name, *)
         end
       end
 
@@ -128,7 +128,7 @@ module StateMachines
       #   rescue StateMachines::InvalidTransition => e
       #     puts "Transition failed: #{e.message}"
       #   end
-      def fire_event_async!(event_name, *args)
+      def fire_event_async!(event_name, *)
         raise NoMethodError, "undefined method `fire_event_async!' for #{self}" unless has_async_machines?
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
@@ -139,18 +139,18 @@ module StateMachines
 
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, just fire directly with bang behavior
-          fire_with_bang(machine, event_name, *args)
+          fire_with_bang(machine, event_name, *)
         else
           # Create async context and wait for result (may raise exception)
           Async do
-            fire_with_bang(machine, event_name, *args)
+            fire_with_bang(machine, event_name, *)
           end.wait
         end
       end
 
       # Dynamically handle individual event async methods
       # This provides launch_async, launch_async!, arm_weapons_async, etc.
-      def method_missing(method_name, *args, **kwargs, &block)
+      def method_missing(method_name, *, **, &)
         method_str = method_name.to_s
 
         # Check if this is an async event method
@@ -160,7 +160,7 @@ module StateMachines
 
           # Check if the base method exists and this machine is async-enabled
           if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async_bang(base_method, *args, **kwargs)
+            return handle_individual_event_async_bang(base_method, *, **)
           end
         elsif method_str.end_with?('_async')
           # Remove the _async suffix to get the base event method
@@ -168,7 +168,7 @@ module StateMachines
 
           # Check if the base method exists and this machine is async-enabled
           if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async(base_method, *args, **kwargs)
+            return handle_individual_event_async(base_method, *, **)
           end
         end
 
@@ -221,19 +221,19 @@ module StateMachines
       end
 
       # Handle individual event async methods (returns task)
-      def handle_individual_event_async(event_method, *args, **kwargs)
+      def handle_individual_event_async(event_method, *, **)
 
         unless defined?(::Async::Task) && ::Async::Task.current?
           raise RuntimeError, "#{event_method}_async must be called within an Async context"
         end
 
         Async do
-          send(event_method, *args, **kwargs)
+          send(event_method, *, **)
         end
       end
 
       # Handle individual event async bang methods (returns task, raises on failure)
-      def handle_individual_event_async_bang(event_method, *args, **kwargs)
+      def handle_individual_event_async_bang(event_method, *, **)
         # Extract event name from method and use bang version
         bang_method = "#{event_method}!".to_sym
 
@@ -242,7 +242,7 @@ module StateMachines
         end
 
         Async do
-          send(bang_method, *args, **kwargs)
+          send(bang_method, *, **)
         end
       end
 

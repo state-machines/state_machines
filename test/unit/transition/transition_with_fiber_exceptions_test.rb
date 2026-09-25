@@ -179,4 +179,23 @@ class TransitionWithFiberExceptionsTest < StateMachinesTest
     assert_nil @transition.instance_variable_get(:@paused_fiber)
     refute @transition.instance_variable_get(:@resuming)
   end
+
+  def test_should_run_ensure_blocks_of_paused_callbacks_on_reset
+    skip "Fiber#kill is missing or asynchronous on #{RUBY_ENGINE}" unless RUBY_ENGINE == 'ruby'
+
+    @machine.around_transition do |block|
+      block.call
+    ensure
+      @object.callbacks << :around_ensure
+    end
+
+    @transition.run_callbacks(after: false) { { success: true } }
+
+    assert_predicate @transition, :paused?
+
+    @transition.reset
+
+    refute_predicate @transition, :paused?
+    assert_equal [:around_ensure], @object.callbacks
+  end
 end

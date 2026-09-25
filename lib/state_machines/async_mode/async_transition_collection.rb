@@ -18,12 +18,12 @@ module StateMachines
     class AsyncTransitionCollection < TransitionCollection
       # Performs transitions asynchronously using Async
       # Provides better concurrency for I/O-bound operations
-      def perform_async(&block)
+      def perform_async(&)
         reset
 
         unless defined?(::Async::Task) && ::Async::Task.current?
           return Async do
-            perform_async(&block)
+            perform_async(&)
           end.wait
         end
 
@@ -31,7 +31,7 @@ module StateMachines
           # Create async tasks for each transition
           tasks = map do |transition|
             Async do
-              execute_transition(transition, &block)
+              execute_transition(transition, &)
             end
           end
 
@@ -57,7 +57,7 @@ module StateMachines
 
       # Performs transitions concurrently using threads
       # Better for CPU-bound operations but requires more careful synchronization
-      def perform_threaded(&block)
+      def perform_threaded(&)
         reset
 
         if valid?
@@ -69,7 +69,7 @@ module StateMachines
           each do |transition|
             threads << Thread.new do
               begin
-                result = execute_transition(transition, &block)
+                result = execute_transition(transition, &)
 
                 results_mutex.with_write_lock { results << result }
               rescue StandardError => e
@@ -92,14 +92,14 @@ module StateMachines
 
       # Runs a single transition either via event attributes or the standard
       # callback/transaction flow, returning the transition on completion
-      def execute_transition(transition, &block)
+      def execute_transition(transition, &)
         if use_event_attributes? && !block_given?
           transition.transient = true
           transition.machine.write_safely(object, :event_transition, transition)
           run_actions
         else
           within_transaction do
-            catch(:halt) { run_callbacks(&block) }
+            catch(:halt) { run_callbacks(&) }
             rollback unless success?
           end
         end
@@ -108,7 +108,7 @@ module StateMachines
       end
 
       # Override run_actions to be thread-safe when needed
-      def run_actions(&block)
+      def run_actions(&)
         catch_exceptions do
           @success = if block_given?
                       result = yield

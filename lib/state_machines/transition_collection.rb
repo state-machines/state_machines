@@ -59,7 +59,7 @@ module StateMachines
     #
     # If a block is passed to this method, that block will be called instead
     # of invoking each transition's action.
-    def perform(&block)
+    def perform(&)
       reset
 
       if valid?
@@ -72,7 +72,7 @@ module StateMachines
           run_actions
         else
           within_transaction do
-            catch(:halt) { run_callbacks(&block) }
+            catch(:halt) { run_callbacks(&) }
             rollback unless success?
           end
         end
@@ -136,14 +136,14 @@ module StateMachines
     # configured actions will be run.
     #
     # If any transition fails to run its callbacks, :halt will be thrown.
-    def run_callbacks(index = 0, &block)
+    def run_callbacks(index = 0, &)
       if (transition = self[index])
         # Pass through any options that affect callback execution (e.g., fiber: false)
         callback_options = { after: !skip_after }
         callback_options[:fiber] = options[:fiber] if options.key?(:fiber)
 
         callback_result = transition.run_callbacks(callback_options) do
-          run_callbacks(index + 1, &block)
+          run_callbacks(index + 1, &)
           { result: results[transition.action], success: success? }
         end
 
@@ -154,7 +154,7 @@ module StateMachines
         throw :halt unless callback_result
       else
         persist
-        run_actions(&block)
+        run_actions(&)
       end
     end
 

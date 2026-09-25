@@ -24,13 +24,13 @@ module StateMachines
 
       # Fires an event asynchronously on the given object
       # Returns an Async::Task for concurrent execution
-      def async_fire_event(object, event_name, *args)
+      def async_fire_event(object, event_name, *)
         unless defined?(::Async::Task) && ::Async::Task.current?
           raise RuntimeError, "async_fire_event must be called within an Async context"
         end
 
         Async do
-          events[event_name].fire(object, *args)
+          events[event_name].fire(object, *)
         end
       end
 
