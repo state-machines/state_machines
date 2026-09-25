@@ -287,8 +287,9 @@ module StateMachines
     # the state has already been persisted
     def reset
       @before_run = @persisted = @after_run = false
-      # Kill so ensure blocks in paused callbacks still run
-      @paused_fiber.kill if @paused_fiber&.alive? && !@paused_fiber.equal?(Fiber.current)
+      # Kill so ensure blocks in paused callbacks still run (CRuby only:
+      # TruffleRuby lacks Fiber#kill, JRuby's doesn't wait for ensure)
+      @paused_fiber.kill if RUBY_ENGINE == 'ruby' && @paused_fiber&.alive? && !@paused_fiber.equal?(Fiber.current)
       @paused_fiber = nil
       @resuming = false
       @continuation_block = nil

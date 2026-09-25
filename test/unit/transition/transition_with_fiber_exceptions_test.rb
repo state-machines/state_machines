@@ -181,6 +181,8 @@ class TransitionWithFiberExceptionsTest < StateMachinesTest
   end
 
   def test_should_run_ensure_blocks_of_paused_callbacks_on_reset
+    skip "Fiber#kill is missing or asynchronous on #{RUBY_ENGINE}" unless RUBY_ENGINE == 'ruby'
+
     @machine.around_transition do |block|
       block.call
     ensure
