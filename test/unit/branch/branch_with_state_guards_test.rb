@@ -81,7 +81,12 @@ class BranchWithStateGuardsTest < StateMachinesTest
     event = StateMachines::Event.new(@klass.state_machine(:state1), :shift)
 
     error = assert_raises(ArgumentError) { event.transition(idling: :first_gear, if_state: [%i[state2 on]]) }
-    assert_match(/:if_state must be a Hash/, error.message)
+    assert_match(/:if_state must be a non-empty Hash/, error.message)
+  end
+
+  def test_raises_error_for_empty_state_guard_at_definition
+    error = assert_raises(ArgumentError) { StateMachines::Branch.new(if_any_state: {}) }
+    assert_match(/:if_any_state must be a non-empty Hash/, error.message)
   end
 
   def test_if_state_prevents_transition_when_state_does_not_match

@@ -167,7 +167,7 @@ module StateMachines
     def build_state_guard(options, option)
       conditions = options.delete(option)
       return if conditions.nil?
-      raise ArgumentError, ":#{option} must be a Hash of state machine name => state name, got #{conditions.inspect}" unless conditions.is_a?(Hash)
+      raise ArgumentError, ":#{option} must be a non-empty Hash of state machine name => state name, got #{conditions.inspect}" unless conditions.is_a?(Hash) && !conditions.empty?
 
       conditions.dup.freeze
     end

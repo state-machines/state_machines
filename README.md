@@ -319,7 +319,7 @@ end
 
 ## Error Handling
 
-A state guard must be a Hash of state machine name => state name; anything else raises
+A state guard must be a non-empty Hash of state machine name => state name; anything else raises
 `ArgumentError` when the transition is defined.
 
 Machine and state names are resolved when the guard is evaluated (the referenced machine may be
@@ -328,7 +328,7 @@ defined later in the class), so typos raise `ArgumentError` on the first `can_*?
 ```ruby
 # Wrong shape - raises at definition time
 transition green: :red, if_state: :shields
-# => ArgumentError: :if_state must be a Hash of state machine name => state name, got :shields
+# => ArgumentError: :if_state must be a non-empty Hash of state machine name => state name, got :shields
 
 # Referencing a non-existent state machine
 transition green: :red, if_state: { nonexistent_machine: :some_state }
