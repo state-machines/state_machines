@@ -150,7 +150,7 @@ module StateMachines
     end
 
     def draw(graph, event, valid_states, io = $stdout)
-      machine.renderer.draw_branch(self, graph, event, valid_states, io)
+      event.machine.renderer.draw_branch(self, graph, event, valid_states, io)
     end
 
     protected

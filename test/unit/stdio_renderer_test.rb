@@ -91,7 +91,7 @@ class STDIORendererTest < Minitest::Test
     graph = {}
     event = StateMachines::Event.new(machine, :ignite)
     io = StringIO.new
-    machine.renderer.draw_branch(branch, graph, event, options: {}, io: io)
+    machine.renderer.draw_branch(branch, graph, event, [], io)
 
     assert_includes(io.string, 'Branch: ')
   end
@@ -104,6 +104,21 @@ class STDIORendererTest < Minitest::Test
     machine.renderer.draw_state(state, graph, options: {}, io: io)
 
     assert_includes(io.string, 'State: parked')
+  end
+
+  def test_draw_through_event_state_and_branch
+    machine = StateMachines::Machine.new(Class.new) do
+      event :ignite do
+        transition parked: :idling
+      end
+    end
+    event = machine.events[:ignite]
+    io = StringIO.new
+    event.draw({}, {}, io)
+    machine.states[:parked].draw({}, {}, io)
+    event.branches.first.draw({}, event, [], io)
+
+    assert_match(/Event: ignite\n.*State: parked\n.*Branch: /, io.string)
   end
 
   def test_draw_events
