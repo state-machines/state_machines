@@ -16,6 +16,11 @@ module StateMachines
     # The condition that must *not* be met on an object
     attr_reader :unless_condition
 
+    # Conditions on the state of other machines
+    attr_reader :if_state_condition, :unless_state_condition,
+                :if_all_states_condition, :unless_all_states_condition,
+                :if_any_state_condition, :unless_any_state_condition
+
     # The requirement for verifying the event being matched
     attr_reader :event_requirement
 
@@ -34,12 +39,12 @@ module StateMachines
       # Build conditionals
       @if_condition = options.delete(:if)
       @unless_condition = options.delete(:unless)
-      @if_state_condition = options.delete(:if_state)
-      @unless_state_condition = options.delete(:unless_state)
-      @if_all_states_condition = options.delete(:if_all_states)
-      @unless_all_states_condition = options.delete(:unless_all_states)
-      @if_any_state_condition = options.delete(:if_any_state)
-      @unless_any_state_condition = options.delete(:unless_any_state)
+      @if_state_condition = build_state_guard(options, :if_state)
+      @unless_state_condition = build_state_guard(options, :unless_state)
+      @if_all_states_condition = build_state_guard(options, :if_all_states)
+      @unless_all_states_condition = build_state_guard(options, :unless_all_states)
+      @if_any_state_condition = build_state_guard(options, :if_any_state)
+      @unless_any_state_condition = build_state_guard(options, :unless_any_state)
 
       # Build event requirement
       @event_requirement = build_matcher(options, :on, :except_on)
@@ -156,6 +161,15 @@ module StateMachines
       else
         AllMatcher.instance
       end
+    end
+
+    # Frozen copy, since branches are shared with subclasses
+    def build_state_guard(options, option)
+      conditions = options.delete(option)
+      return if conditions.nil?
+      raise ArgumentError, ":#{option} must be a Hash of state machine name => state name, got #{conditions.inspect}" unless conditions.is_a?(Hash)
+
+      conditions.dup.freeze
     end
 
     # Verifies that all configured requirements (event and state) match the
