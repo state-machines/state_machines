@@ -252,6 +252,20 @@ class BranchWithStateGuardsTest < StateMachinesTest
     refute branch.matches?(@object), 'Branch should not match when :if_state is met but :if is not'
   end
 
+  def test_state_guard_reads_custom_attribute_of_guarded_machine
+    klass = Class.new do
+      attr_accessor :gate_value
+
+      state_machine :gate, attribute: :gate_value, initial: :locked do
+        state :unlocked
+      end
+    end
+    object = klass.new
+    object.gate_value = 'unlocked'
+
+    assert StateMachines::Branch.new(if_state: { gate: :unlocked }).matches?(object)
+  end
+
   # --- Error Handling ---
   def test_raises_error_for_nonexistent_machine
     # Action: Create a branch referencing a machine that doesn't exist.
