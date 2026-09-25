@@ -254,7 +254,7 @@ module StateMachines
       state = machine.states[state_name]
       raise ArgumentError, "State '#{state_name}' is not defined in state machine '#{machine_name}'" unless state
 
-      state.matches?(object.send(machine_name))
+      state.matches?(machine.read(object, :state))
     end
   end
 end
