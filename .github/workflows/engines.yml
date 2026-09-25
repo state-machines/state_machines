@@ -13,8 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ruby-version: "jruby-10.0.0.1"
-            name: "JRuby 10.0.0.1 (Java 21)"
+          - ruby-version: "jruby-10.1.2.0"
+            name: "JRuby 10.1.2.0 (Java 21)"
           - ruby-version: "truffleruby"
             name: "TruffleRuby"
 
