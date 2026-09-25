@@ -23,18 +23,17 @@ module StateMachines
       end
     end
 
-    module_function def draw_event(event, _graph, options: {}, io: $stdout)
-      io = io || options[:io] || $stdout
+    module_function def draw_event(event, _graph, options = {}, io = $stdout)
+      io = options[:io] || io
       io.puts "  Event: #{event.name}"
     end
 
-    module_function def draw_branch(branch, _graph, _event, options: {}, io: $stdout)
-      io = io || options[:io] || $stdout
+    module_function def draw_branch(branch, _graph, _event, _valid_states = [], io = $stdout)
       io.puts "  Branch: #{branch.inspect}"
     end
 
-    module_function def draw_state(state, _graph, options: {}, io: $stdout)
-      io = io || options[:io] || $stdout
+    module_function def draw_state(state, _graph, options = {}, io = $stdout)
+      io = options[:io] || io
       io.puts "  State: #{state.name}"
     end
 
