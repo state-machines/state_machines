@@ -51,6 +51,9 @@ module StateMachines
               out << "#{draw_requirement(requirement[:from])} => #{draw_requirement(requirement[:to])}"
               out << " IF #{branch.if_condition}" if branch.if_condition
               out << " UNLESS #{branch.unless_condition}" if branch.unless_condition
+              branch.state_guards.each do |kind, conditions|
+                out << " #{kind.upcase} #{conditions.map { |name, state| "#{name}: #{state}" }.join(', ')}"
+              end
               io.puts out
             end
           end
