@@ -506,7 +506,7 @@ module StateMachines
     #
     # Once the callbacks are run, they cannot be run again until this transition
     # is reset.
-    def before(complete = true, index = 0, &block)
+    def before(complete = true, index = 0, &)
       return if @before_run
 
       callback = machine.callbacks[:before][index]
@@ -521,7 +521,7 @@ module StateMachines
             # * The block succeeds, but after callbacks are disabled (in which
             #   case a continuation is stored for later execution)
             callback.call(object, context, self) do
-              before(complete, index + 1, &block)
+              before(complete, index + 1, &)
 
               pause if @success && !complete
 
@@ -533,11 +533,11 @@ module StateMachines
             # Normal before callback
             callback.call(object, context, self)
             # Continue with next callback
-            before(complete, index + 1, &block)
+            before(complete, index + 1, &)
           end
         else
           # Skip to next callback if it doesn't match
-          before(complete, index + 1, &block)
+          before(complete, index + 1, &)
         end
       else
         # No more callbacks, execute the action block if at the end
