@@ -138,6 +138,18 @@ class STDIORendererTest < Minitest::Test
     assert_includes(io.string, 'parked => idling IF key_inserted?')
   end
 
+  def test_draw_state_guards
+    machine = StateMachines::Machine.new(Class.new) do
+      event :fire do
+        transition loaded: :fired, if_state: { bay_doors: :open }, unless_all_states: { shields: :up, weapons: :safe }
+      end
+    end
+    io = StringIO.new
+    machine.renderer.draw_events(machine: machine, io: io)
+
+    assert_includes(io.string, 'loaded => fired IF_STATE bay_doors: open UNLESS_ALL_STATES shields: up, weapons: safe')
+  end
+
   def test_draw_blacklist_matcher
     machine = StateMachines::Machine.new(Class.new) do
       state :parked
