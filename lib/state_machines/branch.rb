@@ -21,6 +21,9 @@ module StateMachines
                 :if_all_states_condition, :unless_all_states_condition,
                 :if_any_state_condition, :unless_any_state_condition
 
+    # The state guards that are set, keyed by option
+    attr_reader :state_guards
+
     # The requirement for verifying the event being matched
     attr_reader :event_requirement
 
@@ -45,6 +48,14 @@ module StateMachines
       @unless_all_states_condition = build_state_guard(options, :unless_all_states)
       @if_any_state_condition = build_state_guard(options, :if_any_state)
       @unless_any_state_condition = build_state_guard(options, :unless_any_state)
+      @state_guards = {
+        if_state: @if_state_condition,
+        unless_state: @unless_state_condition,
+        if_all_states: @if_all_states_condition,
+        unless_all_states: @unless_all_states_condition,
+        if_any_state: @if_any_state_condition,
+        unless_any_state: @unless_any_state_condition
+      }.compact.freeze
 
       # Build event requirement
       @event_requirement = build_matcher(options, :on, :except_on)
@@ -99,7 +110,7 @@ module StateMachines
     def matches?(object, query = {})
       !match(object, query).nil?
     end
-    
+
     # Alias for Minitest's assert_match
     alias =~ matches?
 
@@ -213,16 +224,6 @@ module StateMachines
 
       return false unless if_passes && unless_passes
 
-      # Consolidate all state guards
-      state_guards = {
-        if_state: @if_state_condition,
-        unless_state: @unless_state_condition,
-        if_all_states: @if_all_states_condition,
-        unless_all_states: @unless_all_states_condition,
-        if_any_state: @if_any_state_condition,
-        unless_any_state: @unless_any_state_condition
-      }.compact
-
       return true if state_guards.empty?
 
       validate_and_check_state_guards(object, state_guards)
@@ -235,14 +236,12 @@ module StateMachines
         case guard_type
         when :if_state, :if_all_states
           conditions.all? { |machine, state| check_state(object, machine, state) }
-        when :unless_state
+        when :unless_state, :unless_any_state
           conditions.none? { |machine, state| check_state(object, machine, state) }
         when :if_any_state
           conditions.any? { |machine, state| check_state(object, machine, state) }
         when :unless_all_states
           !conditions.all? { |machine, state| check_state(object, machine, state) }
-        when :unless_any_state
-          conditions.none? { |machine, state| check_state(object, machine, state) }
         end
       end
     end

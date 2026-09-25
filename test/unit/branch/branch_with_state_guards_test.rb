@@ -68,6 +68,12 @@ class BranchWithStateGuardsTest < StateMachinesTest
     assert_equal([nil] * readers.size, readers.map { |kind| branch.public_send(:"#{kind}_condition") })
   end
 
+  def test_state_guards_lists_only_set_guards
+    branch = StateMachines::Branch.new(if_state: { state1: :parked }, unless_any_state: { state2: :on })
+
+    assert_equal({ if_state: { state1: :parked }, unless_any_state: { state2: :on } }, branch.state_guards)
+  end
+
   def test_state_guard_is_a_frozen_copy_of_the_given_hash
     guard = { state2: :on }
     branch = StateMachines::Branch.new(if_state: guard)
