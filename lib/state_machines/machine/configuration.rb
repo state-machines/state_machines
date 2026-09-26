@@ -123,6 +123,16 @@ module StateMachines
       def attribute(name = :state)
         name == :state ? @attribute : :"#{self.name}_#{name}"
       end
+
+      def configure_async_mode!(enabled = true)
+        raise LoadError, 'async: true requires the state_machines-async gem' if enabled
+
+        self
+      end
+
+      def async_mode_enabled?
+        false
+      end
     end
   end
 end
