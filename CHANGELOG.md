@@ -3,6 +3,22 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.300.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.202.0...state_machines/v0.300.0) (2026-09-26)
+
+
+### Features
+
+* drop support for Ruby &lt; 3.4 ([838199a](https://github.com/state-machines/state_machines/commit/838199a860e17135bcdf8cb26ac00f893ec6c1a0))
+* expose state guard conditions on Branch ([9da1a0c](https://github.com/state-machines/state_machines/commit/9da1a0cc83bc971d9b7629192c278f88138130d4))
+
+
+### Bug Fixes
+
+* make Event, State and Branch #draw work with STDIORenderer ([ea2f5cc](https://github.com/state-machines/state_machines/commit/ea2f5ccde08bc6669853da07359e8bf3a69afd5b))
+* read guarded machine state through its attribute ([f0d5abf](https://github.com/state-machines/state_machines/commit/f0d5abf292aa506f7d53207b7da93a53a0eb9682))
+* reject empty state guards ([e5688b6](https://github.com/state-machines/state_machines/commit/e5688b6c73f19143cd7b67ad6cd70a0ff4f810be))
+* show state guards in STDIORenderer output ([10dc8ae](https://github.com/state-machines/state_machines/commit/10dc8ae4fb2280934cd05f45b1b32705d4e06a2e))
+
 ## [0.202.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.201.0...state_machines/v0.202.0) (2026-07-18)
 
 
