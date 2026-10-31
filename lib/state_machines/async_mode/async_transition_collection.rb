@@ -16,96 +16,24 @@ module StateMachines
 
     # Async-aware transition collection that can execute transitions concurrently
     class AsyncTransitionCollection < TransitionCollection
-      # Performs transitions asynchronously using Async
-      # Provides better concurrency for I/O-bound operations
+      # Performs the collection inside an Async task, entering a reactor when
+      # the caller is not already in one.
+      #
+      # The callbacks and the action belong to the collection, not to one
+      # transition, so they run once. What is asynchronous is the collection as
+      # a whole, which is what lets an I/O-bound action yield to its reactor.
       def perform_async(&)
-        reset
+        return perform(&) if defined?(::Async::Task) && ::Async::Task.current?
 
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          return Async do
-            perform_async(&)
-          end.wait
-        end
-
-        if valid?
-          # Create async tasks for each transition
-          tasks = map do |transition|
-            Async do
-              execute_transition(transition, &)
-            end
-          end
-
-          # Wait for all tasks to complete
-          completed_transitions = []
-          tasks.each do |task|
-            begin
-              result = task.wait
-              completed_transitions << result if result
-            rescue StandardError => e
-              # Handle individual transition failures
-              rollback
-              raise AsyncTransitionError.new(object, map(&:machine), [e.message])
-            end
-          end
-
-          # Check if all transitions succeeded
-          @success = completed_transitions.length == length
-        end
-
-        success?
+        Async { perform(&) }.wait
       end
 
-      # Performs transitions concurrently using threads
-      # Better for CPU-bound operations but requires more careful synchronization
+      # Performs the collection on another thread and waits for its result.
       def perform_threaded(&)
-        reset
-
-        if valid?
-          # Use basic thread approach
-          threads = []
-          results = []
-          results_mutex = Concurrent::ReentrantReadWriteLock.new
-
-          each do |transition|
-            threads << Thread.new do
-              begin
-                result = execute_transition(transition, &)
-
-                results_mutex.with_write_lock { results << result }
-              rescue StandardError => e
-                # Handle individual transition failures
-                rollback
-                raise AsyncTransitionError.new(object, [transition.machine], [e.message])
-              end
-            end
-          end
-
-          # Wait for all threads to complete
-          threads.each(&:join)
-          @success = results.length == length
-        end
-
-        success?
+        Thread.new { perform(&) }.value
       end
 
       private
-
-      # Runs a single transition either via event attributes or the standard
-      # callback/transaction flow, returning the transition on completion
-      def execute_transition(transition, &)
-        if use_event_attributes? && !block_given?
-          transition.transient = true
-          transition.machine.write_safely(object, :event_transition, transition)
-          run_actions
-        else
-          within_transaction do
-            catch(:halt) { run_callbacks(&) }
-            rollback unless success?
-          end
-        end
-
-        transition
-      end
 
       # Override run_actions to be thread-safe when needed
       def run_actions(&)
