@@ -8,6 +8,7 @@ class TransitionClaimTest < Minitest::Test
   CALLERS = 4
   RELEASE_DELAY = 0.03
   HANDOFF_TIMEOUT = 1
+  FAULT_TAG = :transition_claim_fault
 
   class CargoBay
     attr_accessor :drops
@@ -87,6 +88,51 @@ class TransitionClaimTest < Minitest::Test
         lander.trail << lander.legs
         lander.trail << lander.ping
       end
+    end
+  end
+
+  class SensorFault < StandardError; end
+
+  class Probe
+    attr_accessor :fault
+
+    state_machine :alpha, initial: :ready, async: true do
+      event(:advance_alpha) { transition ready: :done }
+    end
+
+    state_machine :beta, initial: :stowed, async: true do
+      event(:advance_beta) { transition stowed: :extended }
+    end
+
+    def beta
+      raise SensorFault if @fault == :raise
+      throw FAULT_TAG if @fault == :throw
+
+      super
+    end
+  end
+
+  class Relay
+    state_machine :coil, initial: :cold, async: true do
+      event(:engage) { transition cold: :live }
+    end
+  end
+
+  class Airlock
+    attr_accessor :relay, :armed, :lock_held
+
+    state_machine :door, initial: :sealed, async: true do
+      event(:cycle) { transition sealed: :cycling }
+    end
+
+    def door
+      if @armed
+        @armed = false
+        @lock_held = StateMachines::TransitionClaim::LOCK.owned?
+        @relay.engage
+      end
+
+      super
     end
   end
 
@@ -186,7 +232,71 @@ class TransitionClaimTest < Minitest::Test
     assert_equal ['stowed', true], lander.trail
   end
 
+  def test_an_acquisition_that_raises_strands_none_of_the_claims_it_took
+    probe = Probe.new
+    collection = probe_collection(probe)
+    probe.fault = :raise
+
+    owner = Thread.new do
+      assert_raises(SensorFault) { collection.perform }
+      Fiber[StateMachines::TransitionClaim::OWNER_KEY]
+    end.value
+
+    assert_nil owner
+    assert_empty probe.instance_variable_get(StateMachines::TransitionClaim::CLAIMS_VARIABLE)
+
+    probe.fault = nil
+
+    assert probe_collection(probe, only: :alpha).perform
+    assert_equal 'done', probe.alpha
+  end
+
+  def test_an_acquisition_that_throws_strands_none_of_the_claims_it_took
+    probe = Probe.new
+    collection = probe_collection(probe)
+    probe.fault = :throw
+
+    owner = Thread.new do
+      catch(FAULT_TAG) { collection.perform }
+      Fiber[StateMachines::TransitionClaim::OWNER_KEY]
+    end.value
+
+    assert_nil owner
+    assert_empty probe.instance_variable_get(StateMachines::TransitionClaim::CLAIMS_VARIABLE)
+
+    probe.fault = nil
+
+    assert probe_collection(probe, only: :alpha).perform
+    assert_equal 'done', probe.alpha
+  end
+
+  def test_reading_the_source_state_holds_no_lock_and_can_transition_another_object
+    airlock = Airlock.new
+    airlock.relay = Relay.new
+    collection = airlock_collection(airlock)
+    airlock.armed = true
+
+    assert collection.perform
+    assert_equal 'live', airlock.relay.coil
+    refute airlock.lock_held
+    assert_equal 'cycling', airlock.door
+  end
+
   private
+
+  def probe_collection(probe, only: nil)
+    events = { alpha: :advance_alpha, beta: :advance_beta }
+    events = events.slice(only) if only
+    transitions = events.map { |attribute, event| Probe.state_machines[attribute].events[event].transition_for(probe) }
+
+    Probe.state_machines[:alpha].create_async_transition_collection(transitions)
+  end
+
+  def airlock_collection(airlock)
+    machine = Airlock.state_machines[:door]
+
+    machine.create_async_transition_collection([machine.events[:cycle].transition_for(airlock)])
+  end
 
   def release_collection
     machine = CargoBay.state_machines[:bay]

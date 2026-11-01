@@ -31,23 +31,23 @@ module StateMachines
       # attributes claim them in the same order.
       #
       # Returns the granted claims, or nil when an attribute is held by another
-      # active owner or has left the transition's source state, in which case
-      # the claims already granted are released.
+      # active owner or has left the transition's source state.  Every exit
+      # that does not grant the whole set - a refusal, an exception, a throw -
+      # releases the claims it took.
       def claim(transitions)
         claimable = transitions.select { |transition| transition.machine.async_mode_enabled? }
         granted = []
+        admitted = false
 
-        claimable.sort_by { |transition| transition.attribute.to_s }.each do |transition|
-          claim = claim_attribute(transition)
-          break unless claim
+        begin
+          admitted = claimable.sort_by { |transition| transition.attribute.to_s }.all? do |transition|
+            hold(transition, granted) && at_source?(transition)
+          end
 
-          granted << claim
+          granted if admitted
+        ensure
+          release(granted) unless admitted
         end
-
-        return granted if granted.length == claimable.length
-
-        release(granted)
-        nil
       end
 
       # Releases the claims granted by .claim
@@ -57,33 +57,35 @@ module StateMachines
 
       private
 
-      def claim_attribute(transition)
+      # Takes the transition's attribute, appending the claim to +granted+ as it
+      # is taken.  Returns nil when another active owner holds the attribute.
+      def hold(transition, granted)
         previous_owner = Fiber[OWNER_KEY]
-        claims = claims_for(transition.object)
+        owner = previous_owner&.active? ? previous_owner : Owner.new
+        object = transition.object
+        attribute = transition.attribute
 
-        claim = LOCK.synchronize do
-          owner = previous_owner&.active? ? previous_owner : Owner.new
-          holder = claims[transition.attribute]
+        LOCK.synchronize do
+          claims = claims_for(object)
+          holder = claims[attribute]
+          next unless holder.nil? || !holder.active? || holder.equal?(owner)
 
-          if holder.equal?(owner)
-            new(claims, transition.attribute, owner, previous_owner, false)
-          elsif (holder.nil? || !holder.active?) && transition.machine.states.match!(transition.object).name == transition.from_name
-            claims[transition.attribute] = owner
-            new(claims, transition.attribute, owner, previous_owner, true)
-          end
+          claim = new(claims, attribute, owner, previous_owner, !holder.equal?(owner))
+          granted << claim
+          claims[attribute] = owner
+          Fiber[OWNER_KEY] = owner
+          claim
         end
+      end
 
-        Fiber[OWNER_KEY] = claim.owner if claim
-        claim
+      def at_source?(transition)
+        transition.machine.states.match!(transition.object).name == transition.from_name
       end
 
       def claims_for(object)
         object.instance_variable_get(CLAIMS_VARIABLE) || object.instance_variable_set(CLAIMS_VARIABLE, {})
       end
     end
-
-    # The authority this claim was granted to
-    attr_reader :owner
 
     def initialize(claims, attribute, owner, previous_owner, held) # :nodoc:
       @claims = claims
