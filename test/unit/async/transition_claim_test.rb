@@ -184,7 +184,8 @@ class TransitionClaimTest < Minitest::Test
     rover.resume_drive = Queue.new
 
     rolling = Thread.new { rover_collection(rover, only: :drive).perform_threaded }
-    rover.driving.pop
+
+    assert_equal :claimed, rover.driving.pop(timeout: HANDOFF_TIMEOUT)
 
     refute rover_collection(rover).perform_threaded
     assert_equal 'folded', rover.arm
@@ -192,6 +193,7 @@ class TransitionClaimTest < Minitest::Test
 
     rover.resume_drive.push(:go)
 
+    assert rolling.join(HANDOFF_TIMEOUT), 'the held transition never finished'
     assert rolling.value
     assert rover_collection(rover, only: :arm).perform_threaded
     assert_equal 'open', rover.arm
