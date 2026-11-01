@@ -168,11 +168,26 @@ module StateMachines
     def fire(object, *event_args)
       machine.reset(object)
 
-      if (transition = transition_for(object, {}, *event_args))
-        transition.perform(*event_args)
-      else
+      transition = transition_for(object, {}, *event_args)
+
+      unless transition
         on_failure(object, *event_args)
-        false
+        return false
+      end
+
+      return transition.perform(*event_args) unless machine.async_mode_enabled?
+
+      claim = object.claim_state_machine_transition(machine, transition.from_name)
+
+      unless claim
+        on_failure(object, *event_args)
+        return false
+      end
+
+      begin
+        transition.perform(*event_args)
+      ensure
+        object.release_state_machine_transition(claim)
       end
     end
 
