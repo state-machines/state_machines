@@ -60,6 +60,23 @@ module StateMachines
     # If a block is passed to this method, that block will be called instead
     # of invoking each transition's action.
     def perform(&)
+      claims = TransitionClaim.claim(self)
+      return false unless claims
+
+      begin
+        perform_transitions(&)
+      ensure
+        TransitionClaim.release(claims)
+      end
+    end
+
+    protected
+
+    attr_reader :results # :nodoc:
+
+    private
+
+    def perform_transitions(&)
       reset
 
       if valid?
@@ -84,12 +101,6 @@ module StateMachines
         success?
       end
     end
-
-    protected
-
-    attr_reader :results # :nodoc:
-
-    private
 
     # Is this a valid set of transitions?  If the collection was creating with
     # any +false+ values for transitions, then the the collection will be

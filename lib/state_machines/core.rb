@@ -19,6 +19,7 @@ require 'state_machines/matcher'
 require 'state_machines/matcher_helpers'
 
 require 'state_machines/transition'
+require 'state_machines/transition_claim'
 require 'state_machines/transition_collection'
 
 require 'state_machines/branch'
