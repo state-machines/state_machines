@@ -13,10 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ruby-version: "jruby-10.1.2.0"
-            name: "JRuby 10.1.2.0 (Java 21)"
-          - ruby-version: "truffleruby"
-            name: "TruffleRuby"
+          - ruby-version: "jruby-10.1.3.0"
+            name: "JRuby 10.1.3.0 (Java 21)"
+          - ruby-version: "truffleruby-40.0.0"
+            name: "TruffleRuby 40.0.0"
 
     name: ${{ matrix.name }}
     steps:
