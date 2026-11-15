@@ -446,36 +446,31 @@ module StateMachines
       _sm_assert(correct_final_state, message || default_message)
     end
 
-    # Assert that event execution is immediate (no async delay)
+    # Assert that event execution is immediate: the state has changed when the
+    # bang event returns, and it returned no async task to wait on. Decided by
+    # what the call did, not by how long it took, so a slow runner (a cold
+    # JIT) cannot fail it.
     #
     # @param object [Object] The object with state machines
     # @param event [Symbol] The event to trigger
     # @param machine_name [Symbol] The name of the state machine (defaults to :state)
     # @param message [String, nil] Custom failure message
     # @return [void]
-    # @raise [AssertionError] If execution appears to be async
+    # @raise [AssertionError] If the event did not complete synchronously
     #
     # @example
     #   car = Car.new
     #   assert_sm_immediate_execution(car, :start)
     def assert_sm_immediate_execution(object, event, machine_name = :state, message = nil)
       initial_state = object.send(machine_name)
-
-      # Record start time and execute
-      start_time = Time.now
-      object.send("#{event}!")
-      execution_time = Time.now - start_time
-
+      result = object.send("#{event}!")
       final_state = object.send(machine_name)
-      state_changed = initial_state != final_state
 
-      # Should complete very quickly (under 10ms for sync operations)
-      is_immediate = execution_time < 0.01
+      deferred = defined?(::Async::Task) && result.is_a?(::Async::Task)
+      default_message = "Expected immediate sync execution of '#{event}', but it returned #{result.class} (async)"
 
-      default_message = "Expected immediate sync execution of '#{event}', but took #{execution_time}s (likely async)"
-
-      _sm_assert(state_changed, 'Event should trigger state change')
-      _sm_assert(is_immediate, message || default_message)
+      _sm_assert(initial_state != final_state, message || "Event #{event} should change #{machine_name} before returning")
+      _sm_assert(!deferred, message || default_message)
     end
 
     # === Async Mode Assertions ===
