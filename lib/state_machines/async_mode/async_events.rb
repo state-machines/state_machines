@@ -7,10 +7,12 @@ module StateMachines
       # Fires an event asynchronously using Async
       # Returns an Async::Task that can be awaited for the result
       #
-      # Example:
+      # @return [Async::Task] a task whose result is the performed
+      #   {StateMachines::Transition}, or false if the event was refused
+      # @example
       #   Async do
       #     task = vehicle.async_fire_event(:ignite)
-      #     result = task.wait # => true/false
+      #     result = task.wait # => #<StateMachines::Transition ...> or false
       #   end
       def async_fire_event(event_name, *)
         # Find the machine that has this event
@@ -33,10 +35,12 @@ module StateMachines
       # Fires multiple events asynchronously across different state machines
       # Returns an array of Async::Tasks for concurrent execution
       #
-      # Example:
+      # @return [Array<Async::Task>] one task per event, each resolving to the
+      #   performed {StateMachines::Transition} or false
+      # @example
       #   Async do
       #     tasks = vehicle.async_fire_events(:ignite, :buy_insurance)
-      #     results = tasks.map(&:wait) # => [true, true]
+      #     results = tasks.map(&:wait) # => [#<StateMachines::Transition ...>, #<StateMachines::Transition ...>]
       #   end
       def async_fire_events(*event_names)
         event_names.map { |event_name| async_fire_event(event_name) }
@@ -45,8 +49,10 @@ module StateMachines
       # Fires an event asynchronously and waits for completion
       # This is a convenience method that creates and waits for the task
       #
-      # Example:
-      #   result = vehicle.fire_event_async(:ignite) # => true/false
+      # @return [StateMachines::Transition, false] the performed transition, or
+      #   false if the event was refused
+      # @example
+      #   result = vehicle.fire_event_async(:ignite) # => #<StateMachines::Transition ...> or false
       def fire_event_async(event_name, *)
         raise NoMethodError, "undefined method `fire_event_async' for #{self}" unless has_async_machines?
         # Find the machine that has this event
@@ -70,8 +76,10 @@ module StateMachines
       # Fires multiple events asynchronously and waits for all completions
       # Returns results in the same order as the input events
       #
-      # Example:
-      #   results = vehicle.fire_events_async(:ignite, :buy_insurance) # => [true, true]
+      # @return [Array<StateMachines::Transition, false>] the performed
+      #   transition (or false) for each event, in input order
+      # @example
+      #   results = vehicle.fire_events_async(:ignite, :buy_insurance) # => [#<StateMachines::Transition ...>, #<StateMachines::Transition ...>]
       def fire_events_async(*event_names)
         raise NoMethodError, "undefined method `fire_events_async' for #{self}" unless has_async_machines?
         if defined?(::Async::Task) && ::Async::Task.current?

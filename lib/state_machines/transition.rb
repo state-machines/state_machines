@@ -35,6 +35,14 @@ module StateMachines
     # Whether the transition is only existing temporarily for the object
     attr_writer :transient
 
+    # Why the most recent perform of this transition was refused.
+    #
+    # @return [:halted, :action_failed, :contended, nil] the refusal reason, or
+    #   nil if the transition succeeded or was refused only because another
+    #   transition in the same collection was
+    # @see StateMachines::Event#refusal for the meaning of each reason
+    attr_accessor :refusal
+
     # Creates a new, specific transition
     def initialize(object, machine, event, from_name, to_name, read_state = true) # :nodoc:
       @object = object
@@ -161,6 +169,9 @@ module StateMachines
     #   transition.perform(Time.now)                    # => Passes in additional arguments and runs the +save+ action
     #   transition.perform(Time.now, false)             # => Passes in additional arguments and only sets the state attribute
     #   transition.perform(Time.now, run_action: false) # => Passes in additional arguments and only sets the state attribute
+    #
+    # @return [StateMachines::Transition, false] this transition when it
+    #   succeeds, false when it is refused (see {#refusal})
     def perform(*args)
       run_action = case args.last
                    in true | false
@@ -174,7 +185,7 @@ module StateMachines
       self.args = args
 
       # Run the transition
-      !!TransitionCollection.new([self], { use_transactions: machine.use_transactions, actions: run_action }).perform
+      TransitionCollection.new([self], { use_transactions: machine.use_transactions, actions: run_action }).perform ? self : false
     end
 
     # Runs a block within a transaction for the object being transitioned.

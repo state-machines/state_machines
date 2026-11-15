@@ -197,19 +197,19 @@ vehicle.state_transitions       # => [#<StateMachines:Transition attribute=:stat
 vehicle.speed                   # => 0
 vehicle.moving?                 # => false
 
-vehicle.ignite                  # => true
+vehicle.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>
 vehicle.parked?                 # => false
 vehicle.idling?                 # => true
 vehicle.speed                   # => 10
 vehicle                         # => #<Vehicle:0xb7cf4eac @state="idling", @seatbelt_on=true>
 
-vehicle.shift_up                # => true
+vehicle.shift_up                # => #<StateMachines::Transition attribute=:state event=:shift_up from="idling" from_name=:idling to="first_gear" to_name=:first_gear>
 vehicle.speed                   # => 10
 vehicle.moving?                 # => true
 vehicle                         # => #<Vehicle:0xb7cf4eac @state="first_gear", @seatbelt_on=true>
 
 # A generic event helper is available to fire without going through the event's instance method
-vehicle.fire_state_event(:shift_up) # => true
+vehicle.fire_state_event(:shift_up) # => #<StateMachines::Transition attribute=:state event=:shift_up ...>
 
 # Call state-driven behavior that's undefined for the state raises a NoMethodError
 vehicle.speed                   # => NoMethodError: super: no superclass method `speed' for #<Vehicle:0xb7cf4eac>
@@ -223,7 +223,7 @@ vehicle.state?(:parked)         # => false
 vehicle.state?(:invalid)        # => IndexError: :invalid is an invalid name
 
 # Transition callbacks can receive arguments
-vehicle.park(meter_number: '12345') # => true
+vehicle.park(meter_number: '12345') # => #<StateMachines::Transition attribute=:state event=:park ...>
 vehicle.parked?                     # => true
 vehicle.parking_meter_number        # => "12345"
 
@@ -232,7 +232,7 @@ vehicle.alarm_state             # => 1
 vehicle.alarm_state_name        # => :active
 
 vehicle.can_disable_alarm?      # => true
-vehicle.disable_alarm           # => true
+vehicle.disable_alarm           # => #<StateMachines::Transition attribute=:alarm_state event=:disable ...>
 vehicle.alarm_state             # => 0
 vehicle.alarm_state_name        # => :off
 vehicle.can_enable_alarm?       # => true
@@ -246,6 +246,102 @@ vehicle.state_name                              # => :first_gear
 vehicle.alarm_state_name                        # => :active
 
 vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidParallelTransition: Cannot run events in parallel: ignite, enable_alarm
+```
+
+## Refusal Reasons
+
+An event method returns the performed `StateMachines::Transition` on success and
+`false` when the event is refused, so `if vehicle.ignite` keeps working. (Compare
+with `if`, not `== true`.) To tell *why* it was refused, every event gets a
+`<event>_refusal` reader next to `can_<event>?`, `<event>_transition` and
+`<event>!`. It returns the reason of the most recent attempt to fire that event
+on that object, or `nil` once an attempt succeeds:
+
+| Reason           | Meaning                                                                  |
+|------------------|--------------------------------------------------------------------------|
+| `:no_transition` | No transition is defined for the event from the current state            |
+| `:guard`         | A transition from the current state exists, but its `if:`/`unless:` (or state guards) rejected it |
+| `:halted`        | A `before_transition` or `around_transition` callback halted it          |
+| `:action_failed` | The machine's action (e.g. `save`) did not succeed                       |
+| `:contended`     | Async mode only: a concurrent transition held or moved the attribute first |
+
+```ruby
+vehicle = Vehicle.new           # parked
+vehicle.ignite_refusal          # => nil (never refused)
+
+vehicle.park                    # => false
+vehicle.park_refusal            # => :no_transition
+
+vehicle.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite ...>
+vehicle.ignite_refusal          # => nil
+
+# The bang method raises with the same reason
+begin
+  vehicle.park!
+rescue StateMachines::InvalidTransition => e
+  e.reason                      # => :no_transition
+end
+
+# A transition performed directly carries its reason too
+transition = vehicle.shift_up_transition
+transition.perform              # => false (say a before_transition halted it)
+transition.refusal              # => :halted
+vehicle.shift_up_refusal        # => :halted
+```
+
+The reason is kept per event and per object, so firing another event does not
+overwrite it. The guard conditions are not evaluated a second time to tell
+`:guard` from `:no_transition`.
+
+Parallel events report a reason only for the events that caused the refusal; the
+others read `nil`. An action failure is shared, so every event in the set reports
+`:action_failed`:
+
+```ruby
+vehicle.fire_events(:ignite, :enable_alarm) # => false
+vehicle.ignite_refusal                       # => :no_transition
+vehicle.enable_alarm_refusal                 # => nil
+
+begin
+  vehicle.fire_events!(:ignite, :enable_alarm)
+rescue StateMachines::InvalidParallelTransition => e
+  e.reasons                                  # => {ignite: :no_transition}
+end
+```
+
+When the action fails because an event attribute it runs was refused (the ORM
+integrations perform `state_event` / `alarm_state_event` inside `save`), the
+fired event carries that inner reason, matching the bang method's message:
+an `alarm_state_event` halted inside `save` makes `ignite` read `:halted`. A
+plain action failure (`save` returning false, a failed validation) stays
+`:action_failed`.
+
+Every attempt replaces the previous reason, including one that ends in an
+exception: a success whose `after_transition` raises, or a callback or guard
+that raises before any outcome, leaves the reader at `nil`. (An action that
+raises is `:action_failed`.)
+
+A copy made with `dup` or `clone` starts with no reasons, since it has made no
+attempts. A frozen object records nothing: the event still returns `false`, and
+the reader returns `nil`.
+
+The reader reports the most recent attempt **on the object**, not on the
+caller. When several threads or fibers fire events on the same object
+concurrently, another caller may overwrite the reason between your attempt and
+your read. Use the bang method and rescue `StateMachines::InvalidTransition`,
+whose `#reason` belongs to that call, or `StateMachines::Transition#refusal` on a
+transition you performed yourself:
+
+```ruby
+begin
+  vehicle.ignite!
+rescue StateMachines::InvalidTransition => e
+  e.reason # => this call's reason, e.g. :contended
+end
+```
+
+The reader is also available on the event itself:
+`Vehicle.state_machine.events[:park].refusal(vehicle)`.
 
 # Coordinated State Management
 
@@ -287,7 +383,7 @@ system = TorpedoSystem.new
 system.fire_torpedo  # => false (bay doors are closed)
 
 system.open_bay_doors!
-system.fire_torpedo  # => true (bay doors are now open)
+system.fire_torpedo  # => #<StateMachines::Transition ...> (bay doors are now open)
 ```
 
 ### Multiple State Guards
@@ -405,7 +501,7 @@ drone = AutonomousDrone.new
 Async do
   # Async event firing - returns Async::Task
   task = drone.launch_async
-  result = task.wait  # => true
+  result = task.wait  # => #<StateMachines::Transition ...>
 
   # Bang methods for strict error handling
   drone.power_up_async!  # => Async::Task (raises on failure)
@@ -696,7 +792,7 @@ method like so:
 
 ```ruby
 vehicle = Vehicle.create    # => #<Vehicle id=1 state="parked">
-vehicle.ignite              # => true
+vehicle.ignite              # => #<StateMachines::Transition attribute=:state event=:ignite ...>
 vehicle.state               # => "idling"
 ```
 
@@ -997,7 +1093,7 @@ end
 
 vehicle = Vehicle.new                   # => #<Vehicle:0xb708412c @state="parked" ...>
 vehicle.state                           # => "parked"
-vehicle.machine.ignite                  # => true
+vehicle.machine.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite ...>
 vehicle.machine.state                   # => "idling"
 vehicle.state                           # => "idling"
 vehicle.machine.state_transitions       # => [#<StateMachines:Transition ...>]

@@ -9,6 +9,28 @@ module StateMachines
   class Event
     include MatcherHelpers
 
+    # The object instance variable holding the most recent refusal reason per
+    # machine and event
+    REFUSALS_VARIABLE = :@_state_machine_refusals
+
+    # Serialises the creation and updates of an object's refusal reasons, so
+    # that concurrent attempts on one object do not lose each other's reason
+    REFUSALS_LOCK = Thread::Mutex.new
+
+    class << self
+      # Forgets every refusal reason recorded on the given object, e.g. when
+      # it is copied or reloaded.
+      #
+      # @api private
+      # @param object [Object] the object whose reasons are forgotten
+      # @return [void]
+      def clear_refusals(object)
+        return if object.frozen? || !object.instance_variable_defined?(REFUSALS_VARIABLE)
+
+        object.remove_instance_variable(REFUSALS_VARIABLE)
+      end
+    end
+
     # The state machine for which this event is defined
     attr_accessor :machine
 
@@ -161,19 +183,114 @@ module StateMachines
 
     # Attempts to perform the next available transition on the given object.
     # If no transitions can be made, then this will return false, otherwise
-    # true.
+    # the performed {StateMachines::Transition}.
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
+    #
+    # The reason for a refusal is recorded on the object and can be read back
+    # with {#refusal} (or the generated `*_refusal` helper).
+    #
+    # @return [StateMachines::Transition, false] the performed transition, or
+    #   false if the event was refused
+    # @see #refusal
     def fire(object, *event_args)
       machine.reset(object)
 
-      if (transition = transition_for(object, {}, *event_args))
+      transition = begin
+        transition_for(object, {}, *event_args)
+      rescue StandardError
+        # A guard raised before this attempt had an outcome
+        record_refusal(object, nil)
+        raise
+      end
+
+      if transition
         transition.perform(*event_args)
       else
+        record_refusal(object, refusal_without_transition(object))
         on_failure(object, *event_args)
         false
       end
+    end
+
+    # The reason the most recent attempt to fire this event on the given object
+    # was refused.
+    #
+    # The reasons are:
+    # - :no_transition - no transition is defined for the event from the
+    #   object's current state
+    # - :guard - a transition is defined from the current state, but its :if /
+    #   :unless / state guards rejected it
+    # - :halted - a before_transition or around_transition callback halted the
+    #   transition
+    # - :action_failed - the machine's action (e.g. save) did not succeed
+    # - :contended - in async mode, a concurrent transition held or moved the
+    #   attribute first
+    #
+    # When the event was fired in parallel with others (see
+    # {StateMachines::InstanceMethods#fire_events}), only the events that caused
+    # the refusal carry a reason; the others read nil.  When the action failed
+    # because an event attribute it performed was refused (see
+    # {StateMachines::TransitionCollection#perform}), the event carries that
+    # inner reason.
+    #
+    # The reason describes the most recent attempt *on the object*, whichever
+    # caller made it: it is not tied to a caller.  When several threads or
+    # fibers fire events on the same object concurrently, each should rely on
+    # its own result - the bang method's {StateMachines::InvalidTransition#reason}
+    # (or {StateMachines::Transition#refusal} of a transition it performed) -
+    # rather than on this reader, which another caller may have overwritten.
+    #
+    # A frozen object records no reason, so this reads nil for it.  A copy
+    # (+dup+ / +clone+) starts with no reasons, as it has made no attempt.
+    #
+    # @param object [Object] the object the event was fired on
+    # @return [:no_transition, :guard, :halted, :action_failed, :contended, nil]
+    #   the refusal reason, or nil if the most recent attempt succeeded, raised
+    #   before an outcome, or none was made
+    # @example
+    #   vehicle.state     # => "idling"
+    #   vehicle.ignite    # => false
+    #   vehicle.class.state_machine.events[:ignite].refusal(vehicle) # => :no_transition
+    #   vehicle.ignite_refusal                                       # => :no_transition
+    def refusal(object)
+      return if object.frozen?
+
+      refusals = object.instance_variable_get(REFUSALS_VARIABLE)
+      refusals && refusals[[machine.name, name]]
+    end
+
+    # Records the reason the event was refused on the given object, or clears
+    # it when reason is nil.  Nothing is recorded on a frozen object.
+    #
+    # @param object [Object] the object the event was fired on
+    # @param reason [Symbol, nil] the refusal reason (see {#refusal}), or nil
+    #   to clear it
+    # @return [void]
+    def record_refusal(object, reason) # :nodoc:
+      return if object.frozen?
+
+      key = [machine.name, name]
+      REFUSALS_LOCK.synchronize do
+        refusals = object.instance_variable_get(REFUSALS_VARIABLE)
+        if reason
+          (refusals || object.instance_variable_set(REFUSALS_VARIABLE, {}))[key] = reason
+        else
+          refusals&.delete(key)
+        end
+      end
+    end
+
+    # Why no transition could be built for the object.  The conditions are not
+    # evaluated again.
+    #
+    # @param object [Object] the object the event was fired on
+    # @return [:guard, :no_transition] :guard when a branch matches the current
+    #   state but its conditions rejected it, otherwise :no_transition
+    def refusal_without_transition(object) # :nodoc:
+      query = { from: machine.states.match!(object).name, guard: false }
+      branches.any? { |branch| branch.matches?(object, query) } ? :guard : :no_transition
     end
 
     # Marks the object as invalid and runs any failure callbacks associated with
@@ -236,6 +353,12 @@ module StateMachines
       # Fires the event
       machine.define_helper(:instance, qualified_name) do |machine, object, *args, **kwargs|
         machine.event(name).fire(object, *args, **kwargs)
+      end
+
+      # Gets the reason the most recent attempt to fire the event was refused,
+      # or nil if it succeeded
+      machine.define_helper(:instance, "#{qualified_name}_refusal") do |machine, object|
+        machine.event(name).refusal(object)
       end
 
       # Fires the event, raising an exception if it fails

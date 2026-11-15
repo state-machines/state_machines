@@ -61,15 +61,16 @@ module StateMachines
         raise(InvalidEvent.new(object, event_name)) unless event
 
         # Get the transition that will be performed for the event
-        unless (transition = event.transition_for(object))
-          event.on_failure(object)
-        end
+        transition = event.transition_for(object)
+        event.record_refusal(object, transition ? nil : event.refusal_without_transition(object))
+        event.on_failure(object) unless transition
         transition
-      end.compact
+      end
 
       # Run the events in parallel only if valid transitions were found for
-      # all of them
-      if events.length == transitions.length
+      # all of them.  Otherwise only the events without a transition carry a
+      # refusal reason.
+      if transitions.all?
         TransitionCollection.new(transitions, { use_transactions: resolve_use_transactions, actions: run_action }).perform
       else
         false

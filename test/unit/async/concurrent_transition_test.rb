@@ -44,7 +44,7 @@ class ConcurrentTransitionTest < Minitest::Test
   def test_one_way_transition_is_performed_once_across_threads
     results = CALLERS.times.map { Thread.new { Async { @pod.eject_async.wait }.wait } }.map(&:value)
 
-    assert_equal 1, results.count(true)
+    assert_equal 1, results.count { |result| result.is_a?(StateMachines::Transition) }
     assert_equal CALLERS - 1, results.count(false)
     assert_equal 'away', @pod.pod
     assert_equal 1, @pod.launches
@@ -53,7 +53,7 @@ class ConcurrentTransitionTest < Minitest::Test
   def test_one_way_transition_is_performed_once_across_fibers_of_one_reactor
     results = Async { CALLERS.times.map { @pod.eject_async }.map(&:wait) }.wait
 
-    assert_equal 1, results.count(true)
+    assert_equal 1, results.count { |result| result.is_a?(StateMachines::Transition) }
     assert_equal CALLERS - 1, results.count(false)
     assert_equal 'away', @pod.pod
     assert_equal 1, @pod.launches
@@ -77,6 +77,7 @@ class ConcurrentTransitionTest < Minitest::Test
 
     assert Async { beacon.transmit_async.wait }.wait
     assert_equal 'sent', beacon.signal
-    assert_equal ['idle', true], beacon.trail
+    assert_equal 'idle', beacon.trail.first
+    assert_kind_of StateMachines::Transition, beacon.trail.last
   end
 end

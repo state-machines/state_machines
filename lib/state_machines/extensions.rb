@@ -141,6 +141,19 @@ module StateMachines
       fire_events(*(events + [run_action])) || raise(StateMachines::InvalidParallelTransition.new(self, events))
     end
 
+    # A copy (+dup+ / +clone+) has made no attempt to fire an event, so it
+    # starts with no refusal reasons instead of sharing the original's.
+    #
+    # A class defining its own +initialize_copy+ must call +super+.
+    #
+    # @param orig [Object] the object being copied
+    # @return [void]
+    # @see StateMachines::Event#refusal
+    def initialize_copy(orig)
+      super
+      StateMachines::Event.clear_refusals(self)
+    end
+
     protected
 
     def initialize_state_machines(options = {}, &) # :nodoc:
