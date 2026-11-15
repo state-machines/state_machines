@@ -129,7 +129,12 @@ module StateMachines
                       if event = self[event_name.to_sym, :name]
                         event.transition_for(object) || begin
                           # No valid transition: invalidate
-                          machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]]) if invalidate
+                          if invalidate
+                            reason = event.refusal_without_transition(object)
+                            event.record_refusal(object, reason)
+                            TransitionCollection.report_nested_refusal(object, reason)
+                            machine.invalidate(object, :event, :invalid_event, [[:state, machine.states.match!(object).human_name(object.class)]])
+                          end
                           false
                         end
                       else

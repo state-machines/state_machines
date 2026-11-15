@@ -39,10 +39,15 @@ module StateMachines
       #   object or nil if no transitions can be performed.  Like <tt>can_park?</tt>
       #   this will also *not* run validations or callbacks.  It will only
       #   determine if the state machine defines a valid transition for the event.
+      # * <tt>park_refusal</tt> - Gets the reason the most recent attempt to fire
+      #   the "park" event was refused (<tt>:no_transition</tt>, <tt>:guard</tt>,
+      #   <tt>:halted</tt>, <tt>:action_failed</tt> or <tt>:contended</tt>), or nil
+      #   if it succeeded.  See {StateMachines::Event#refusal}.
       #
       # With a namespace of "car", the above names map to the following methods:
       # * <tt>can_park_car?</tt>
       # * <tt>park_car_transition</tt>
+      # * <tt>park_car_refusal</tt>
       # * <tt>park_car</tt>
       # * <tt>park_car!</tt>
       #

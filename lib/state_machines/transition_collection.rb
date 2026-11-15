@@ -59,15 +59,68 @@ module StateMachines
     #
     # If a block is passed to this method, that block will be called instead
     # of invoking each transition's action.
+    #
+    # When the collection is refused, each transition that caused it carries
+    # the reason in {StateMachines::Transition#refusal}, and the reason is
+    # recorded for its event on the object.  The outcome of this attempt is
+    # recorded however it ends: a success or an exception raised before any
+    # outcome (e.g. by a callback) clears the reasons left by an earlier
+    # attempt.
+    #
+    # When the action fails because an event attribute it performed was
+    # refused (a collection nested inside the action, as the ORM integrations
+    # run around save), the transitions carry that inner reason instead of
+    # :action_failed.
+    #
+    # @return [Object, false] the action's result, or whether every transition
+    #   succeeded
+    # @see StateMachines::Event#refusal
     def perform(&)
-      claims = TransitionClaim.claim(self)
+      each { |transition| transition.refusal = nil }
+      claims = TransitionClaim.claim(self) { |transition| transition.refusal = :contended }
       return false unless claims
 
-      begin
-        perform_transitions(&)
-      ensure
-        TransitionClaim.release(claims)
+      result = perform_transitions(&)
+      assign_refusals unless success?
+      result
+    ensure
+      record_refusals
+      TransitionClaim.release(claims) if claims
+    end
+
+    class << self
+      # Reports the reason an event attribute performed inside an action was
+      # refused to the innermost collection running that action on the same
+      # object, which then carries it instead of :action_failed if the action
+      # fails.
+      #
+      # @api private
+      # @param object [Object] the object the action runs on
+      # @param reason [Symbol, nil] the inner refusal reason
+      # @return [void]
+      def report_nested_refusal(object, reason)
+        return unless reason
+
+        running = Thread.current[RUNNING_ACTIONS_KEY]&.reverse_each&.find { |collection| collection.object.equal?(object) }
+        running&.nested_refusal ||= reason
       end
+    end
+
+    # The fiber-local stack of collections whose actions are running
+    RUNNING_ACTIONS_KEY = :state_machines_running_actions
+
+    # The reason an event attribute performed inside this collection's action
+    # was refused (see .report_nested_refusal)
+    #
+    # @api private
+    # @return [Symbol, nil]
+    attr_accessor :nested_refusal
+
+    # Gets the object being transitioned
+    #
+    # @return [Object]
+    def object
+      first.object
     end
 
     protected
@@ -86,6 +139,7 @@ module StateMachines
             transition.machine.write(object, :event_transition, transition)
           end
 
+          @actions_run = true
           run_actions
         else
           within_transaction do
@@ -117,11 +171,6 @@ module StateMachines
       @success
     end
 
-    # Gets the object being transitioned
-    def object
-      first.object
-    end
-
     # Gets the list of actions to run.  If configured to skip actions, then
     # this will return an empty collection.
     def actions
@@ -140,6 +189,36 @@ module StateMachines
     def reset
       @results = {}
       @success = false
+      @actions_run = false
+      @halted_by = nil
+      @nested_refusal = nil
+    end
+
+    # Assigns the reason this collection was refused to the transitions that
+    # caused it.  A reason already assigned by a collection nested inside the
+    # action (an action hook performing the same transitions) is kept, since
+    # it knows why the action failed; so is a reason reported by an event
+    # attribute refused inside the action (see .report_nested_refusal).
+    #
+    # @return [void]
+    def assign_refusals
+      return if any?(&:refusal)
+
+      if @actions_run
+        reason = nested_refusal || :action_failed
+        each { |transition| transition.refusal = reason }
+      elsif @halted_by
+        @halted_by.refusal = :halted
+      end
+    end
+
+    # Records each transition's refusal (or its absence) for its event on the
+    # object
+    #
+    # @return [void]
+    # @see StateMachines::Event#record_refusal
+    def record_refusals
+      each { |transition| transition.machine.events.fetch(transition.event).record_refusal(transition.object, transition.refusal) }
     end
 
     # Runs each transition's callbacks recursively.  Once all before callbacks
@@ -162,9 +241,15 @@ module StateMachines
         # consider it successful (the pause was intentional)
         @success = true if skip_after && transition.paused?
 
-        throw :halt unless callback_result
+        unless callback_result
+          # The innermost transition to halt is the one that caused it; the
+          # ones wrapping it halt as a consequence
+          @halted_by ||= transition
+          throw :halt
+        end
       else
         persist
+        @actions_run = true
         run_actions(&)
       end
     end
@@ -200,10 +285,27 @@ module StateMachines
     # Wraps the given block with a rescue handler so that any exceptions that
     # occur will automatically result in the transition rolling back any changes
     # that were made to the object involved.
+    #
+    # An action that raises (e.g. ActiveRecord's save!) has failed, so the
+    # transitions are refused with :action_failed before the exception
+    # propagates.
+    #
+    # While the block runs, the collection is registered as running its
+    # action on the object, so that event attributes refused inside it can
+    # report their reason (see .report_nested_refusal).
+    #
+    # @raise [StandardError] whatever the block raised, after the rollback
     def catch_exceptions
-      yield
+      running = (Thread.current[RUNNING_ACTIONS_KEY] ||= [])
+      running.push(self)
+      begin
+        yield
+      ensure
+        running.pop
+      end
     rescue StandardError
       rollback
+      each { |transition| transition.refusal ||= :action_failed }
       raise
     end
 
@@ -226,6 +328,17 @@ module StateMachines
   class AttributeTransitionCollection < TransitionCollection
     def initialize(transitions = [], options = {}) # :nodoc:
       super(transitions, { use_transactions: false, actions: false }.merge(options))
+    end
+
+    # Performs the event attributes' transitions around the action.  When
+    # they are refused, the reason is reported to the collection running the
+    # action, if any (see TransitionCollection.report_nested_refusal).
+    #
+    # @return [Object, false] see TransitionCollection#perform
+    def perform(&)
+      result = super
+      TransitionCollection.report_nested_refusal(object, find(&:refusal)&.refusal) unless empty? || success?
+      result
     end
 
     private

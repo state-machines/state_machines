@@ -34,6 +34,12 @@ module StateMachines
       # active owner or has left the transition's source state.  Every exit
       # that does not grant the whole set - a refusal, an exception, a throw -
       # releases the claims it took.
+      #
+      # @param transitions [Array<StateMachines::Transition>] the transitions
+      #   to claim attributes for
+      # @yieldparam transition [StateMachines::Transition] the transition whose
+      #   attribute could not be claimed, when the claim is refused
+      # @return [Array<StateMachines::TransitionClaim>, nil]
       def claim(transitions)
         claimable = transitions.select { |transition| transition.machine.async_mode_enabled? }
         granted = []
@@ -41,7 +47,10 @@ module StateMachines
 
         begin
           admitted = claimable.sort_by { |transition| transition.attribute.to_s }.all? do |transition|
-            hold(transition, granted) && at_source?(transition)
+            next true if hold(transition, granted) && at_source?(transition)
+
+            yield(transition) if block_given?
+            false
           end
 
           granted if admitted

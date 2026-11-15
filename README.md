@@ -246,6 +246,101 @@ vehicle.state_name                              # => :first_gear
 vehicle.alarm_state_name                        # => :active
 
 vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidParallelTransition: Cannot run events in parallel: ignite, enable_alarm
+```
+
+## Refusal Reasons
+
+An event method returns `false` when the event is refused, so `if vehicle.ignite`
+keeps working. To tell *why* it was refused, every event gets a
+`<event>_refusal` reader next to `can_<event>?`, `<event>_transition` and
+`<event>!`. It returns the reason of the most recent attempt to fire that event
+on that object, or `nil` once an attempt succeeds:
+
+| Reason           | Meaning                                                                  |
+|------------------|--------------------------------------------------------------------------|
+| `:no_transition` | No transition is defined for the event from the current state            |
+| `:guard`         | A transition from the current state exists, but its `if:`/`unless:` (or state guards) rejected it |
+| `:halted`        | A `before_transition` or `around_transition` callback halted it          |
+| `:action_failed` | The machine's action (e.g. `save`) did not succeed                       |
+| `:contended`     | Async mode only: a concurrent transition held or moved the attribute first |
+
+```ruby
+vehicle = Vehicle.new           # parked
+vehicle.ignite_refusal          # => nil (never refused)
+
+vehicle.park                    # => false
+vehicle.park_refusal            # => :no_transition
+
+vehicle.ignite                  # => true
+vehicle.ignite_refusal          # => nil
+
+# The bang method raises with the same reason
+begin
+  vehicle.park!
+rescue StateMachines::InvalidTransition => e
+  e.reason                      # => :no_transition
+end
+
+# A transition performed directly carries its reason too
+transition = vehicle.shift_up_transition
+transition.perform              # => false (say a before_transition halted it)
+transition.refusal              # => :halted
+vehicle.shift_up_refusal        # => :halted
+```
+
+The reason is kept per event and per object, so firing another event does not
+overwrite it. The guard conditions are not evaluated a second time to tell
+`:guard` from `:no_transition`.
+
+Parallel events report a reason only for the events that caused the refusal; the
+others read `nil`. An action failure is shared, so every event in the set reports
+`:action_failed`:
+
+```ruby
+vehicle.fire_events(:ignite, :enable_alarm) # => false
+vehicle.ignite_refusal                       # => :no_transition
+vehicle.enable_alarm_refusal                 # => nil
+
+begin
+  vehicle.fire_events!(:ignite, :enable_alarm)
+rescue StateMachines::InvalidParallelTransition => e
+  e.reasons                                  # => {ignite: :no_transition}
+end
+```
+
+When the action fails because an event attribute it runs was refused (the ORM
+integrations perform `state_event` / `alarm_state_event` inside `save`), the
+fired event carries that inner reason, matching the bang method's message:
+an `alarm_state_event` halted inside `save` makes `ignite` read `:halted`. A
+plain action failure (`save` returning false, a failed validation) stays
+`:action_failed`.
+
+Every attempt replaces the previous reason, including one that ends in an
+exception: a success whose `after_transition` raises, or a callback or guard
+that raises before any outcome, leaves the reader at `nil`. (An action that
+raises is `:action_failed`.)
+
+A copy made with `dup` or `clone` starts with no reasons, since it has made no
+attempts. A frozen object records nothing: the event still returns `false`, and
+the reader returns `nil`.
+
+The reader reports the most recent attempt **on the object**, not on the
+caller. When several threads or fibers fire events on the same object
+concurrently, another caller may overwrite the reason between your attempt and
+your read. Use the bang method and rescue `StateMachines::InvalidTransition`,
+whose `#reason` belongs to that call, or `StateMachines::Transition#refusal` on a
+transition you performed yourself:
+
+```ruby
+begin
+  vehicle.ignite!
+rescue StateMachines::InvalidTransition => e
+  e.reason # => this call's reason, e.g. :contended
+end
+```
+
+The reader is also available on the event itself:
+`Vehicle.state_machine.events[:park].refusal(vehicle)`.
 
 # Coordinated State Management
 

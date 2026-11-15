@@ -35,6 +35,14 @@ module StateMachines
     # Whether the transition is only existing temporarily for the object
     attr_writer :transient
 
+    # Why the most recent perform of this transition was refused.
+    #
+    # @return [:halted, :action_failed, :contended, nil] the refusal reason, or
+    #   nil if the transition succeeded or was refused only because another
+    #   transition in the same collection was
+    # @see StateMachines::Event#refusal for the meaning of each reason
+    attr_accessor :refusal
+
     # Creates a new, specific transition
     def initialize(object, machine, event, from_name, to_name, read_state = true) # :nodoc:
       @object = object

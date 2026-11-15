@@ -14,6 +14,10 @@ class InvalidParallelTransitionTest < StateMachinesTest
     assert_equal @object, @invalid_transition.object
   end
 
+  def test_should_have_no_reasons_for_an_object_without_machines
+    assert_empty @invalid_transition.reasons
+  end
+
   def test_should_have_events
     assert_equal @events, @invalid_transition.events
   end

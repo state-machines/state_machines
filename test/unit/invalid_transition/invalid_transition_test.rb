@@ -31,6 +31,16 @@ class InvalidTransitionTest < StateMachinesTest
     assert_equal :ignite, @invalid_transition.qualified_event
   end
 
+  def test_should_have_no_reason_without_a_recorded_refusal
+    assert_nil @invalid_transition.reason
+  end
+
+  def test_should_have_the_reason_recorded_for_the_event
+    @machine.event(:ignite).fire(@object)
+
+    assert_equal :no_transition, StateMachines::InvalidTransition.new(@object, @machine, :ignite).reason
+  end
+
   def test_should_have_a_from_value
     assert_equal 'parked', @invalid_transition.from
   end
