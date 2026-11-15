@@ -3,7 +3,8 @@
     ".": {
       "release-type": "ruby",
       "package-name": "state_machines",
-      "version-file": "lib/state_machines/version.rb"
+      "version-file": "lib/state_machines/version.rb",
+      "bump-minor-pre-major": true
     }
   }
 }
