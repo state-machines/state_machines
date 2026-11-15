@@ -13,7 +13,7 @@ module StateMachines
       # base class that may have originally defined the machine.
       def sibling_machines
         owner_class.state_machines.each_with_object([]) do |(name, machine), machines|
-          machines << (owner_class.state_machine(name) {}) if machine.attribute == attribute && machine != self
+          machines << owner_class.state_machine(name) {} if machine.attribute == attribute && machine != self
         end
       end
 

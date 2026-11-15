@@ -64,6 +64,7 @@ module StateMachines
 
     # Creates a new context for the given state
     def initialize(state)
+      super()
       @state = state
       @machine = state.machine
 

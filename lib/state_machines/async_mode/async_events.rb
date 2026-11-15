@@ -18,14 +18,10 @@ module StateMachines
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
+        raise ArgumentError, "Event #{event_name} not found in any state machine" unless machine
 
         # Must be called within an Async context
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "async_fire_event must be called within an Async context. Use: Async { vehicle.async_fire_event(:event) }"
-        end
+        raise 'async_fire_event must be called within an Async context. Use: Async { vehicle.async_fire_event(:event) }' unless defined?(::Async::Task) && ::Async::Task.current?
 
         Async do
           machine.events[event_name].fire(self, *)
@@ -55,12 +51,11 @@ module StateMachines
       #   result = vehicle.fire_event_async(:ignite) # => #<StateMachines::Transition ...> or false
       def fire_event_async(event_name, *)
         raise NoMethodError, "undefined method `fire_event_async' for #{self}" unless has_async_machines?
+
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
+        raise ArgumentError, "Event #{event_name} not found in any state machine" unless machine
 
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, just fire directly
@@ -82,6 +77,7 @@ module StateMachines
       #   results = vehicle.fire_events_async(:ignite, :buy_insurance) # => [#<StateMachines::Transition ...>, #<StateMachines::Transition ...>]
       def fire_events_async(*event_names)
         raise NoMethodError, "undefined method `fire_events_async' for #{self}" unless has_async_machines?
+
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, run concurrently
           tasks = event_names.map { |event_name| async_fire_event(event_name) }
@@ -112,14 +108,10 @@ module StateMachines
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
+        raise ArgumentError, "Event #{event_name} not found in any state machine" unless machine
 
         # Must be called within an Async context
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "async_fire_event! must be called within an Async context. Use: Async { vehicle.async_fire_event!(:event) }"
-        end
+        raise 'async_fire_event! must be called within an Async context. Use: Async { vehicle.async_fire_event!(:event) }' unless defined?(::Async::Task) && ::Async::Task.current?
 
         Async do
           fire_with_bang(machine, event_name, *)
@@ -138,12 +130,11 @@ module StateMachines
       #   end
       def fire_event_async!(event_name, *)
         raise NoMethodError, "undefined method `fire_event_async!' for #{self}" unless has_async_machines?
+
         # Find the machine that has this event
         machine = self.class.state_machines.values.find { |m| m.events[event_name] }
 
-        unless machine
-          raise ArgumentError, "Event #{event_name} not found in any state machine"
-        end
+        raise ArgumentError, "Event #{event_name} not found in any state machine" unless machine
 
         if defined?(::Async::Task) && ::Async::Task.current?
           # Already in async context, just fire directly with bang behavior
@@ -167,17 +158,13 @@ module StateMachines
           base_method = method_str.chomp('_async!').to_sym
 
           # Check if the base method exists and this machine is async-enabled
-          if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async_bang(base_method, *, **)
-          end
+          return handle_individual_event_async_bang(base_method, *, **) if respond_to?(base_method) && async_method_for_event?(base_method)
         elsif method_str.end_with?('_async')
           # Remove the _async suffix to get the base event method
           base_method = method_str.chomp('_async').to_sym
 
           # Check if the base method exists and this machine is async-enabled
-          if respond_to?(base_method) && async_method_for_event?(base_method)
-            return handle_individual_event_async(base_method, *, **)
-          end
+          return handle_individual_event_async(base_method, *, **) if respond_to?(base_method) && async_method_for_event?(base_method)
         end
 
         # If not an async method, call the original method_missing
@@ -201,7 +188,7 @@ module StateMachines
 
       # Check if this object has any async-enabled state machines
       def has_async_machines?
-        self.class.state_machines.any? { |name, machine| machine.async_mode_enabled? }
+        self.class.state_machines.any? { |_name, machine| machine.async_mode_enabled? }
       end
 
       private
@@ -214,15 +201,13 @@ module StateMachines
       # Check if this event method should have async versions
       def async_method_for_event?(event_method)
         # Find which machine contains this event
-        self.class.state_machines.each do |name, machine|
-          if machine.async_mode_enabled?
-            # Check if this event method belongs to this machine
-            machine.events.each do |event|
-              qualified_name = event.qualified_name
-              if qualified_name.to_sym == event_method || "#{qualified_name}!".to_sym == event_method
-                return true
-              end
-            end
+        self.class.state_machines.each do |_name, machine|
+          next unless machine.async_mode_enabled?
+
+          # Check if this event method belongs to this machine
+          machine.events.each do |event|
+            qualified_name = event.qualified_name
+            return true if qualified_name.to_sym == event_method || :"#{qualified_name}!" == event_method
           end
         end
         false
@@ -230,10 +215,7 @@ module StateMachines
 
       # Handle individual event async methods (returns task)
       def handle_individual_event_async(event_method, *, **)
-
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "#{event_method}_async must be called within an Async context"
-        end
+        raise "#{event_method}_async must be called within an Async context" unless defined?(::Async::Task) && ::Async::Task.current?
 
         Async do
           send(event_method, *, **)
@@ -243,11 +225,9 @@ module StateMachines
       # Handle individual event async bang methods (returns task, raises on failure)
       def handle_individual_event_async_bang(event_method, *, **)
         # Extract event name from method and use bang version
-        bang_method = "#{event_method}!".to_sym
+        bang_method = :"#{event_method}!"
 
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "#{event_method}_async! must be called within an Async context"
-        end
+        raise "#{event_method}_async! must be called within an Async context" unless defined?(::Async::Task) && ::Async::Task.current?
 
         Async do
           send(bang_method, *, **)
@@ -259,12 +239,10 @@ module StateMachines
         method_str = method_name.to_s
 
         # Find the machine and event for this method
-        self.class.state_machines.each do |name, machine|
+        self.class.state_machines.each do |_name, machine|
           machine.events.each do |event|
             qualified_name = event.qualified_name
-            if qualified_name.to_s == method_str || "#{qualified_name}!".to_s == method_str
-              return event.name
-            end
+            return event.name if qualified_name.to_s == method_str || "#{qualified_name}!" == method_str
           end
         end
 
@@ -282,9 +260,7 @@ module StateMachines
       #     results = vehicle.fire_events_concurrent(:ignite, :buy_insurance)
       #   end
       def fire_events_concurrent(*event_names)
-        unless defined?(::Async::Task) && ::Async::Task.current?
-          raise RuntimeError, "fire_events_concurrent must be called within an Async context"
-        end
+        raise 'fire_events_concurrent must be called within an Async context' unless defined?(::Async::Task) && ::Async::Task.current?
 
         tasks = async_fire_events(*event_names)
         tasks.map(&:wait)

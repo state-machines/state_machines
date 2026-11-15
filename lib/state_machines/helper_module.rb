@@ -5,6 +5,7 @@ module StateMachines
   # state machine
   class HelperModule < Module # :nodoc:
     def initialize(machine, kind)
+      super()
       @machine = machine
       @kind = kind
     end
