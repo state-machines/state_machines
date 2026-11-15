@@ -42,9 +42,9 @@ module StateMachines
     module UniversalBackend
       def validate!(code, filename)
         code = code.b
-        code.sub!(/\A(?:\xef\xbb\xbf)?(\s*\#.*$)*(\n)?/n) {
-          "#$&#{"\n" if $1 && !$2}BEGIN{throw tag, :ok}\n"
-        }
+        code.sub!(/\A(?:\xef\xbb\xbf)?(\s*\#.*$)*(\n)?/n) do
+          "#{::Regexp.last_match(0)}#{"\n" if ::Regexp.last_match(1) && !::Regexp.last_match(2)}BEGIN{throw tag, :ok}\n"
+        end
         code = code.force_encoding(Encoding::UTF_8)
         catch { |tag| eval(code, binding, filename, __LINE__ - 1) } == :ok
       end

@@ -22,6 +22,7 @@ module StateMachines
     # * <tt>:guard</tt> - Whether to guard transitions with the if/unless
     #   conditionals defined for each one
     def initialize(object, machine, options = {})
+      super()
       StateMachines::OptionsValidator.assert_valid_keys!(options, :target, :guard)
 
       @object = object

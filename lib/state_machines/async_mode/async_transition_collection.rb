@@ -39,24 +39,24 @@ module StateMachines
       def run_actions(&)
         catch_exceptions do
           @success = if block_given?
-                      result = yield
-                      actions.each { |action| results[action] = result }
-                      !!result
-                    else
-                      actions.compact.each do |action|
-                        next if skip_actions
+                       result = yield
+                       actions.each { |action| results[action] = result }
+                       !!result
+                     else
+                       actions.compact.each do |action|
+                         next if skip_actions
 
-                        # Use thread-safe write for results
-                        if object.respond_to?(:state_machine_mutex)
-                          object.state_machine_mutex.with_write_lock do
-                            results[action] = object.send(action)
-                          end
-                        else
-                          results[action] = object.send(action)
-                        end
-                      end
-                      results.values.all?
-                    end
+                         # Use thread-safe write for results
+                         if object.respond_to?(:state_machine_mutex)
+                           object.state_machine_mutex.with_write_lock do
+                             results[action] = object.send(action)
+                           end
+                         else
+                           results[action] = object.send(action)
+                         end
+                       end
+                       results.values.all?
+                     end
         end
       end
     end
