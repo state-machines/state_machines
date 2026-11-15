@@ -143,6 +143,18 @@ class TransitionClaimTest < Minitest::Test
     @bay.drops = 0
   end
 
+  # Bug: a copy shared the original's lock and claims, so the two objects
+  # serialized on one lock and saw each other's claims.
+  def test_a_copy_gets_its_own_lock_and_claims
+    original_lock = @bay.state_machine_mutex
+    @bay.release
+
+    [@bay.dup, @bay.clone].each do |copy|
+      refute copy.instance_variable_defined?(StateMachines::TransitionClaim::CLAIMS_VARIABLE)
+      refute_same original_lock, copy.state_machine_mutex
+    end
+  end
+
   def test_one_way_transition_is_performed_once_across_threads
     collections = CALLERS.times.map { release_collection }
     results = collections.map { |collection| Thread.new { collection.perform_threaded } }.map(&:value)

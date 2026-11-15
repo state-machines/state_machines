@@ -5,8 +5,7 @@ module StateMachines
     # Thread-safe state operations for async-enabled state machines
     # Uses concurrent-ruby for enterprise-grade thread safety
     module ThreadSafeState
-      # Lazily created state that is rebuilt on demand rather than marshalled
-      TRANSIENT_VARIABLES = [:@_state_machine_mutex, StateMachines::TransitionClaim::CLAIMS_VARIABLE].freeze
+      TRANSIENT_VARIABLES = StateMachines::InstanceMethods::TRANSIENT_VARIABLES
 
       MUTEX_CREATION_LOCK = Thread::Mutex.new
 
