@@ -443,7 +443,7 @@ module StateMachines
 
       default_message = "Expected sync execution of '#{event}' to change #{machine_name} from '#{initial_state}' to '#{expected_state}', but got '#{final_state}'"
 
-      _sm_assert(result, "Event #{event} should return true on success")
+      _sm_assert(result, "Event #{event} should return the performed transition on success, but returned #{result.inspect}")
       _sm_assert(state_changed, "State should change from #{initial_state}")
       _sm_assert(correct_final_state, message || default_message)
     end
