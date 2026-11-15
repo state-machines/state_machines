@@ -3,6 +3,35 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.300.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.202.0...state_machines/v0.300.0) (2026-11-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* comparisons against true (`vehicle.ignite == true`, `assert_equal true, vehicle.ignite`, `results.count(true)`) no longer match a success; test for truthiness or StateMachines::Transition. fire_events still returns true on success.
+
+### Features
+
+* drop support for Ruby &lt; 3.4 ([838199a](https://github.com/state-machines/state_machines/commit/838199a860e17135bcdf8cb26ac00f893ec6c1a0))
+* expose state guard conditions on Branch ([9da1a0c](https://github.com/state-machines/state_machines/commit/9da1a0cc83bc971d9b7629192c278f88138130d4))
+* expose why an event was refused ([855fb83](https://github.com/state-machines/state_machines/commit/855fb8371cab3aeba20314bc39c7f11506f8a1f5))
+* return the performed transition from a successful event ([42e7410](https://github.com/state-machines/state_machines/commit/42e74100ebf8bdcaa95f7ee789692b1326a3362d))
+* run tests with padded_cell on CRuby ([#179](https://github.com/state-machines/state_machines/issues/179)) ([6d9e778](https://github.com/state-machines/state_machines/commit/6d9e7784cffea9679ca6a77742fb7c6a24f8bb55))
+* **test_helper:** assert refusal reasons ([5165f5e](https://github.com/state-machines/state_machines/commit/5165f5e3b51a7ea2d659cbc5abeec5b5153afb6f))
+
+
+### Bug Fixes
+
+* a one-way async transition succeeds once ([6289132](https://github.com/state-machines/state_machines/commit/6289132b8f72e0037d1ed53dafb91c3c99fb0072))
+* admit every transition through one claim ([dcf9617](https://github.com/state-machines/state_machines/commit/dcf9617a2f7df494852149ca2e1954b2058efff2))
+* claim an attribute before reading its source state ([bdad5ec](https://github.com/state-machines/state_machines/commit/bdad5ec3fe9319beb245f1435870246db1947582))
+* make Event, State and Branch #draw work with STDIORenderer ([ea2f5cc](https://github.com/state-machines/state_machines/commit/ea2f5ccde08bc6669853da07359e8bf3a69afd5b))
+* read guarded machine state through its attribute ([f0d5abf](https://github.com/state-machines/state_machines/commit/f0d5abf292aa506f7d53207b7da93a53a0eb9682))
+* reject empty state guards ([e5688b6](https://github.com/state-machines/state_machines/commit/e5688b6c73f19143cd7b67ad6cd70a0ff4f810be))
+* run an async collection's callbacks and action once ([8865d8e](https://github.com/state-machines/state_machines/commit/8865d8e3d195da46574d075e216e5cb24dd202f0))
+* show state guards in STDIORenderer output ([10dc8ae](https://github.com/state-machines/state_machines/commit/10dc8ae4fb2280934cd05f45b1b32705d4e06a2e))
+* **test_helper:** describe the transition returned by a successful event ([f003c4f](https://github.com/state-machines/state_machines/commit/f003c4f174146050edf9e311f9472e4df663ab42))
+
 ## [0.202.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.201.0...state_machines/v0.202.0) (2026-07-18)
 
 
