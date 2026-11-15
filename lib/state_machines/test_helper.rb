@@ -403,9 +403,7 @@ module StateMachines
       async_machines = []
 
       object.class.state_machines.each do |name, machine|
-        if machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
-          async_machines << name
-        end
+        async_machines << name if machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
       end
 
       default_message = "Expected all state machines to be sync-only, but these have async enabled: #{async_machines.inspect}"
@@ -518,7 +516,7 @@ module StateMachines
       async_methods = %i[fire_event_async fire_events_async fire_event_async! async_fire_event]
       available_async_methods = async_methods.select { |method| object.respond_to?(method) }
 
-      default_message = "Expected async methods to be available, but found none"
+      default_message = 'Expected async methods to be available, but found none'
 
       _sm_refute_empty(available_async_methods, message || default_message)
     end
@@ -547,11 +545,11 @@ module StateMachines
         _sm_assert_empty(non_async_machines, message || default_message)
       else
         # Check that at least one machine has async
-        async_machines = object.class.state_machines.select do |name, machine|
+        async_machines = object.class.state_machines.select do |_name, machine|
           machine.respond_to?(:async_mode_enabled?) && machine.async_mode_enabled?
         end
 
-        default_message = "Expected at least one state machine to have async enabled, but none found"
+        default_message = 'Expected at least one state machine to have async enabled, but none found'
 
         _sm_refute_empty(async_machines, message || default_message)
       end
@@ -569,15 +567,14 @@ module StateMachines
     #   drone = AutonomousDrone.new
     #   assert_sm_async_event_methods(drone, :launch)  # Checks launch_async and launch_async!
     def assert_sm_async_event_methods(object, event, message = nil)
-      async_method = "#{event}_async".to_sym
-      async_bang_method = "#{event}_async!".to_sym
+      async_method = :"#{event}_async"
+      async_bang_method = :"#{event}_async!"
 
       has_async = object.respond_to?(async_method)
       has_async_bang = object.respond_to?(async_bang_method)
 
-
-      _sm_assert(has_async, "Missing #{async_method} method")
-      _sm_assert(has_async_bang, "Missing #{async_bang_method} method")
+      _sm_assert(has_async, message || "Missing #{async_method} method")
+      _sm_assert(has_async_bang, message || "Missing #{async_bang_method} method")
     end
 
     # Assert that an object has thread-safe state methods when async is enabled
