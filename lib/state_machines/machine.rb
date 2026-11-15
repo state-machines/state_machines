@@ -476,6 +476,14 @@ module StateMachines
     # Whether the machine will use transactions when firing events
     attr_reader :use_transactions
 
+    # The options declared by the machine's integration (see
+    # StateMachines::Integrations::Base::ClassMethods#integration_options)
+    # that were passed when creating the machine. Available from
+    # +owner_class=+ onward.
+    #
+    # @return [Hash{Symbol => Object}] frozen option name => value
+    attr_reader :integration_options
+
     # Defines a new helper method in an instance or class scope with the given
     # name.  If the method is already defined in the scope, then this will not
     # override it.

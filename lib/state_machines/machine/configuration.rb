@@ -40,6 +40,7 @@ module StateMachines
         @initialize_state = options[:initialize]
         @action_hook_defined = false
         @async_requested = options[:async]
+        @integration_options = @integration ? options.slice(*@integration.integration_options).freeze : {}.freeze
 
         self.owner_class = owner_class
 

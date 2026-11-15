@@ -74,4 +74,42 @@ class IntegrationOptionsTest < StateMachinesTest
 
     assert_match(/Unknown key: :unknown_option/, error.message)
   end
+
+  def test_should_expose_integration_options_when_owner_class_is_assigned
+    seen = nil
+    integration = Module.new do
+      include StateMachines::Integrations::Base
+
+      def self.integration_options
+        [:test_option]
+      end
+
+      def self.matching_ancestors
+        [TestModel]
+      end
+
+      define_method(:owner_class=) do |klass|
+        seen = integration_options.dup
+        super(klass)
+      end
+    end
+    StateMachines::Integrations.register(integration)
+    Object.const_set('TestModel', Class.new)
+
+    machine = TestModel.state_machine(test_option: :value) { state :active }
+
+    assert_equal({ test_option: :value }, seen)
+    assert_equal({ test_option: :value }, machine.integration_options)
+    assert_predicate machine.integration_options, :frozen?
+  ensure
+    StateMachines::Integrations.send(:integrations).delete(integration)
+    Object.send(:remove_const, 'TestModel') if defined?(TestModel)
+  end
+
+  def test_should_have_no_integration_options_without_integration
+    machine = StateMachines::Machine.new(Class.new)
+
+    assert_empty machine.integration_options
+    assert_predicate machine.integration_options, :frozen?
+  end
 end
