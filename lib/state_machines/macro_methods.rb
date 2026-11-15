@@ -185,13 +185,13 @@ module StateMachines
     #
     #   # Getting current event / transition availability
     #   vehicle.state_events                      # => [:park]
-    #   vehicle.park                              # => true
+    #   vehicle.park                              # => #<StateMachines::Transition attribute=:state event=:park ...>
     #   vehicle.state_events                      # => [:ignite]
     #   vehicle.state_events(:from => :idling)    # => [:park]
     #   vehicle.state_events(:to => :parked)      # => []
     #
     #   vehicle.state_transitions                 # => [#<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>]
-    #   vehicle.ignite                            # => true
+    #   vehicle.ignite                            # => #<StateMachines::Transition attribute=:state event=:ignite ...>
     #   vehicle.state_transitions                 # => [#<StateMachines::Transition attribute=:state event=:park from="idling" from_name=:idling to="parked" to_name=:parked>]
     #
     #   vehicle.state_transitions(:on => :ignite) # => []
@@ -207,7 +207,7 @@ module StateMachines
     #                                             #   ]
     #
     #   # Fire arbitrary events
-    #   vehicle.fire_state_event(:park)           # => true
+    #   vehicle.fire_state_event(:park)           # => #<StateMachines::Transition attribute=:state event=:park ...>
     #
     # == Attribute initialization
     #
@@ -414,7 +414,7 @@ module StateMachines
     #
     #   # Fire +ignite+ event directly
     #   vehicle = Vehicle.create    # => #<Vehicle id=1 state="parked" alarm_state="active">
-    #   vehicle.ignite              # => true
+    #   vehicle.ignite              # => #<StateMachines::Transition attribute=:state event=:ignite ...>
     #   vehicle.state               # => "idling"
     #   vehicle.alarm_state         # => "active"
     #

@@ -234,8 +234,12 @@ class RefusalReasonsTest < StateMachinesTest
     assert_same false, @rocket.launch
   end
 
-  def test_should_return_true_on_success
-    assert_same true, @rocket.launch
+  def test_should_return_the_transition_on_success
+    transition = @rocket.launch
+
+    assert_kind_of StateMachines::Transition, transition
+    assert_equal :launch, transition.event
+    assert_equal 'flying', transition.to
   end
 
   def test_should_clear_the_refusal_after_success

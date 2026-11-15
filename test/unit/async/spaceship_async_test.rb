@@ -99,7 +99,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
       # Wait for all launches to complete
       results = launch_tasks.map(&:wait)
 
-      assert_equal [true, true, true], results
+      assert(results.all?(StateMachines::Transition))
 
       # All ships should be flying
       ships.each do |ship|
@@ -113,7 +113,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
 
       shield_results = shield_tasks.map(&:wait)
 
-      assert_equal [true, true, true], shield_results
+      assert(shield_results.all?(StateMachines::Transition))
 
       # All shields should be up
       ships.each do |ship|
@@ -145,7 +145,7 @@ class SpaceShipAsyncModeTest < Minitest::Test
     threads.each(&:join)
 
     # Only one thread should successfully launch, others should fail
-    successful_launches = results.count { |r| r[:result] == true }
+    successful_launches = results.count { |r| r[:result].is_a?(StateMachines::Transition) }
 
     assert_equal 1, successful_launches, 'Only one thread should successfully launch'
     assert_equal 'flying', @spaceship.status

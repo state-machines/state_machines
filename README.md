@@ -197,19 +197,19 @@ vehicle.state_transitions       # => [#<StateMachines:Transition attribute=:stat
 vehicle.speed                   # => 0
 vehicle.moving?                 # => false
 
-vehicle.ignite                  # => true
+vehicle.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite from="parked" from_name=:parked to="idling" to_name=:idling>
 vehicle.parked?                 # => false
 vehicle.idling?                 # => true
 vehicle.speed                   # => 10
 vehicle                         # => #<Vehicle:0xb7cf4eac @state="idling", @seatbelt_on=true>
 
-vehicle.shift_up                # => true
+vehicle.shift_up                # => #<StateMachines::Transition attribute=:state event=:shift_up from="idling" from_name=:idling to="first_gear" to_name=:first_gear>
 vehicle.speed                   # => 10
 vehicle.moving?                 # => true
 vehicle                         # => #<Vehicle:0xb7cf4eac @state="first_gear", @seatbelt_on=true>
 
 # A generic event helper is available to fire without going through the event's instance method
-vehicle.fire_state_event(:shift_up) # => true
+vehicle.fire_state_event(:shift_up) # => #<StateMachines::Transition attribute=:state event=:shift_up ...>
 
 # Call state-driven behavior that's undefined for the state raises a NoMethodError
 vehicle.speed                   # => NoMethodError: super: no superclass method `speed' for #<Vehicle:0xb7cf4eac>
@@ -223,7 +223,7 @@ vehicle.state?(:parked)         # => false
 vehicle.state?(:invalid)        # => IndexError: :invalid is an invalid name
 
 # Transition callbacks can receive arguments
-vehicle.park(meter_number: '12345') # => true
+vehicle.park(meter_number: '12345') # => #<StateMachines::Transition attribute=:state event=:park ...>
 vehicle.parked?                     # => true
 vehicle.parking_meter_number        # => "12345"
 
@@ -232,7 +232,7 @@ vehicle.alarm_state             # => 1
 vehicle.alarm_state_name        # => :active
 
 vehicle.can_disable_alarm?      # => true
-vehicle.disable_alarm           # => true
+vehicle.disable_alarm           # => #<StateMachines::Transition attribute=:alarm_state event=:disable ...>
 vehicle.alarm_state             # => 0
 vehicle.alarm_state_name        # => :off
 vehicle.can_enable_alarm?       # => true
@@ -250,8 +250,9 @@ vehicle.fire_events!(:ignite, :enable_alarm)    # => StateMachines:InvalidParall
 
 ## Refusal Reasons
 
-An event method returns `false` when the event is refused, so `if vehicle.ignite`
-keeps working. To tell *why* it was refused, every event gets a
+An event method returns the performed `StateMachines::Transition` on success and
+`false` when the event is refused, so `if vehicle.ignite` keeps working. (Compare
+with `if`, not `== true`.) To tell *why* it was refused, every event gets a
 `<event>_refusal` reader next to `can_<event>?`, `<event>_transition` and
 `<event>!`. It returns the reason of the most recent attempt to fire that event
 on that object, or `nil` once an attempt succeeds:
@@ -271,7 +272,7 @@ vehicle.ignite_refusal          # => nil (never refused)
 vehicle.park                    # => false
 vehicle.park_refusal            # => :no_transition
 
-vehicle.ignite                  # => true
+vehicle.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite ...>
 vehicle.ignite_refusal          # => nil
 
 # The bang method raises with the same reason
@@ -382,7 +383,7 @@ system = TorpedoSystem.new
 system.fire_torpedo  # => false (bay doors are closed)
 
 system.open_bay_doors!
-system.fire_torpedo  # => true (bay doors are now open)
+system.fire_torpedo  # => #<StateMachines::Transition ...> (bay doors are now open)
 ```
 
 ### Multiple State Guards
@@ -500,7 +501,7 @@ drone = AutonomousDrone.new
 Async do
   # Async event firing - returns Async::Task
   task = drone.launch_async
-  result = task.wait  # => true
+  result = task.wait  # => #<StateMachines::Transition ...>
 
   # Bang methods for strict error handling
   drone.power_up_async!  # => Async::Task (raises on failure)
@@ -791,7 +792,7 @@ method like so:
 
 ```ruby
 vehicle = Vehicle.create    # => #<Vehicle id=1 state="parked">
-vehicle.ignite              # => true
+vehicle.ignite              # => #<StateMachines::Transition attribute=:state event=:ignite ...>
 vehicle.state               # => "idling"
 ```
 
@@ -1092,7 +1093,7 @@ end
 
 vehicle = Vehicle.new                   # => #<Vehicle:0xb708412c @state="parked" ...>
 vehicle.state                           # => "parked"
-vehicle.machine.ignite                  # => true
+vehicle.machine.ignite                  # => #<StateMachines::Transition attribute=:state event=:ignite ...>
 vehicle.machine.state                   # => "idling"
 vehicle.state                           # => "idling"
 vehicle.machine.state_transitions       # => [#<StateMachines:Transition ...>]

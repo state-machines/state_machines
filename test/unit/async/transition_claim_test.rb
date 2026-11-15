@@ -219,7 +219,7 @@ class TransitionClaimTest < Minitest::Test
       outpost.deliveries.map(&:wait)
     end.wait
 
-    assert_equal 1, results.count(true)
+    assert_equal 1, results.count { |result| result.is_a?(StateMachines::Transition) }
     assert_equal CALLERS - 1, results.count(false)
     assert_equal 'stocked', outpost.hatch
     assert_equal 1, outpost.supplies
@@ -231,7 +231,8 @@ class TransitionClaimTest < Minitest::Test
     machine = Lander.state_machines[:legs]
 
     assert machine.create_async_transition_collection([machine.events[:extend_legs].transition_for(lander)]).perform_threaded
-    assert_equal ['stowed', true], lander.trail
+    assert_equal 'stowed', lander.trail.first
+    assert_kind_of StateMachines::Transition, lander.trail.last
   end
 
   def test_an_acquisition_that_raises_strands_none_of_the_claims_it_took

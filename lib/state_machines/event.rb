@@ -183,7 +183,7 @@ module StateMachines
 
     # Attempts to perform the next available transition on the given object.
     # If no transitions can be made, then this will return false, otherwise
-    # true.
+    # the performed {StateMachines::Transition}.
     #
     # Any additional arguments are passed to the StateMachines::Transition#perform
     # instance method.
@@ -191,6 +191,8 @@ module StateMachines
     # The reason for a refusal is recorded on the object and can be read back
     # with {#refusal} (or the generated `*_refusal` helper).
     #
+    # @return [StateMachines::Transition, false] the performed transition, or
+    #   false if the event was refused
     # @see #refusal
     def fire(object, *event_args)
       machine.reset(object)

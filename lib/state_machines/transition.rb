@@ -169,6 +169,9 @@ module StateMachines
     #   transition.perform(Time.now)                    # => Passes in additional arguments and runs the +save+ action
     #   transition.perform(Time.now, false)             # => Passes in additional arguments and only sets the state attribute
     #   transition.perform(Time.now, run_action: false) # => Passes in additional arguments and only sets the state attribute
+    #
+    # @return [StateMachines::Transition, false] this transition when it
+    #   succeeds, false when it is refused (see {#refusal})
     def perform(*args)
       run_action = case args.last
                    in true | false
@@ -182,7 +185,7 @@ module StateMachines
       self.args = args
 
       # Run the transition
-      !!TransitionCollection.new([self], { use_transactions: machine.use_transactions, actions: run_action }).perform
+      TransitionCollection.new([self], { use_transactions: machine.use_transactions, actions: run_action }).perform ? self : false
     end
 
     # Runs a block within a transaction for the object being transitioned.
