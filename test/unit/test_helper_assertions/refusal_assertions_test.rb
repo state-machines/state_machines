@@ -288,4 +288,27 @@ class RefusalAssertionsTest < StateMachinesTest
     assert_sm_event_triggers(@shuttle, :land)
     assert_sm_immediate_execution(@shuttle, :launch)
   end
+
+  # Bug: immediate execution was decided by wall-clock time (< 10ms), so a
+  # slow runner failed it. It is decided by what the event did.
+  class SlowShuttle
+    state_machine :state, initial: :grounded do
+      before_transition(on: :launch) { sleep 0.02 }
+      event(:launch) { transition grounded: :flying }
+    end
+  end
+
+  def test_immediate_execution_ignores_how_long_the_event_took
+    assert_sm_immediate_execution(SlowShuttle.new, :launch)
+  end
+
+  def test_immediate_execution_fails_for_an_event_returning_an_async_task
+    skip 'async gem not loaded' unless defined?(::Async::Task)
+
+    @shuttle.define_singleton_method(:launch!) do
+      self.state = 'flying'
+      ::Async::Task.allocate
+    end
+    assert_assertion_fails(/returned Async::Task \(async\)/) { assert_sm_immediate_execution(@shuttle, :launch) }
+  end
 end
