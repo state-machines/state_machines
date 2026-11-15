@@ -3,6 +3,27 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.301.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.300.0...state_machines/v0.301.0) (2026-11-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* copies get their own lock; reopened machines apply or refuse options ([#181](https://github.com/state-machines/state_machines/issues/181))
+
+### Features
+
+* keep integration options on the machine ([b96cf57](https://github.com/state-machines/state_machines/commit/b96cf575d69473eaba5be6f9beb6272003f00b7c))
+
+
+### Bug Fixes
+
+* copies get their own lock; reopened machines apply or refuse options ([#181](https://github.com/state-machines/state_machines/issues/181)) ([27d5d5c](https://github.com/state-machines/state_machines/commit/27d5d5c7559d609c6abc7f7cbfc6c471630f2fa8))
+
+
+### Miscellaneous Chores
+
+* release 0.301.0 ([1801d11](https://github.com/state-machines/state_machines/commit/1801d110a1e3d8730f8d1e4c0e4a4f18990ee4e8))
+
 ## [0.300.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.202.0...state_machines/v0.300.0) (2026-11-15)
 
 
