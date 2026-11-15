@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.301.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.0...state_machines/v0.301.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* assert_sm_async_event_methods uses its message argument ([05dfd2c](https://github.com/state-machines/state_machines/commit/05dfd2c5cc6925e57fff6a99daf8171c08b345aa))
+
 ## [0.301.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.300.0...state_machines/v0.301.0) (2026-11-15)
 
 
