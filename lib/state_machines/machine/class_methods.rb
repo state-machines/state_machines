@@ -3,6 +3,10 @@
 module StateMachines
   class Machine
     module ClassMethods
+      # Options a reopened machine accepts; the others only apply when it is
+      # created.
+      REOPEN_OPTIONS = %i[initial async].freeze
+
       # Attempts to find or create a state machine for the given class.  For
       # example,
       #
@@ -14,6 +18,9 @@ module StateMachines
       # If a machine of the given name already exists in one of the class's
       # superclasses, then a copy of that machine will be created and stored
       # in the new owner class (the original will remain unchanged).
+      #
+      # Reopening an existing machine applies +:initial+ and +:async+;
+      # any other option raises ArgumentError instead of being ignored.
       def find_or_create(owner_class, *args, &)
         options = args.last.is_a?(Hash) ? args.pop : {}
         name = args.first || :state
@@ -24,15 +31,20 @@ module StateMachines
                   owner_class.state_machines.values.first))) || nil
 
         if machine
+          unsupported = options.keys - REOPEN_OPTIONS
+          unless unsupported.empty?
+            raise ArgumentError, "Cannot change #{unsupported.map(&:inspect).join(', ')} of existing state machine " \
+                                 "#{name.inspect} on #{owner_class}; reopening it accepts only :initial and :async"
+          end
+
           # Only create a new copy if changes are being made to the machine in
           # a subclass
           if machine.owner_class != owner_class && (options.any? || block_given?)
             machine = machine.clone
-            machine.initial_state = options[:initial] if options.include?(:initial)
             machine.owner_class = owner_class
-            # Configure async mode if requested in options
-            machine.configure_async_mode!(options[:async]) if options.include?(:async)
           end
+          machine.initial_state = options[:initial] if options.include?(:initial)
+          machine.configure_async_mode!(options[:async]) if options.include?(:async)
 
           # Evaluate DSL
           machine.instance_eval(&) if block_given?
