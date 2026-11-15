@@ -599,11 +599,210 @@ module StateMachines
       _sm_assert_empty(missing_methods, message || default_message)
     end
 
+    # === Refusal Reason Assertions ===
+
+    # The reasons an event can be refused for
+    #
+    # @see StateMachines::Event#refusal
+    REFUSAL_REASONS = %i[no_transition guard halted action_failed contended].freeze
+
+    # Assert that firing an event is refused, leaving the machine's state unchanged
+    #
+    # Fires the non-bang event method, which must return false. When a reason is
+    # given, the refusal recorded for the event must equal it.
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event name (plain or namespace-qualified)
+    # @param reason [Symbol, nil] The expected refusal reason, or nil to accept any
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [Symbol, nil] The recorded refusal reason
+    # @raise [ArgumentError] If the reason is not a known refusal reason
+    # @raise [AssertionError] If the event succeeds, changes the state, or is refused for another reason
+    #
+    # @example
+    #   vehicle = Vehicle.new                                         # parked
+    #   assert_sm_refused(vehicle, :park)                             # Any reason
+    #   assert_sm_refused(vehicle, :park, :no_transition)             # Specific reason
+    #   assert_sm_refused(vehicle, :enable, :guard, machine_name: :alarm_state)
+    def assert_sm_refused(object, event, reason = nil, machine_name: :state, message: nil)
+      _sm_validate_refusal_reason(reason) if reason
+      machine, event_obj = _sm_find_event(object, event, machine_name)
+
+      state_before = machine.read(object, :state)
+      result = object.public_send(event_obj.qualified_name)
+      state_after = machine.read(object, :state)
+      actual = event_obj.refusal(object)
+
+      unless result == false
+        outcome = result.is_a?(StateMachines::Transition) ? "it transitioned #{result.from_name.inspect} -> #{result.to_name.inspect}" : "it returned #{result.inspect}"
+        _sm_flunk(message || "Expected :#{event_obj.qualified_name} on #{machine.name} to be refused, but #{outcome}")
+      end
+      _sm_assert(state_before == state_after,
+                 message || "Expected a refused :#{event_obj.qualified_name} to leave #{machine.name} at #{state_before.inspect}, but it became #{state_after.inspect}")
+      if reason
+        _sm_assert_equal(reason, actual,
+                         message || "Expected :#{event_obj.qualified_name} on #{machine.name} to be refused for #{reason.inspect}, but was refused for #{actual.inspect}")
+      end
+
+      actual
+    end
+
+    # Assert that the most recent attempt to fire an event was refused for the expected reason
+    #
+    # Reads the recorded refusal without firing the event.
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event name (plain or namespace-qualified)
+    # @param expected_reason [Symbol] The expected refusal reason
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [Symbol] The recorded refusal reason
+    # @raise [ArgumentError] If the reason is not a known refusal reason
+    # @raise [AssertionError] If the recorded reason differs
+    #
+    # @example
+    #   vehicle.park
+    #   assert_sm_refusal(vehicle, :park, :no_transition)
+    def assert_sm_refusal(object, event, expected_reason, machine_name: :state, message: nil)
+      _sm_validate_refusal_reason(expected_reason)
+      machine, event_obj = _sm_find_event(object, event, machine_name)
+      actual = event_obj.refusal(object)
+      default_message = "Expected the last :#{event_obj.qualified_name} on #{machine.name} to be refused for #{expected_reason.inspect}, but #{actual ? "it was refused for #{actual.inspect}" : 'no refusal was recorded'}"
+
+      _sm_assert_equal(expected_reason, actual, message || default_message)
+      actual
+    end
+
+    # Assert that the most recent attempt to fire an event recorded no refusal
+    #
+    # Reads the recorded refusal without firing the event. Passes after a
+    # success, or when the event was never fired.
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event name (plain or namespace-qualified)
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [void]
+    # @raise [AssertionError] If a refusal is recorded
+    #
+    # @example
+    #   vehicle.ignite
+    #   refute_sm_refusal(vehicle, :ignite)
+    def refute_sm_refusal(object, event, machine_name: :state, message: nil)
+      machine, event_obj = _sm_find_event(object, event, machine_name)
+      actual = event_obj.refusal(object)
+      default_message = "Expected no refusal for the last :#{event_obj.qualified_name} on #{machine.name}, but it was refused for #{actual.inspect}"
+
+      _sm_assert_nil(actual, message || default_message)
+    end
+    alias assert_sm_no_refusal refute_sm_refusal
+
+    # Assert that the bang event method raises StateMachines::InvalidTransition with the expected reason
+    #
+    # @param object [Object] The object with state machines
+    # @param event [Symbol] The event name (plain or namespace-qualified)
+    # @param expected_reason [Symbol] The expected StateMachines::InvalidTransition#reason
+    # @param machine_name [Symbol] The name of the state machine (defaults to :state)
+    # @param message [String, nil] Custom failure message
+    # @return [StateMachines::InvalidTransition] The raised error
+    # @raise [ArgumentError] If the reason is not a known refusal reason
+    # @raise [AssertionError] If nothing is raised or the reason differs
+    #
+    # @example
+    #   assert_sm_raises_refusal(vehicle, :park, :no_transition)
+    def assert_sm_raises_refusal(object, event, expected_reason, machine_name: :state, message: nil)
+      _sm_validate_refusal_reason(expected_reason)
+      machine, event_obj = _sm_find_event(object, event, machine_name)
+      bang = "#{event_obj.qualified_name}!"
+
+      error = _sm_capture_error(StateMachines::InvalidTransition) { object.public_send(bang) }
+      _sm_flunk(message || "Expected #{bang} on #{machine.name} to raise StateMachines::InvalidTransition, but nothing was raised") unless error
+
+      _sm_assert_equal(expected_reason, error.reason,
+                       message || "Expected #{bang} on #{machine.name} to be refused for #{expected_reason.inspect}, but was refused for #{error.reason.inspect}")
+      error
+    end
+
+    # Assert that firing events in parallel is refused with the expected reasons
+    #
+    # +fire_events+ must return false, and +fire_events!+ must raise
+    # StateMachines::InvalidParallelTransition whose #reasons equals the
+    # expected Hash. Only the events that caused the refusal carry a reason.
+    #
+    # @param object [Object] The object with state machines
+    # @param events [Array<Symbol>] The (qualified) event names to fire together
+    # @param expected_reasons [Hash{Symbol => Symbol}] The expected reason per event
+    # @param message [String, nil] Custom failure message
+    # @return [StateMachines::InvalidParallelTransition] The raised error
+    # @raise [ArgumentError] If a reason is not a known refusal reason
+    # @raise [AssertionError] If the events are not refused or the reasons differ
+    #
+    # @example
+    #   assert_sm_parallel_refused(vehicle, %i[ignite enable_alarm], { enable_alarm: :no_transition })
+    def assert_sm_parallel_refused(object, events, expected_reasons, message: nil)
+      raise ArgumentError, "Expected reasons must be a Hash of event => reason, got #{expected_reasons.inspect}" unless expected_reasons.is_a?(Hash)
+
+      expected_reasons.each_value { |reason| _sm_validate_refusal_reason(reason) }
+      events = Array(events)
+
+      result = object.fire_events(*events)
+      _sm_flunk(message || "Expected fire_events(#{events.map(&:inspect).join(', ')}) to be refused, but it returned #{result.inspect}") unless result == false
+
+      error = _sm_capture_error(StateMachines::InvalidParallelTransition) { object.fire_events!(*events) }
+      _sm_flunk(message || "Expected fire_events!(#{events.map(&:inspect).join(', ')}) to raise StateMachines::InvalidParallelTransition, but nothing was raised") unless error
+
+      _sm_assert_equal(expected_reasons, error.reasons,
+                       message || "Expected fire_events!(#{events.map(&:inspect).join(', ')}) to be refused for #{expected_reasons.inspect}, but was refused for #{error.reasons.inspect}")
+      error
+    end
+
     # RSpec-style aliases for event triggering (for consistency with RSpec expectations)
     alias expect_to_trigger_event assert_sm_triggers_event
     alias have_triggered_event assert_sm_triggers_event
 
+    # RSpec-style aliases for refusal reasons
+    alias expect_to_be_refused assert_sm_refused
+    alias expect_refusal assert_sm_refusal
+    alias expect_no_refusal refute_sm_refusal
+    alias expect_to_raise_refusal assert_sm_raises_refusal
+    alias expect_parallel_refused assert_sm_parallel_refused
+
     private
+
+    # Finds the machine and its event, accepting the plain or the
+    # namespace-qualified event name, and raising when either is missing
+    def _sm_find_event(object, event, machine_name)
+      machine = object.class.state_machines[machine_name] if object.class.respond_to?(:state_machines)
+      unless machine
+        available = object.class.respond_to?(:state_machines) ? object.class.state_machines.keys : []
+        raise ArgumentError, "No state machine '#{machine_name}' found. Available machines: #{available.inspect}"
+      end
+
+      event_obj = machine.events[event.to_sym] || machine.events[event.to_sym, :qualified_name]
+      return [machine, event_obj] if event_obj
+
+      raise ArgumentError, "No event :#{event} found on machine :#{machine_name}. Available events: #{machine.events.map(&:qualified_name).inspect}"
+    end
+
+    # Raises a descriptive ArgumentError for an unknown refusal reason, so a
+    # typo in the expectation is not reported as a failed refusal
+    def _sm_validate_refusal_reason(reason)
+      return if REFUSAL_REASONS.include?(reason)
+
+      suggestion = DidYouMean::SpellChecker.new(dictionary: REFUSAL_REASONS).correct(reason.to_s).first if defined?(DidYouMean::SpellChecker)
+      hint = suggestion ? " Did you mean #{suggestion.inspect}?" : ''
+      raise ArgumentError, "Unknown refusal reason #{reason.inspect}.#{hint} Valid reasons: #{REFUSAL_REASONS.inspect}"
+    end
+
+    # Runs the block and returns the error of the given class it raised, or
+    # nil when it raised nothing; other errors propagate
+    def _sm_capture_error(error_class)
+      yield
+      nil
+    rescue error_class => e
+      e
+    end
 
     # Finds the can_<event>? method for the event, trying both the default and
     # namespaced naming patterns, and raising when neither exists
@@ -650,6 +849,16 @@ module StateMachines
         expect(actual).to eq(expected), message
       else
         raise message unless expected == actual
+      end
+    end
+
+    def _sm_assert_nil(value, message)
+      if defined?(::Minitest)
+        assert_nil value, message
+      elsif defined?(::RSpec)
+        expect(value).to be_nil, message
+      else
+        raise message unless value.nil?
       end
     end
 

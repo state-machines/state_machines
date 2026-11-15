@@ -723,6 +723,37 @@ machine = Vehicle.state_machine(:state)
 assert_after_transition(machine, on: :crash, do: :tow)
 ```
 
+#### Refusal Reason Assertions
+
+Assert *why* an event was refused (see [Refusal Reasons](#refusal-reasons)). Reasons are
+validated against `:no_transition`, `:guard`, `:halted`, `:action_failed` and `:contended`, so a
+typo raises `ArgumentError` instead of reporting a bogus refusal:
+
+```ruby
+# Fires the non-bang event: it must return false and leave the state unchanged
+assert_sm_refused(vehicle, :park)                       # Any reason; returns the reason
+assert_sm_refused(vehicle, :ignite, :guard)             # Specific reason
+
+# Reads the most recent refusal without firing
+vehicle.park
+assert_sm_refusal(vehicle, :park, :no_transition)
+vehicle.ignite
+refute_sm_refusal(vehicle, :ignite)                     # Nil after a success
+
+# The bang raises StateMachines::InvalidTransition with that #reason (returns the error)
+assert_sm_raises_refusal(vehicle, :park, :no_transition)
+
+# fire_events returns false and fire_events! raises InvalidParallelTransition with these #reasons
+assert_sm_parallel_refused(vehicle, %i[park enable_alarm], { park: :no_transition })
+
+# Namespaced machines accept the plain or the qualified event name
+assert_sm_refusal(vehicle, :enable, :guard, machine_name: :alarm_state)
+assert_sm_refusal(vehicle, :enable_alarm, :guard, machine_name: :alarm_state)
+```
+
+RSpec-style aliases: `expect_to_be_refused`, `expect_refusal`, `expect_no_refusal`,
+`expect_to_raise_refusal`, `expect_parallel_refused`.
+
 #### Multiple State Machine Support
 
 The TestHelper fully supports objects with multiple state machines:
