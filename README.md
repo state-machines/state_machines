@@ -321,6 +321,14 @@ exception: a success whose `after_transition` raises, or a callback or guard
 that raises before any outcome, leaves the reader at `nil`. (An action that
 raises is `:action_failed`.)
 
+Whether an `after_transition` callback that raises undoes the transition
+depends on the action. Without an action hook, the callback runs after the
+transition is complete: the new state stays and the reader is `nil`. When the
+machine hooks its action (the ORM integrations hook `save`), `after_transition`
+callbacks run inside that action, so a raise counts as the action failing: the
+state rolls back with it and the reader is `:action_failed`. The exception is
+re-raised in both cases.
+
 A copy made with `dup` or `clone` starts with no reasons, since it has made no
 attempts. A frozen object records nothing: the event still returns `false`, and
 the reader returns `nil`.
