@@ -28,3 +28,7 @@ Metrics/MethodLength:
 
 AllCops:
   NewCops: enable
+  TargetRubyVersion: 4.0
+  Exclude:
+    - "pkg/**/*"
+    - "vendor/**/*"
