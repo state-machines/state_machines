@@ -15,7 +15,7 @@ module StateMachines
                        end
 
         # Validate options including integration-specific options
-        valid_keys = %i[attribute initial initialize action plural namespace integration messages use_transactions]
+        valid_keys = creation_options
         valid_keys += @integration.integration_options if @integration
         self.class.assert_extensions_loaded!(options.keys - valid_keys)
         StateMachines::OptionsValidator.assert_valid_keys!(options, valid_keys)
@@ -24,6 +24,8 @@ module StateMachines
           extend @integration
 
           options = (@integration.defaults || {}).merge(options)
+          # An integration default can supply an extension's option too
+          self.class.assert_extensions_loaded!(options.keys - valid_keys)
         end
 
         # Add machine-wide defaults
@@ -55,6 +57,8 @@ module StateMachines
 
         # Evaluate DSL
         instance_eval(&) if block_given?
+
+        after_definition(options)
 
         self.initial_state = options[:initial] unless sibling_machines.any?
       end

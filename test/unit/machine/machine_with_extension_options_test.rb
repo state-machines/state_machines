@@ -20,8 +20,44 @@ class MachineWithExtensionOptionsTest < StateMachinesTest
     end
   end
 
+  # An integration whose defaults supply the extension's option
+  module AsyncByDefault
+    include StateMachines::Integrations::Base
+
+    @defaults = { async: true }
+  end
+
+  # A machine with an extension's creation option, recording the options
+  # #after_definition sees
+  class BeaconMachine < StateMachines::Machine
+    attr_reader :defined_with, :states_when_defined
+
+    def creation_options
+      super + %i[beacon]
+    end
+
+    protected
+
+    def after_definition(options)
+      super
+      @defined_with = options
+      @states_when_defined = states.map(&:name)
+    end
+  end
+
+  # An integration whose defaults supply BeaconMachine's option
+  module LitByDefault
+    include StateMachines::Integrations::Base
+
+    @defaults = { beacon: :lit }
+  end
+
   def setup
     @klass = Class.new
+  end
+
+  def teardown
+    StateMachines::Integrations.reset
   end
 
   def test_should_name_the_gem_when_async_is_given_on_creation
@@ -53,6 +89,41 @@ class MachineWithExtensionOptionsTest < StateMachinesTest
 
     assert_match ASYNC_MISSING, error.message
     assert_same @klass.state_machine(:status), subclass.state_machine(:status)
+  end
+
+  def test_should_name_the_gem_when_an_integration_default_supplies_async
+    StateMachines::Integrations.register(AsyncByDefault)
+
+    error = assert_raises(ArgumentError) { StateMachines::Machine.new(@klass, integration: :async_by_default) }
+
+    assert_match ASYNC_MISSING, error.message
+  end
+
+  def test_should_accept_only_the_core_options_on_creation_by_default
+    assert_equal %i[attribute initial initialize action plural namespace integration messages use_transactions],
+                 StateMachines::Machine.new(@klass).creation_options
+  end
+
+  def test_should_hand_an_extension_option_to_after_definition_once_the_block_ran
+    machine = BeaconMachine.new(@klass, beacon: :lit, initial: :parked) { state :idling }
+
+    assert_equal :lit, machine.defined_with[:beacon]
+    assert_includes machine.states_when_defined, :idling
+  end
+
+  def test_should_hand_an_integration_default_for_an_extension_option_to_after_definition
+    StateMachines::Integrations.register(LitByDefault)
+
+    assert_equal :lit, BeaconMachine.new(@klass, integration: :lit_by_default).defined_with[:beacon]
+  end
+
+  def test_should_let_the_caller_override_an_integration_default_with_false
+    StateMachines::Integrations.register(LitByDefault)
+
+    machine = BeaconMachine.new(@klass, integration: :lit_by_default, beacon: false)
+
+    assert_includes machine.defined_with, :beacon
+    refute machine.defined_with[:beacon]
   end
 
   def test_should_still_report_other_unknown_options_as_unknown

@@ -450,10 +450,11 @@ Async mode (`state_machine ..., async: true`, `<event>_async` methods, `fire_eve
 in the [state_machines-async](https://github.com/state-machines/state_machines-async) gem. Without it
 loaded, `async: true` raises `ArgumentError` naming the gem rather than being ignored.
 
-Extensions plug into two machine hooks: `Machine#claims_transitions?` makes `TransitionCollection#perform`
+Extensions plug into machine hooks: `Machine#claims_transitions?` makes `TransitionCollection#perform`
 claim the machine's attribute before performing (concurrent transitions out of one state then perform once,
-the others are refused as `:contended`), and `Machine#reopen_options` / `Machine#reopen` let a reopened
-machine accept an extension's option.
+the others are refused as `:contended`); `Machine#creation_options` / `Machine#after_definition` let a new
+machine accept an extension's option (from the caller or the integration's defaults), and
+`Machine#reopen_options` / `Machine#reopen` let a reopened machine accept it.
 
 ```ruby
 # Human-friendly names can be accessed for states/events

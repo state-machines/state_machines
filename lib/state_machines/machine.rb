@@ -612,6 +612,16 @@ module StateMachines
       false
     end
 
+    # The options a new machine accepts, besides its integration's
+    # (StateMachines::Integrations::Base::ClassMethods#integration_options).
+    # An extension adding an option appends it here and applies it in
+    # #after_definition.
+    #
+    # @return [Array<Symbol>]
+    def creation_options
+      %i[attribute initial initialize action plural namespace integration messages use_transactions]
+    end
+
     # The options a reopened machine accepts (see
     # StateMachines::Machine.find_or_create); the others only apply when it is
     # created.  An extension adding a reopenable option appends it here and
@@ -635,6 +645,15 @@ module StateMachines
 
     # Runs additional initialization hooks.  By default, this is a no-op.
     def after_initialize; end
+
+    # Runs once a new machine's definition block has been evaluated, before
+    # its initial state is set, with its options: the caller's merged over
+    # the integration's defaults.  By default, this is a no-op; an extension
+    # applies its #creation_options here.
+    #
+    # @param _options [Hash] the machine's options
+    # @return [void]
+    def after_definition(_options); end
 
     # Always yields
     def transaction(_object)
