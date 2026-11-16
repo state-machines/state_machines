@@ -225,8 +225,10 @@ module StateMachines
     # - :halted - a before_transition or around_transition callback halted the
     #   transition
     # - :action_failed - the machine's action (e.g. save) did not succeed
-    # - :contended - in async mode, a concurrent transition held or moved the
-    #   attribute first
+    # - :contended - a concurrent transition held or moved the attribute
+    #   first; only on machines that claim their transitions (see
+    #   {StateMachines::Machine#claims_transitions?}), such as async mode
+    #   machines of state_machines-async
     #
     # When the event was fired in parallel with others (see
     # {StateMachines::InstanceMethods#fire_events}), only the events that caused
