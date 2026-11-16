@@ -26,9 +26,10 @@ module StateMachines
     LOCK = Thread::Mutex.new
 
     class << self
-      # Claims an attribute for every given transition whose machine runs in
-      # async mode, ordered by attribute so that collections over the same
-      # attributes claim them in the same order.
+      # Claims an attribute for every given transition whose machine claims
+      # transitions (Machine#claims_transitions?), ordered by attribute so that
+      # collections over the same attributes claim them in the same order.  A
+      # collection without such a transition is granted an empty set.
       #
       # Returns the granted claims, or nil when an attribute is held by another
       # active owner or has left the transition's source state.  Every exit
@@ -41,7 +42,7 @@ module StateMachines
       #   attribute could not be claimed, when the claim is refused
       # @return [Array<StateMachines::TransitionClaim>, nil]
       def claim(transitions)
-        claimable = transitions.select { |transition| transition.machine.async_mode_enabled? }
+        claimable = transitions.select { |transition| transition.machine.claims_transitions? }
         granted = []
         admitted = false
 

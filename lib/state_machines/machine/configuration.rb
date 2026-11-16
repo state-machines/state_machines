@@ -15,8 +15,9 @@ module StateMachines
                        end
 
         # Validate options including integration-specific options
-        valid_keys = %i[attribute initial initialize action plural namespace integration messages use_transactions async]
+        valid_keys = %i[attribute initial initialize action plural namespace integration messages use_transactions]
         valid_keys += @integration.integration_options if @integration
+        self.class.assert_extensions_loaded!(options.keys - valid_keys)
         StateMachines::OptionsValidator.assert_valid_keys!(options, valid_keys)
 
         if @integration
@@ -40,7 +41,6 @@ module StateMachines
         @use_transactions = options[:use_transactions]
         @initialize_state = options[:initialize]
         @action_hook_defined = false
-        @async_requested = options[:async]
         @integration_options = @integration ? options.slice(*@integration.integration_options).freeze : {}.freeze
 
         self.owner_class = owner_class
@@ -56,9 +56,6 @@ module StateMachines
         # Evaluate DSL
         instance_eval(&) if block_given?
 
-        # Configure async mode if requested, after owner_class is set and DSL is evaluated
-        configure_async_mode!(true) if @async_requested
-
         self.initial_state = options[:initial] unless sibling_machines.any?
       end
 
@@ -73,8 +70,6 @@ module StateMachines
         @states = @states.dup
         @states.machine = self
         @callbacks = { before: @callbacks[:before].dup, after: @callbacks[:after].dup, failure: @callbacks[:failure].dup }
-        @async_requested = orig.instance_variable_get(:@async_requested)
-        @async_mode_enabled = orig.instance_variable_get(:@async_mode_enabled)
       end
 
       # Sets the class which is the owner of this state machine.  Any methods

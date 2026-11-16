@@ -95,8 +95,18 @@ class RefusalReasonsTest < StateMachinesTest
     end
   end
 
+  # A machine whose transitions are claimed before they are performed, as an
+  # extension running them concurrently makes it
+  module ClaimingMachine
+    def claims_transitions?
+      true
+    end
+  end
+
   class Satellite
-    state_machine :orbit, initial: :parked, async: true do
+    state_machine :orbit, initial: :parked do
+      extend ClaimingMachine
+
       event(:launch) { transition parked: :cruising }
     end
   end
@@ -217,8 +227,6 @@ class RefusalReasonsTest < StateMachinesTest
   end
 
   def test_should_report_contended_when_the_state_moves_before_the_claim
-    skip "Async tests not supported on #{RUBY_ENGINE}" if %w[jruby truffleruby].include?(RUBY_ENGINE)
-
     satellite = Satellite.new
     transition = satellite.launch_transition
     satellite.orbit = 'cruising'
@@ -511,10 +519,10 @@ class RefusalReasonsTest < StateMachinesTest
   end
 
   def test_should_report_contended_only_on_the_contended_transition_in_parallel
-    skip "Async tests not supported on #{RUBY_ENGINE}" if %w[jruby truffleruby].include?(RUBY_ENGINE)
-
     klass = Class.new do
-      state_machine :orbit, initial: :parked, async: true do
+      state_machine :orbit, initial: :parked do
+        extend ClaimingMachine
+
         event(:launch) { transition parked: :cruising }
       end
 

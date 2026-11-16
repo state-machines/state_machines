@@ -22,9 +22,9 @@ module StateMachines
   end
 
   module InstanceMethods
-    # Per-object concurrency state, created on demand: the lock and the
-    # transition claims. Never copied nor marshalled.
-    TRANSIENT_VARIABLES = %i[@_state_machine_mutex @_state_machine_transition_claims].freeze
+    # Per-object concurrency state, created on demand: the transition claims.
+    # Never copied (see #initialize_copy).
+    TRANSIENT_VARIABLES = %i[@_state_machine_transition_claims].freeze
 
     # Runs one or more events in parallel.  All events will run through the
     # following steps:
@@ -147,8 +147,8 @@ module StateMachines
 
     # A copy (+dup+ / +clone+) has made no attempt to fire an event, so it
     # starts with no refusal reasons instead of sharing the original's. It
-    # also gets its own lock and transition claims (created on demand)
-    # instead of sharing the original's.
+    # also gets its own transition claims (created on demand) instead of
+    # sharing the original's.
     #
     # A class defining its own +initialize_copy+ must call +super+.
     #

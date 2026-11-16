@@ -37,7 +37,6 @@ Below is an example of many of the features offered by this plugin, including:
 * Transition callbacks
 * Conditional transitions
 * Coordinated state management guards
-* Asynchronous state machines (async: true)
 * State-driven instance behavior
 * Customized state values
 * Parallel events
@@ -263,7 +262,7 @@ on that object, or `nil` once an attempt succeeds:
 | `:guard`         | A transition from the current state exists, but its `if:`/`unless:` (or state guards) rejected it |
 | `:halted`        | A `before_transition` or `around_transition` callback halted it          |
 | `:action_failed` | The machine's action (e.g. `save`) did not succeed                       |
-| `:contended`     | Async mode only: a concurrent transition held or moved the attribute first |
+| `:contended`     | A concurrent transition held or moved the attribute first (only machines that claim their transitions, e.g. [state_machines-async](https://github.com/state-machines/state_machines-async)) |
 
 ```ruby
 vehicle = Vehicle.new           # parked
@@ -447,119 +446,14 @@ StarshipBridge.new.can_red_alert?
 
 # Asynchronous State Machines
 
-State machines can operate asynchronously for high-performance applications. This is ideal for I/O-bound tasks, such as in web servers or other concurrent environments, where you don't want a long-running state transition (like one involving a network call) to block the entire thread.
+Async mode (`state_machine ..., async: true`, `<event>_async` methods, `fire_event_async`) lives
+in the [state_machines-async](https://github.com/state-machines/state_machines-async) gem. Without it
+loaded, `async: true` raises `ArgumentError` naming the gem rather than being ignored.
 
-This feature is powered by the [async](https://github.com/socketry/async) gem and uses `concurrent-ruby` for enterprise-grade thread safety.
-
-## Platform Compatibility
-
-**Supported Platforms:**
-* MRI Ruby (CRuby) 3.4+
-* Other Ruby engines with full Fiber scheduler support
-
-**Unsupported Platforms:**
-* JRuby - Falls back to synchronous mode with warnings
-* TruffleRuby - Falls back to synchronous mode with warnings
-
-## Basic Async Usage
-
-Enable async mode by adding `async: true` to your state machine declaration:
-
-```ruby
-class AutonomousDrone < StarfleetShip
-  # Async-enabled state machine for autonomous operation
-  state_machine :status, async: true, initial: :docked do
-    event :launch do
-      transition docked: :flying
-    end
-
-    event :land do
-      transition flying: :docked
-    end
-  end
-
-  # Mixed configuration: some machines async, others sync
-  state_machine :teleporter_status, async: true, initial: :offline do
-    event :power_up do
-      transition offline: :charging
-    end
-
-    event :teleport do
-      transition ready: :teleporting
-    end
-  end
-
-  # Weapons remain synchronous for safety
-  state_machine :weapons, initial: :disarmed do
-    event :arm do
-      transition disarmed: :armed
-    end
-  end
-end
-```
-
-## Async Event Methods
-
-Async-enabled machines automatically generate async versions of event methods:
-
-```ruby
-drone = AutonomousDrone.new
-
-# Within an Async context
-Async do
-  # Async event firing - returns Async::Task
-  task = drone.launch_async
-  result = task.wait  # => #<StateMachines::Transition ...>
-
-  # Bang methods for strict error handling
-  drone.power_up_async!  # => Async::Task (raises on failure)
-
-  # Generic async event firing
-  drone.fire_event_async(:teleport)  # => Async::Task
-end
-
-# Outside Async context - raises error
-drone.launch_async  # => RuntimeError: launch_async must be called within an Async context
-```
-
-## Thread Safety
-
-Async state machines use enterprise-grade thread safety with `concurrent-ruby`:
-
-```ruby
-# Concurrent operations are automatically thread-safe
-threads = []
-10.times do
-  threads << Thread.new do
-    Async do
-      drone.launch_async.wait
-      drone.land_async.wait
-    end
-  end
-end
-threads.each(&:join)
-```
-
-## Performance Considerations
-
-* **Thread Safety**: Uses `Concurrent::ReentrantReadWriteLock` for optimal read/write performance.
-* **Memory**: Each async-enabled object gets its own mutex (lazy-loaded).
-* **Marshalling**: Objects with async state machines can be serialized (mutex excluded/recreated).
-* **Mixed Mode**: You can mix async and sync state machines in the same class.
-
-## Dependencies
-
-Async functionality requires:
-
-```ruby
-# Gemfile (automatically scoped to MRI Ruby)
-platform :ruby do
-  gem 'async', '>= 2.25.0'
-  gem 'concurrent-ruby', '>= 1.3.5'
-end
-```
-
-*Note: These gems are only installed on supported platforms. JRuby/TruffleRuby won't attempt installation.*
+Extensions plug into two machine hooks: `Machine#claims_transitions?` makes `TransitionCollection#perform`
+claim the machine's attribute before performing (concurrent transitions out of one state then perform once,
+the others are refused as `:contended`), and `Machine#reopen_options` / `Machine#reopen` let a reopened
+machine accept an extension's option.
 
 ```ruby
 # Human-friendly names can be accessed for states/events

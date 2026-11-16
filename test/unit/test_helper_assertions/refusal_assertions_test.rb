@@ -302,13 +302,17 @@ class RefusalAssertionsTest < StateMachinesTest
     assert_sm_immediate_execution(SlowShuttle.new, :launch)
   end
 
-  def test_immediate_execution_fails_for_an_event_returning_an_async_task
-    skip 'async gem not loaded' unless defined?(::Async::Task)
-
+  def test_immediate_execution_fails_for_an_event_returning_something_to_wait_on
+    pending = Class.new
     @shuttle.define_singleton_method(:launch!) do
       self.state = 'flying'
-      ::Async::Task.allocate
+      pending.new
     end
-    assert_assertion_fails(/returned Async::Task \(async\)/) { assert_sm_immediate_execution(@shuttle, :launch) }
+    assert_assertion_fails(/to return the performed transition, but it returned #<Class/) { assert_sm_immediate_execution(@shuttle, :launch) }
+  end
+
+  def test_immediate_execution_fails_when_the_state_has_not_changed_on_return
+    @shuttle.define_singleton_method(:launch!) { launch_transition }
+    assert_assertion_fails(/should change state before returning/) { assert_sm_immediate_execution(@shuttle, :launch) }
   end
 end

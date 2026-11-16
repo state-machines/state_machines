@@ -14,7 +14,6 @@ require_relative 'machine/event_methods'
 require_relative 'machine/callbacks'
 require_relative 'machine/rendering'
 require_relative 'machine/integration'
-require_relative 'machine/async_extensions'
 require_relative 'syntax_validator'
 
 module StateMachines
@@ -595,6 +594,41 @@ module StateMachines
     # event transitions when the configured action gets called.
     def action_hook?(self_only = false)
       @action_hook_defined || (!self_only && owner_class.state_machines.any? { |_name, machine| machine.action == action && machine != self && machine.action_hook?(true) })
+    end
+
+    # Whether objects may perform this machine's transitions concurrently, from
+    # several threads or fibers at once.  When true,
+    # TransitionCollection#perform claims the machine's attribute on the
+    # object before performing (see StateMachines::TransitionClaim), so of
+    # concurrent transitions out of one state only the first is performed and
+    # the others are refused as :contended.
+    #
+    # The core's machines do not claim.  An extension that performs
+    # transitions concurrently overrides this, as state_machines-async does
+    # for the machines it runs in async mode.
+    #
+    # @return [Boolean]
+    def claims_transitions?
+      false
+    end
+
+    # The options a reopened machine accepts (see
+    # StateMachines::Machine.find_or_create); the others only apply when it is
+    # created.  An extension adding a reopenable option appends it here and
+    # applies it in #reopen.
+    #
+    # @return [Array<Symbol>]
+    def reopen_options
+      %i[initial]
+    end
+
+    # Applies the options given when this machine is reopened, before the
+    # reopening block is evaluated.
+    #
+    # @param options [Hash] the options, limited to #reopen_options
+    # @return [void]
+    def reopen(options)
+      self.initial_state = options[:initial] if options.include?(:initial)
     end
 
     protected
