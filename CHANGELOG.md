@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.301.2](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.1...state_machines/v0.301.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* assert_sm_immediate_execution checks what the event did, not how long it took ([162150d](https://github.com/state-machines/state_machines/commit/162150d9ca6e8184a9ab590824619fca16b8bf2a))
+
 ## [0.301.1](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.0...state_machines/v0.301.1) (2026-11-15)
 
 
