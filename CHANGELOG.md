@@ -3,6 +3,22 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.302.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.2...state_machines/v0.302.0) (2026-11-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* move async mode to state_machines-async
+
+### Features
+
+* move async mode to state_machines-async ([a3c4640](https://github.com/state-machines/state_machines/commit/a3c4640a6c1e89c9995dad94fa0c76ab00d2c0f6))
+
+
+### Bug Fixes
+
+* let extensions take creation options, integration defaults included ([583ad63](https://github.com/state-machines/state_machines/commit/583ad63d58c023556ea2f76579109fd86fc1e653))
+
 ## [0.301.2](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.1...state_machines/v0.301.2) (2026-11-16)
 
 
