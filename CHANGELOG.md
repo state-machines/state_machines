@@ -3,6 +3,31 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.304.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.303.0...state_machines/v0.304.0) (2026-11-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* an around_transition no longer spans valid? and the following save; it wraps the save. Transition#paused?, #resumable? and #resume!, StateMachines::PausableFiber and the fiber: option of transition collections are removed; Transition#previewed? reports a preview in progress.
+* before, after, around and do are reserved keys in a transition's hash. A state named :after used as a hash key must be written `transition from: :after, to: :parked`; the ArgumentError says so.
+
+### Features
+
+* add before:/after:/around: callbacks to transition branches ([97749ff](https://github.com/state-machines/state_machines/commit/97749ff673bec52e4ce0fea6f95e076e23810e2f))
+
+
+### Bug Fixes
+
+* end a preview with the full run and fail it with later machines ([1d93594](https://github.com/state-machines/state_machines/commit/1d93594c1eba2ff64dc15200e4efc8435ec43393))
+* keep preview bookkeeping only from a successful preview to its full run ([1c0e1e1](https://github.com/state-machines/state_machines/commit/1c0e1e16105d3fbd4845dda0ec3b61de5d938ac6))
+* list only valid keys for a state context transition ([3dfb8e3](https://github.com/state-machines/state_machines/commit/3dfb8e3ac6deca14fff759a438a784266f8d4539))
+* preview every before callback and evaluate each condition once ([c384066](https://github.com/state-machines/state_machines/commit/c384066dfdc30a525efac404ca82672a1c8055ab))
+* preview transitions instead of pausing them across calls ([7aad05a](https://github.com/state-machines/state_machines/commit/7aad05a5b3e0b7eca1fb678c61659bacf5c91c32))
+* read transition callback keys the same way everywhere ([1fc0e94](https://github.com/state-machines/state_machines/commit/1fc0e941d0a344aab6e7d637ad0fabf22e45702f))
+* resume a paused transition with the context it paused in ([6c9670c](https://github.com/state-machines/state_machines/commit/6c9670cce9c033800db823ebcdf1839cf8b5a793))
+* run a paused transition's action when resuming without fibers ([e361f04](https://github.com/state-machines/state_machines/commit/e361f047499bd8cea9dea6efe0475b696528ccfb))
+* run failure callbacks when a preview halts or fails ([7c47fd1](https://github.com/state-machines/state_machines/commit/7c47fd13a0425834c984d800277354b67266100c))
+
 ## [0.303.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.302.0...state_machines/v0.303.0) (2026-11-17)
 
 
