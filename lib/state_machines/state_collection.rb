@@ -3,8 +3,10 @@
 module StateMachines
   # Represents a collection of states in a state machine
   class StateCollection < NodeCollection
+    # Names are found by their string form too ('parked' / :parked).  Values
+    # are not: a state matches a value by ==, so true must not find 'true'.
     def initialize(machine) # :nodoc:
-      super(machine, index: %i[name qualified_name value])
+      super(machine, index: %i[name qualified_name value], string_keys: %i[name qualified_name])
     end
 
     # Determines whether the given object is in a specific state.  If the
@@ -54,7 +56,9 @@ module StateMachines
     #   states.match(vehicle)         # => nil
     def match(object)
       value = machine.read(object, :state)
-      self[value, :value] || detect { |state| state.matches?(value) }
+      indexed = self[value, :value]
+      # A custom :if matcher has the last word, even over an indexed value
+      indexed&.matches?(value) ? indexed : detect { |state| state.matches?(value) }
     end
 
     # Determines the current state of the given object as configured by this

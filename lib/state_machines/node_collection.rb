@@ -4,10 +4,11 @@ require_relative 'options_validator'
 
 module StateMachines
   # Represents a collection of nodes in a state machine, be it events or states.
-  # Lookups treat a key and its string form as the same key (:parked, 'parked',
-  # and 10 / '10' / :'10' for numeric keys).  The one exception is nil: it is
-  # only ever found by nil, since nil.to_s is '' and would otherwise collide
-  # with a node keyed by :"" or ''.
+  # Lookups in a string-keyed index (by default, every index) treat a key and
+  # its string form as the same key (:parked, 'parked', and 10 / '10' / :'10'
+  # for numeric keys).  The one exception is nil: it is only ever found by nil,
+  # since nil.to_s is '' and would otherwise collide with a node keyed by :"" or
+  # ''.  Other indices only find a node by an eql? key.
   class NodeCollection
     include Enumerable
 
@@ -21,16 +22,22 @@ module StateMachines
     # * <tt>:index</tt> - One or more attributes to automatically generate
     #   hashed indices for in order to perform quick lookups.  Default is to
     #   index by the :name attribute
+    # * <tt>:string_keys</tt> - The indices that also find a node by the string
+    #   form of its key.  Default is every index
     def initialize(machine, options = {})
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :index)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :index, :string_keys)
       options = { index: :name }.merge(options)
 
       @machine = machine
       @nodes = []
       @index_names = Array(options[:index])
+      @string_keys = Array(options.fetch(:string_keys, @index_names))
+      unknown = @string_keys - @index_names
+      raise ArgumentError, "Invalid string_keys: #{unknown.inspect} not in the indices" if unknown.any?
+
       @indices = @index_names.each_with_object({}) do |name, indices|
         indices[name] = {}
-        indices[:"#{name}_to_s"] = {}
+        indices[:"#{name}_to_s"] = {} if @string_keys.include?(name)
       end
       @default_index = Array(options[:index]).first
       @contexts = []
@@ -147,7 +154,7 @@ module StateMachines
     # If the key cannot be found, then nil will be returned.
     def [](key, index_name = @default_index)
       index(index_name)[key] ||
-        (key.nil? ? nil : index(:"#{index_name}_to_s")[key.to_s])
+        (string_key?(index_name, key) ? index(:"#{index_name}_to_s")[key.to_s] : nil)
     end
 
     # Gets the node indexed by the given key.  By default, this will look up the
@@ -181,22 +188,26 @@ module StateMachines
       node.send(attribute)
     end
 
+    # Whether the key has a string version in the given index.  A nil key has
+    # none: nil.to_s is '', which would make nil and :"" the same key.
+    def string_key?(name, key)
+      !key.nil? && @string_keys.include?(name)
+    end
+
     # Adds the given key / node combination to an index, including its string
-    # version.  A nil key has no string version: nil.to_s is '', which would
-    # make nil and :"" the same key.
+    # version where the index has one
     def add_to_index(name, key, node)
       index(name)[key] = node
-      index(:"#{name}_to_s")[key.to_s] = node unless key.nil?
+      index(:"#{name}_to_s")[key.to_s] = node if string_key?(name, key)
     end
 
     # Removes the given key from an index, including its string version
     def remove_from_index(name, key)
       index(name).delete(key)
-      index(:"#{name}_to_s").delete(key.to_s) unless key.nil?
+      index(:"#{name}_to_s").delete(key.to_s) if string_key?(name, key)
     end
 
-    # Updates the node for the given index, including the string and symbol
-    # versions of the index
+    # Updates the node for the given index, including its string version
     def update_index(name, node)
       index = self.index(name)
       old_key = index.key(node)

@@ -10,7 +10,7 @@ class NodeCollectionTest < StateMachinesTest
 
   def test_should_raise_exception_if_invalid_option_specified
     exception = assert_raises(ArgumentError) { StateMachines::NodeCollection.new(@machine, invalid: true) }
-    assert_equal 'Unknown key: :invalid. Valid keys are: :index', exception.message
+    assert_equal 'Unknown key: :invalid. Valid keys are: :index, :string_keys', exception.message
   end
 
   def test_should_raise_exception_on_lookup_if_invalid_index_specified
