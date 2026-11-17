@@ -134,11 +134,12 @@ module StateMachines
 
       options = { bind_to_object: self.class.bind_to_object, terminator: self.class.terminator }.merge(options)
 
-      # Proxy lambda blocks so that they're bound to the object
+      # Blocks bound to the object run through a proxy, but @methods keeps the
+      # user's own blocks: their identity, source_location and inspect are
+      # what introspection and renderers report, not the proxy's
       bind_to_object = options.delete(:bind_to_object)
-      @methods.map! do |method|
-        bind_to_object && method.is_a?(Proc) ? bound_method(method) : method
-      end
+      @bound_methods = {}.compare_by_identity
+      @methods.each { |method| @bound_methods[method] ||= bound_method(method) if bind_to_object && method.is_a?(Proc) }
 
       @terminator = options.delete(:terminator)
       @branch = Branch.new(options)
@@ -182,7 +183,7 @@ module StateMachines
         current_method = @methods[index]
         if current_method
           yielded = false
-          evaluate_method(object, current_method, *) do
+          evaluate_method(object, invoker(current_method), *) do
             yielded = true
             run_methods(object, context, index + 1, *, &)
           end
@@ -193,10 +194,16 @@ module StateMachines
         end
       else
         @methods.each do |method|
-          result = evaluate_method(object, method, *)
+          result = evaluate_method(object, invoker(method), *)
           throw :halt if @terminator&.call(result)
         end
       end
+    end
+
+    # The callable to evaluate for a configured method: its bound proxy when
+    # the callback binds blocks to the object, otherwise the method itself
+    def invoker(method)
+      @bound_methods.fetch(method, method)
     end
 
     # Generates a method that can be bound to the object being transitioned
