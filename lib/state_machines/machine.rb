@@ -4,7 +4,6 @@ require_relative 'options_validator'
 require_relative 'machine/class_methods'
 require_relative 'machine/utilities'
 require_relative 'machine/parsing'
-require_relative 'machine/validation'
 require_relative 'machine/helper_generators'
 require_relative 'machine/action_hooks'
 require_relative 'machine/scoping'
@@ -421,7 +420,6 @@ module StateMachines
     include MatcherHelpers
     include Utilities
     include Parsing
-    include Validation
     include HelperGenerators
     include ActionHooks
     include Scoping

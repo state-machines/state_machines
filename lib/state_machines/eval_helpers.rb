@@ -192,26 +192,37 @@ module StateMachines
       end
     end
 
-    private
+    # Patterns refused in String conditions before they are evaluated
+    DANGEROUS_PATTERNS = [
+      /`.*`/,           # Backticks (shell execution)
+      /system\s*\(/,    # System calls
+      /exec\s*\(/,      # Exec calls
+      /eval\s*\(/,      # Nested eval
+      /require\s+['"]/, # Require statements
+      /load\s+['"]/,    # Load statements
+      /File\./,         # File operations
+      /IO\./,           # IO operations
+      /Dir\./,          # Directory operations
+      /Kernel\./        # Kernel operations
+    ].freeze
+    private_constant :DANGEROUS_PATTERNS
 
-    # Validates string input before eval to prevent code injection
-    # This is a basic safety check - not foolproof security
+    # Checks a String condition or callback exactly as core does before
+    # evaluating it.  This is a basic safety check, not a sandbox.
+    #
+    #   StateMachines::EvalHelpers.validate_eval_string('vehicle.seatbelt_on?') # => nil
+    #   StateMachines::EvalHelpers.validate_eval_string('`ls`')    # => SecurityError
+    #   StateMachines::EvalHelpers.validate_eval_string('if true') # => ArgumentError
+    #
+    # Raises SecurityError for a pattern it refuses (shell, eval, require,
+    # File / IO / Dir / Kernel access) and ArgumentError for invalid syntax.
+    # +yield+ is allowed, as a String evaluated with a block may yield.
+    # Returns nil when the string may be evaluated.
+    #
+    # A module function: public on the module, and private in the classes
+    # that include EvalHelpers, where evaluation calls it.
     def validate_eval_string(method_string)
-      # Check for obviously dangerous patterns
-      dangerous_patterns = [
-        /`.*`/,           # Backticks (shell execution)
-        /system\s*\(/,    # System calls
-        /exec\s*\(/,      # Exec calls
-        /eval\s*\(/,      # Nested eval
-        /require\s+['"]/, # Require statements
-        /load\s+['"]/, # Load statements
-        /File\./,         # File operations
-        /IO\./,           # IO operations
-        /Dir\./,          # Directory operations
-        /Kernel\./        # Kernel operations
-      ]
-
-      dangerous_patterns.each do |pattern|
+      DANGEROUS_PATTERNS.each do |pattern|
         raise SecurityError, "Potentially dangerous code detected in eval string: #{method_string.inspect}" if method_string.match?(pattern)
       end
 
@@ -222,6 +233,8 @@ module StateMachines
       rescue SyntaxError => e
         raise ArgumentError, "Invalid Ruby syntax in eval string: #{e.message}"
       end
+      nil
     end
+    module_function :validate_eval_string
   end
 end

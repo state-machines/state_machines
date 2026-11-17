@@ -2,8 +2,10 @@
 
 require 'test_helper'
 
-class MachineValidationTest < StateMachinesTest
-  include StateMachines::Machine::Validation
+class EvalHelpersValidateEvalStringTest < StateMachinesTest
+  def validate_eval_string(code)
+    StateMachines::EvalHelpers.validate_eval_string(code)
+  end
 
   def test_validate_eval_string_with_safe_code
     validate_eval_string('1 + 1')
@@ -76,5 +78,47 @@ class MachineValidationTest < StateMachinesTest
   def test_validate_eval_string_with_whitespace_only
     validate_eval_string('   ')
     validate_eval_string("\t\n")
+  end
+
+  def test_validate_eval_string_allows_yield
+    assert_nil validate_eval_string('yield')
+  end
+
+  def test_validate_eval_string_returns_nil
+    assert_nil validate_eval_string('1 + 1')
+  end
+end
+
+class EvalHelpersValidateEvalStringVisibilityTest < StateMachinesTest
+  def test_should_be_private_in_including_classes
+    refute_includes StateMachines::Branch.public_instance_methods, :validate_eval_string
+    assert_includes StateMachines::Branch.private_instance_methods, :validate_eval_string
+  end
+end
+
+# Every evaluator must apply the same check: Machine used to resolve to a
+# separate copy that rejected yield
+class EvalHelpersValidateEvalStringEvaluationTest < StateMachinesTest
+  def evaluators
+    [StateMachines::Machine.new(Class.new), StateMachines::Branch.new, StateMachines::Callback.new(:before, :foo)]
+  end
+
+  def test_should_allow_yield_everywhere
+    evaluators.each { |evaluator| assert_equal :ran, evaluator.evaluate_method(Object.new, 'yield') { :ran }, evaluator.class.name }
+  end
+
+  def test_should_raise_the_same_security_error
+    evaluators.each do |evaluator|
+      error = assert_raises(SecurityError) { evaluator.evaluate_method(Object.new, '`ls`') }
+      assert_equal 'Potentially dangerous code detected in eval string: "`ls`"', error.message
+    end
+  end
+
+  def test_should_raise_the_same_syntax_error
+    expected = assert_raises(ArgumentError) { StateMachines::EvalHelpers.validate_eval_string('if true') }.message
+
+    evaluators.each do |evaluator|
+      assert_equal expected, assert_raises(ArgumentError) { evaluator.evaluate_method(Object.new, 'if true') }.message
+    end
   end
 end
