@@ -24,21 +24,16 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
                                                            ], after: false)
   end
 
-  # This test is no longer needed since all Ruby engines support pause
-  # def test_should_raise_exception
-  #   assert_raises(ArgumentError) { @transitions.perform }
-  # end
-
   def test_should_succeed
     @transitions.perform
 
     assert @transitions.perform
   end
 
-  def test_should_not_run_around_callbacks_after_yield
+  def test_should_not_enter_around_callbacks
     @transitions.perform
 
-    refute_includes @callbacks, :around_after
+    assert_empty @callbacks
   end
 
   def test_should_run_around_callbacks_after_yield_on_subsequent_perform
@@ -48,11 +43,10 @@ class TransitionCollectionWithSkippedAfterCallbacksAndAroundCallbacksTest < Stat
     assert_includes @callbacks, :around_after
   end
 
-  def test_should_not_rerun_around_callbacks_before_yield_on_subsequent_perform
+  def test_should_run_the_around_callback_once_around_the_subsequent_perform
     @transitions.perform
-    @callbacks = []
     StateMachines::TransitionCollection.new([@transition]).perform
 
-    refute_includes @callbacks, :around_before
+    assert_equal %i[around_before around_after], @callbacks
   end
 end

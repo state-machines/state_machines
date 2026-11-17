@@ -385,6 +385,13 @@ against their branch.
 A transition takes its callback chain when it starts: a `before_transition`
 registered while that chain is running applies from the next transition on.
 
+Validating before saving (ActiveModel and ActiveRecord with a pending event, e.g.
+`valid?` before `save`) runs a preview of the transition: the `before_transition`
+callbacks up to the first `around_transition`, then the validation in the new
+state, and no after callbacks. The save continues from there: the around callbacks
+run then, wrapping the save on its own stack, and the before callbacks the preview
+ran are not repeated. An around callback never stays suspended between two calls.
+
 `before`, `after`, `around` and `do` are reserved keys in a transition's hash, like
 `from`, `to`, `if` and `unless`. `do:` is refused, since a branch has three kinds
 of callbacks. A state named `:after` (or `:before`, `:around`) is written with

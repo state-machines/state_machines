@@ -34,17 +34,17 @@ module StateMachines
       attributes = map(&:attribute).uniq
       raise ArgumentError, 'Cannot perform multiple transitions in parallel for the same state machine attribute' if attributes.length != length
 
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions, :fiber)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :actions, :after, :use_transactions)
       options = { actions: true, after: true, use_transactions: true }.merge(options)
       @skip_actions = !options[:actions]
       @skip_after = !options[:after]
       @use_transactions = options[:use_transactions]
       @options = options
 
-      # Reset transitions when creating a new collection
-      # But preserve paused transitions to allow resuming
+      # Reset transitions when creating a new collection, except those a
+      # preview run started, which this collection continues
       each do |transition|
-        transition.reset unless transition.paused?
+        transition.reset unless transition.previewed?
       end
     end
 
@@ -106,7 +106,7 @@ module StateMachines
       end
     end
 
-    # The fiber-local stack of collections whose actions are running
+    # The stack (Thread.current, so per fiber) of collections whose actions are running
     RUNNING_ACTIONS_KEY = :state_machines_running_actions
 
     # The reason an event attribute performed inside this collection's action
@@ -228,18 +228,10 @@ module StateMachines
     # If any transition fails to run its callbacks, :halt will be thrown.
     def run_callbacks(index = 0, &)
       if (transition = self[index])
-        # Pass through any options that affect callback execution (e.g., fiber: false)
-        callback_options = { after: !skip_after }
-        callback_options[:fiber] = options[:fiber] if options.key?(:fiber)
-
-        callback_result = transition.run_callbacks(callback_options) do
+        callback_result = transition.run_callbacks(after: !skip_after) do
           run_callbacks(index + 1, &)
           { result: results[transition.action], success: success? }
         end
-
-        # If we're skipping after callbacks and the transition is paused,
-        # consider it successful (the pause was intentional)
-        @success = true if skip_after && transition.paused?
 
         unless callback_result
           # The innermost transition to halt is the one that caused it; the

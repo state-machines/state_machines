@@ -30,14 +30,35 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     refute @run
   end
 
-  def test_should_run_around_callbacks_before_yield
+  def test_should_not_enter_around_callbacks
+    @run = false
     @machine.around_transition do |block|
       @run = true
       block.call
     end
 
     assert @transition.run_callbacks(after: false)
-    assert @run
+    refute @run
+    assert_predicate @transition, :previewed?
+  end
+
+  def test_should_run_before_callbacks_up_to_the_first_around_once
+    @callbacks = []
+    @machine.before_transition { @callbacks << :first_before }
+    @machine.around_transition do |block|
+      @callbacks << :around_in
+      block.call
+      @callbacks << :around_out
+    end
+    @machine.before_transition { @callbacks << :second_before }
+
+    @transition.run_callbacks(after: false)
+
+    assert_equal [:first_before], @callbacks
+
+    @transition.run_callbacks
+
+    assert_equal %i[first_before around_in second_before around_out], @callbacks
   end
 
   def test_should_not_run_around_callbacks_after_yield
@@ -66,7 +87,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @machine.after_transition { @callbacks << :after }
 
     assert @transition.run_callbacks(after: false)
-    assert_equal %i[before_around_1 before_around_2], @callbacks
+    assert_empty @callbacks
 
     assert @transition.run_callbacks
     assert_equal %i[before_around_1 before_around_2 after_around_2 after_around_1 after], @callbacks
@@ -88,7 +109,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @machine.after_transition { @callbacks << :after }
 
     assert @transition.run_callbacks(after: false)
-    assert_equal %i[before_around_1 before_around_2], @callbacks
+    assert_empty @callbacks
 
     assert @transition.run_callbacks
     assert_equal %i[before_around_1 before_around_2 after_around_2], @callbacks
@@ -152,23 +173,4 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     @transition.run_callbacks(after: false)
     assert_raises(ArgumentError) { @transition.run_callbacks }
   end
-
-  # This test is no longer relevant since all Ruby engines support pause
-  # Previously, it tested that ArgumentError was raised when pause wasn't supported
-  # def test_should_raise_exception_on_second_call
-  #   @callbacks = []
-  #   @machine.around_transition do |block|
-  #     @callbacks << :before_around_1
-  #     block.call
-  #     @callbacks << :after_around_1
-  #   end
-  #   @machine.around_transition do |block|
-  #     @callbacks << :before_around_2
-  #     block.call
-  #     @callbacks << :after_around_2
-  #   end
-  #   @machine.after_transition { @callbacks << :after }
-  #
-  #   assert_raises(ArgumentError) { @transition.run_callbacks(after: false) }
-  # end
 end

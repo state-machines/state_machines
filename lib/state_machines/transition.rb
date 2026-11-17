@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 module StateMachines
-  # Module to extend Fiber instances for pausable state tracking
-  module PausableFiber
-    attr_accessor :state_machine_fiber_pausable
-  end
-
   # A transition represents a state change for a specific attribute.
   #
   # Transitions consist of:
@@ -54,11 +49,6 @@ module StateMachines
       @branch = branch
       @args = []
       @transient = false
-      @paused_fiber = nil
-      @resuming = false
-      @continuation_block = nil
-      @paused_context = @resume_context = @resume_error = nil
-      @fiber_thread_storage = nil
 
       @event = machine.events.fetch(event)
       @from_state = machine.states.fetch(from_name)
@@ -206,49 +196,31 @@ module StateMachines
     #
     # Configuration options:
     # * +before+ - Whether to run before callbacks.
-    # * +after+ - Whether to run after callbacks.  If false, then any around
-    #   callbacks will be paused until called again with +after+ enabled.
+    # * +after+ - Whether to run after callbacks.  If false, the run is a
+    #   preview (e.g. validating before a save): the before callbacks run up
+    #   to the first around callback, which is not entered, then the block,
+    #   and no after callbacks.  The next run with +after+ enabled continues
+    #   the chain from there on its own stack, so the around callbacks wrap
+    #   its action, and does not repeat the before callbacks already run.
     #   Default is true.
     #
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
-    def run_callbacks(options = {}, &block)
+    def run_callbacks(options = {}, &)
       options = { before: true, after: true }.merge(options)
+      return preview(&) unless options[:after]
 
-      # If we have a paused fiber and we're not trying to resume (after: false),
-      # this is an idempotent call on an already-paused transition. Just return true.
-      return true if @paused_fiber&.alive? && !options[:after]
-
-      # Always use fibers for compatibility with existing pause/resume functionality
-      # The fiber argument can still be used to explicitly control fiber usage
-      pausable_options = options.key?(:fiber) ? { fiber: options[:fiber] } : {}
-
-      # Check if we're resuming from a pause
-      if @paused_fiber&.alive? && options[:after]
-        # The continuation (the action) runs once, where the unpaused path
-        # would run it: inside the paused fiber, with the context the around
-        # callbacks set and their unwinding on an exception.  With
-        # fiber: false (ActiveRecord's save after an explicit valid?) it may
-        # not run in another fiber, so it runs here with that context bridged
-        # (see #resume_on_caller).  Without a block, @success is the one
-        # preserved from the pause.
-        halted = if options[:fiber] == false
-                   resume_on_caller(&block)
-                 else
-                   @continuation_block = block if block_given?
-                   pausable { true }
-                 end
-      else
+      if options[:before]
         @success = false
-        # For normal execution (not pause/resume), default to success
-        # The action block will override this if needed
-        halted = pausable(pausable_options) { before(options[:after], &block) } if options[:before]
+        halted = !catch(:halt) do
+          before(@preview_index || 0, &)
+          true
+        end
       end
 
-      # After callbacks are only run if:
-      # * An around callback didn't halt after yielding OR the run failed
-      # * They're enabled or the run didn't succeed
-      after if (!(@before_run && halted) || !@success) && (options[:after] || !@success)
+      # After callbacks are only run if an around callback didn't halt after
+      # yielding, or the run failed
+      after if !(@before_run && halted) || !@success
 
       @before_run
     end
@@ -313,12 +285,7 @@ module StateMachines
     def reset
       @before_run = @persisted = @after_run = false
       @before_callbacks = nil
-      # Kill so ensure blocks in paused callbacks still run (CRuby only:
-      # TruffleRuby lacks Fiber#kill, JRuby's doesn't wait for ensure)
-      @paused_fiber.kill if RUBY_ENGINE == 'ruby' && @paused_fiber&.alive? && !@paused_fiber.equal?(Fiber.current)
-      @paused_fiber = nil
-      @resuming = false
-      @fiber_thread_storage = nil
+      @preview_index = nil
     end
 
     # Determines equality of transitions by testing whether the object, states,
@@ -342,40 +309,19 @@ module StateMachines
       "#<#{self.class} #{%w[attribute event from from_name to to_name].map { |attr| "#{attr}=#{send(attr).inspect}" } * ' '}>"
     end
 
-    # Checks whether this transition is currently paused.
-    # Returns true if there is a paused fiber, false otherwise.
-    def paused?
-      @paused_fiber&.alive? || false
-    end
-
-    # Checks whether this transition has a paused fiber that can be resumed.
-    # Returns true if there is a paused fiber, false otherwise.
-    #
-    # Note: The actual resuming happens automatically when run_callbacks is called
-    # again on a transition with a paused fiber.
-    def resumable?
-      paused?
-    end
-
-    # Manually resumes the execution of a previously paused callback.
-    # Returns true if the transition was successfully resumed and completed,
-    # false if there was no paused fiber, and raises an exception if the
-    # transition was halted.
-    def resume!(&block)
-      return false unless paused?
-
-      # The continuation runs inside the resumed fiber, as in run_callbacks
-      @continuation_block = block if block_given?
-      !pausable { true }
+    # Whether a preview run (run_callbacks with after: false) has run part of
+    # this transition's before chain, which the next full run continues
+    def previewed?
+      !@preview_index.nil?
     end
 
     # Completes a transition whose before phase has already run by executing
-    # its after callbacks, resuming any paused around callbacks first.  Used
+    # its after callbacks, running any around callbacks its preview left first.  Used
     # to finish transitions that were stored for deferred completion (e.g.
     # generated mid-action from an event attribute) once their action has
     # succeeded.
     def complete_deferred_after_callbacks
-      if paused?
+      if previewed?
         run_callbacks(after: true)
       else
         after
@@ -384,195 +330,32 @@ module StateMachines
 
     private
 
-    # Records a continuation's outcome for the around callbacks still paused
-    def run_continuation
-      action = { success: true }.merge(yield)
+    # A preview run: the before callbacks from where the last preview stopped
+    # up to the first around callback that applies (not entered: it wraps the
+    # action of the full run), then the block.  Returns false if a before
+    # callback halted.
+    def preview
+      index = @preview_index || 0
+      halted = !catch(:halt) do
+        while (callback = before_callbacks[index])
+          break if callback.type == :around && callback.branch.matches?(object, context)
+
+          callback.call(object, context, self)
+          index += 1
+        end
+        true
+      end
+      @preview_index = index
+
+      if halted
+        @success = false
+        return false
+      end
+
+      action = block_given? ? { success: true }.merge(yield) : { success: true }
       @result = action[:result]
       @success = action[:success]
-    end
-
-    # Resumes a paused transition without running its continuation in another
-    # fiber.  The action runs on the caller with the paused fiber's context
-    # (Thread.current and Fiber storage as the around callbacks left them),
-    # and the fiber gets the context the action left, plus its exception if
-    # it raised, so the around callbacks see the same state, and unwind the
-    # same way, as when nothing paused.
-    def resume_on_caller(&block)
-      if block_given?
-        apply_fiber_context(@paused_context)
-        begin
-          run_continuation(&block)
-        rescue StandardError => e
-          @resume_error = e
-        end
-        @resume_context = capture_fiber_context
-      end
-      pausable { true }
-    end
-
-    # Thread.current (fiber-local) and Fiber storage of the current fiber
-    def capture_fiber_context
-      [capture_thread_locals, Fiber.current.storage || {}]
-    end
-
-    # Sets the current fiber's Thread.current and Fiber storage values
-    def apply_fiber_context(context)
-      return unless context
-
-      locals, storage = context
-      locals.each { |key, value| Thread.current[key] = value }
-      storage.each { |key, value| Fiber[key] = value }
-    end
-
-    # Runs a block that may get paused.  If the block doesn't pause, then
-    # execution will continue as normal.  If the block gets paused, then it
-    # will take care of switching the execution context when it's resumed.
-    #
-    # This will return true if the given block halts for a reason other than
-    # getting paused.
-    #
-    # Options:
-    # * :fiber - Whether to use fiber-based execution (default: true)
-    def pausable(options = {})
-      # If fiber is disabled, use simple synchronous execution
-      if options[:fiber] == false
-        halted = !catch(:halt) do
-          yield
-          true
-        end
-        return halted
-      end
-
-      if @paused_fiber
-        # Resume the paused fiber
-        @resuming = true
-        begin
-          result = @paused_fiber.resume
-        rescue StandardError => e
-          # Clean up on exception
-          @resuming = false
-          @paused_fiber = nil
-          raise e
-        end
-        @resuming = false
-
-        result_value = unwrap_fiber_result(result)
-
-        # Check if fiber is still alive after resume
-        if @paused_fiber.alive?
-          # Still paused, keep the fiber
-          true
-        else
-          # Fiber completed
-          @paused_fiber = nil
-          result_value == :halted
-        end
-      else
-        # Capture current fiber's Thread.current storage to preserve object identity
-        # This is needed for compatibility but has limitations with dynamic assignments
-        parent_fiber_locals = capture_thread_locals
-
-        # Create a new fiber to run the block
-        fiber = Fiber.new do
-          # Restore parent's Thread.current storage with exact same object references
-          parent_fiber_locals.each do |key, value|
-            Thread.current[key] = value
-          end
-
-          # Mark that we're inside a pausable fiber
-          Fiber.current.extend(StateMachines::PausableFiber)
-          Fiber.current.state_machine_fiber_pausable = true
-          begin
-            halted = !catch(:halt) do
-              yield
-              true
-            end
-
-            # Export the final thread storage state along with the result
-            [halted ? :halted : :completed, capture_thread_locals]
-          rescue StandardError => e
-            # Store the exception for re-raising
-            [:error, e]
-          ensure
-            # Clean up the flag
-            Fiber.current.state_machine_fiber_pausable = false
-          end
-        end
-
-        # Run the fiber
-        result = fiber.resume
-
-        result_value = unwrap_fiber_result(result)
-
-        # Save if paused
-        if fiber.alive?
-          @paused_fiber = fiber
-          # Return true to indicate paused (treated as halted for flow control)
-          true
-        else
-          # Fiber completed, return whether it was halted
-          result_value == :halted
-        end
-      end
-    end
-
-    # Snapshots the current fiber's Thread.current storage, preserving object
-    # identity of the stored values
-    def capture_thread_locals
-      Thread.current.keys.each_with_object({}) do |key, storage|
-        storage[key] = Thread.current[key]
-      end
-    end
-
-    # Unwraps a result returned from a pausable fiber, re-raising any exception
-    # captured inside the fiber and importing its exported thread storage
-    def unwrap_fiber_result(result)
-      return result unless result.is_a?(Array)
-
-      if result[0] == :error
-        @paused_fiber = nil
-        raise result[1]
-      end
-
-      @fiber_thread_storage = result[1] if result.length == 2 && result[1].is_a?(Hash)
-      result[0]
-    end
-
-    # Pauses the current callback execution.  This should only occur within
-    # around callbacks when the remainder of the callback will be executed at
-    # a later point in time.
-    def pause
-      # Don't pause if we're in the middle of resuming
-      return if @resuming
-
-      # Only yield if we're actually inside a fiber created by pausable
-      # We use a module extension to track this
-      current_fiber = Fiber.current
-      return unless current_fiber.respond_to?(:state_machine_fiber_pausable) && current_fiber.state_machine_fiber_pausable
-
-      # Snapshot for a resume that runs the action outside this fiber
-      @paused_context = capture_fiber_context
-      Fiber.yield
-
-      # Resumed after the action ran on the caller (fiber: false): take back
-      # the context it left, and raise its exception here, inside the around
-      # callbacks, so they unwind as they would without a pause
-      if @resume_context || @resume_error
-        apply_fiber_context(@resume_context)
-        error = @resume_error
-        @paused_context = @resume_context = @resume_error = nil
-        raise error if error
-
-        return
-      end
-
-      # When we resume from the pause, execute the continuation block if present
-      return unless @continuation_block && !@result
-
-      action = { success: true }.merge(@continuation_block.call)
-      @result = action[:result]
-      @success = action[:success]
-      @continuation_block = nil
+      true
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only
@@ -581,7 +364,7 @@ module StateMachines
     #
     # Once the callbacks are run, they cannot be run again until this transition
     # is reset.
-    def before(complete = true, index = 0, &)
+    def before(index = 0, &)
       return if @before_run
 
       callback = before_callbacks[index]
@@ -590,15 +373,9 @@ module StateMachines
         # Check if callback matches this transition using branch
         if callback.branch.matches?(object, context)
           if callback.type == :around
-            # Around callback: need to handle recursively.  Execution only gets
-            # paused if:
-            # * The block fails and the callback doesn't run on failures OR
-            # * The block succeeds, but after callbacks are disabled (in which
-            #   case a continuation is stored for later execution)
+            # The rest of the chain, and the action, run inside the around
             callback.call(object, context, self) do
-              before(complete, index + 1, &)
-
-              pause if @success && !complete
+              before(index + 1, &)
 
               # If the block failed (success is false), we should halt
               # the around callback from continuing
@@ -608,11 +385,11 @@ module StateMachines
             # Normal before callback
             callback.call(object, context, self)
             # Continue with next callback
-            before(complete, index + 1, &)
+            before(index + 1, &)
           end
         else
           # Skip to next callback if it doesn't match
-          before(complete, index + 1, &)
+          before(index + 1, &)
         end
       else
         # No more callbacks, execute the action block if at the end
@@ -644,10 +421,6 @@ module StateMachines
     # should never halt the execution of a +perform+.
     def after
       return if @after_run
-
-      # Restore the fiber's thread storage to ensure consistency
-      # This preserves Thread.current state from before/around callbacks to after callbacks
-      @fiber_thread_storage.each { |key, value| Thread.current[key] = value } if @fiber_thread_storage
 
       catch(:halt) do
         # A branch's afters run before the machine's, closest to the change;
