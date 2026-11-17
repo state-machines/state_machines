@@ -3,6 +3,32 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.303.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.302.0...state_machines/v0.303.0) (2026-11-17)
+
+
+### Features
+
+* add Callback#callables ([870c68d](https://github.com/state-machines/state_machines/commit/870c68d9e586b734d7ab2409e48bdb2e738bdd78))
+* add StateMachines::EvalHelpers.validate_eval_string ([8e492eb](https://github.com/state-machines/state_machines/commit/8e492ebe3036cc2c58dc274d7cede35a643ec918))
+
+
+### Bug Fixes
+
+* ask each state matcher once in StateCollection#match ([229fb33](https://github.com/state-machines/state_machines/commit/229fb33c099fd9b83ab3e2a5ce17acc6dcb3aee1))
+* decide state context fallbacks up front instead of rescuing ([dfe7a7e](https://github.com/state-machines/state_machines/commit/dfe7a7eb5a4b03d3234935b60d39380a5e0e0041))
+* find states by value the way State#matches? does ([762ac1e](https://github.com/state-machines/state_machines/commit/762ac1e008bcc11f73590dc4aa28033502d25785))
+* forward keyword arguments through state context methods ([87dbada](https://github.com/state-machines/state_machines/commit/87dbadafa7fee879ad28862a5c61c51e90a3cd37))
+* handle user names in generated methods without eval ([e793684](https://github.com/state-machines/state_machines/commit/e79368481863a8f66708ba2a92594a3bf9d776b6))
+* keep a protected action protected when hooked ([c01a375](https://github.com/state-machines/state_machines/commit/c01a37570436a94cb2e436812fde6936e2d0d5e8))
+* keep the nil state distinct from a state named :"" ([e8e8640](https://github.com/state-machines/state_machines/commit/e8e8640d34216994f6c18f4c3a1864d1e47474b0))
+* keep the user's block in a callback bound to the object ([d029c65](https://github.com/state-machines/state_machines/commit/d029c65c12122e166d849ea8a243f2762c5ce93f))
+* make assert_sm_possible_transitions work ([5b51103](https://github.com/state-machines/state_machines/commit/5b511038199d6b7b38b1ebfa74cc130e04e78412))
+* make StateMachines::InvalidContext a NoMethodError ([e936bca](https://github.com/state-machines/state_machines/commit/e936bca60c1462c74e2c8ec9b29f9658b9c8677a))
+* match transition callbacks in assert_before/after_transition ([3de380d](https://github.com/state-machines/state_machines/commit/3de380df15706b2008f950a5423bb5d413f67b91))
+* resolve state and event names in the test helper assertions ([06b2c91](https://github.com/state-machines/state_machines/commit/06b2c91269d9e34d805a9ca2ecc5f2c391ac2dd0))
+* run every core test file ([225a11c](https://github.com/state-machines/state_machines/commit/225a11c429a7ba41123212b927f15180e684d556))
+* scope private state context methods to their state ([9baa75e](https://github.com/state-machines/state_machines/commit/9baa75e4c4288b3da842c6c27736b9f5ed7234e4))
+
 ## [0.302.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.301.2...state_machines/v0.302.0) (2026-11-16)
 
 
