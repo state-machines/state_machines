@@ -261,6 +261,22 @@ module StateMachines
       @persisted = true
     end
 
+    # Whether this transition's state change is in place: written by {#persist}
+    # and not undone since by {#rollback} (or {#reset}).
+    #
+    # A transition that is refused never stays persisted: a halting before
+    # callback stops it ahead of the write, and a failed or raising action
+    # rolls it back.  Once the action has succeeded nothing rolls it back, so
+    # it stays persisted whatever the after phase does (an after callback
+    # halting, an around callback halting or raising after its yield).  A
+    # successful preview (e.g. ActiveRecord's +valid?+) leaves it persisted
+    # for the full run that completes it.
+    #
+    # @return [Boolean]
+    def persisted?
+      @persisted == true
+    end
+
     # Rolls back changes made to the object's state via this transition.  This
     # will revert the state back to the +from+ value.
     #
