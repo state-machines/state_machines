@@ -30,22 +30,35 @@ module StateMachines
       # Adds reader/writer methods for accessing the state attribute
       def define_state_accessor
         attribute = self.attribute
+        reader = !owner_class_ancestor_has_method?(:instance, attribute)
+        writer = !owner_class_ancestor_has_method?(:instance, "#{attribute}=")
+        unless ivar_name?(attribute)
+          # attr_reader / attr_writer store in @<attribute>, so core cannot
+          # define them; fine only if the owner class defines both itself
+          return if owner_class_has_method?(:instance, attribute) && owner_class_has_method?(:instance, "#{attribute}=")
 
-        @helper_modules[:instance].class_eval { attr_reader attribute } unless owner_class_ancestor_has_method?(:instance, attribute)
-        @helper_modules[:instance].class_eval { attr_writer attribute } unless owner_class_ancestor_has_method?(:instance, "#{attribute}=")
+          raise_invalid_ivar_name(attribute, 'state machine attribute')
+        end
+
+        @helper_modules[:instance].send(:attr_reader, attribute) if reader
+        @helper_modules[:instance].send(:attr_writer, attribute) if writer
       end
 
       # Adds predicate method to the owner class for determining the name of the
       # current state
       def define_state_predicate
-        # Interpolated into the helper source, so it must be a literal boolean
-        # (the finder answers the ancestor owning the method)
-        call_super = owner_class_ancestor_has_method?(:instance, "#{name}?") ? true : false # rubocop:disable Style/IfWithBooleanLiteralBranches
-        define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
-            def #{name}?(*args)
-              args.empty? && (#{call_super} || defined?(super)) ? super : self.class.state_machine(#{name.inspect}).states.matches?(self, *args)
-            end
-        END_EVAL
+        machine_name = name
+        call_super = owner_class_ancestor_has_method?(:instance, "#{name}?")
+        # Defined directly rather than through define_helper, which would skip
+        # it with a conflict warning: this predicate deliberately wraps an
+        # inherited one, deferring to it when called without arguments
+        @helper_modules[:instance].send(:define_method, "#{name}?") do |*args|
+          if args.empty? && (call_super || defined?(super))
+            super()
+          else
+            self.class.state_machine(machine_name).states.matches?(self, *args)
+          end
+        end
       end
 
       # Adds helper methods for getting information about this state machine's
@@ -85,9 +98,9 @@ module StateMachines
         end
 
         event_transition_attribute = attribute(:event_transition)
-        define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
-              protected; attr_accessor #{event_transition_attribute.inspect}
-        END_EVAL
+        helper = @helper_modules[:instance]
+        helper.send(:attr_accessor, event_transition_attribute)
+        helper.send(:protected, event_transition_attribute, :"#{event_transition_attribute}=")
       end
 
       # Adds helper methods for getting information about this state machine's

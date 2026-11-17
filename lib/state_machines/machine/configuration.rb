@@ -33,6 +33,9 @@ module StateMachines
 
         # Set machine configuration
         @name = args.first || :state
+        # The name builds the default attribute and the @<name>_event /
+        # @<name>_event_transition ivars, so it must be an ivar-safe name
+        assert_ivar_name!(@name, 'state machine name')
         @attribute = options[:attribute] || @name
         @events = EventCollection.new(self)
         @states = StateCollection.new(self)

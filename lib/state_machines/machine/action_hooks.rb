@@ -29,14 +29,14 @@ module StateMachines
         action = self.action
         private_action_hook = owner_class.private_method_defined?(action_hook)
 
-        # Only define helper if it hasn't
-        define_helper :instance, <<-END_EVAL, __FILE__, __LINE__ + 1
-            def #{action_hook}(*)
-              self.class.state_machines.transitions(self, #{action.inspect}).perform { super }
-            end
-
-            private #{action_hook.inspect} if #{private_action_hook}
-        END_EVAL
+        # define_method, not a def in evaluated source: the action is a method
+        # the owner already has, and Ruby allows names (:"save it") that no def
+        # can spell
+        helper = @helper_modules[:instance]
+        helper.send(:define_method, action_hook) do |*args, **kwargs, &block|
+          self.class.state_machines.transitions(self, action).perform { super(*args, **kwargs, &block) }
+        end
+        helper.send(:private, action_hook) if private_action_hook
       end
 
       # The method to hook into for triggering transitions when invoked.  By

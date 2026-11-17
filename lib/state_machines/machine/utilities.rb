@@ -3,7 +3,31 @@
 module StateMachines
   class Machine
     module Utilities
+      # Probed (never written) to ask Ruby whether a name is a legal instance
+      # variable name, which also makes it a legal attr_accessor name
+      IVAR_PROBE = Object.new.freeze
+      private_constant :IVAR_PROBE
+
       protected
+
+      # Whether +name+ makes a valid instance variable name (@name)
+      def ivar_name?(name)
+        IVAR_PROBE.instance_variable_defined?(:"@#{name}")
+        true
+      rescue NameError
+        false
+      end
+
+      # Raises an ArgumentError unless +name+ makes a valid instance variable
+      # name, so a bad name fails where it is given rather than later from
+      # attr_accessor or instance_variable_get
+      def assert_ivar_name!(name, role)
+        raise_invalid_ivar_name(name, role) unless ivar_name?(name)
+      end
+
+      def raise_invalid_ivar_name(name, role)
+        raise ArgumentError, "#{name.inspect} is not a valid #{role}: it must be usable as an instance variable name (@#{name})"
+      end
 
       # Looks up other machines that have been defined in the owner class and
       # are targeting the same attribute as this machine.  When accessing

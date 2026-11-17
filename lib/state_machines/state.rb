@@ -212,17 +212,21 @@ module StateMachines
       context.class_eval(&)
       new_methods = context_methods.to_a.reject { |(name, method)| old_methods[name] == method }
 
-      # Alias new methods so that the only execute when the object is in this state
+      # Alias new methods so that the only execute when the object is in this
+      # state.  define_method, not a def in evaluated source: the methods are
+      # the user's, under any name Ruby allows (:"do it", :[], :+).
+      machine_name = machine.name
+      state_name = name
       new_methods.each do |(method_name, _method)|
         context_name = context_name_for(method_name)
-        context.class_eval <<-END_EVAL, __FILE__, __LINE__ + 1
-          alias_method :"#{context_name}", :#{method_name}
-          def #{method_name}(*args, &block)
-            state = self.class.state_machine(#{machine.name.inspect}).states.fetch(#{name.inspect})
-            options = {:method_missing => lambda {super(*args, &block)}, :method_name => #{method_name.inspect}}
-            state.call(self, :"#{context_name}", *(args + [options]), &block)
-          end
-        END_EVAL
+        protected_method = context.protected_method_defined?(method_name)
+        context.send(:alias_method, context_name, method_name)
+        context.send(:define_method, method_name) do |*args, &block|
+          state = self.class.state_machine(machine_name).states.fetch(state_name)
+          options = { method_missing: -> { super(*args, &block) }, method_name: method_name }
+          state.call(self, context_name, *(args + [options]), &block)
+        end
+        context.send(:protected, method_name) if protected_method
       end
 
       true
@@ -245,7 +249,9 @@ module StateMachines
       options = { method_name: method }.merge(options)
       state = machine.states.match!(object)
 
-      if state == self && object.respond_to?(method)
+      # include_all: the aliased context method keeps a protected original's
+      # visibility, and respond_to? alone would not see it
+      if state == self && object.respond_to?(method, true)
         object.send(method, *args, &)
       elsif (method_missing = options[:method_missing])
         # Dispatch to the superclass since the object either isn't in this state
