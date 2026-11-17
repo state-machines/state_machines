@@ -42,7 +42,7 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
     assert_predicate @transition, :previewed?
   end
 
-  def test_should_run_before_callbacks_up_to_the_first_around_once
+  def test_should_run_every_before_callback_once
     @callbacks = []
     @machine.before_transition { @callbacks << :first_before }
     @machine.around_transition do |block|
@@ -54,11 +54,11 @@ class TransitionWithAfterCallbacksSkippedTest < StateMachinesTest
 
     @transition.run_callbacks(after: false)
 
-    assert_equal [:first_before], @callbacks
+    assert_equal %i[first_before second_before], @callbacks
 
     @transition.run_callbacks
 
-    assert_equal %i[first_before around_in second_before around_out], @callbacks
+    assert_equal %i[first_before second_before around_in around_out], @callbacks
   end
 
   def test_should_not_run_around_callbacks_after_yield

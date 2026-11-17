@@ -386,11 +386,15 @@ A transition takes its callback chain when it starts: a `before_transition`
 registered while that chain is running applies from the next transition on.
 
 Validating before saving (ActiveModel and ActiveRecord with a pending event, e.g.
-`valid?` before `save`) runs a preview of the transition: the `before_transition`
-callbacks up to the first `around_transition`, then the validation in the new
-state, and no after callbacks. The save continues from there: the around callbacks
-run then, wrapping the save on its own stack, and the before callbacks the preview
-ran are not repeated. An around callback never stays suspended between two calls.
+`valid?` before `save`) runs a preview of the transition: every
+`before_transition` callback, skipping the `around_transition` callbacks (not
+entered, their conditions not evaluated), then the validation in the new state,
+and no after callbacks. Validation therefore sees everything the save's before
+callbacks set. The save does not repeat those before callbacks; its around
+callbacks wrap the save alone, on its own stack. So when `valid?` ran first, a
+`before_transition` declared after an `around_transition` has already run outside
+that around; a save without a prior `valid?` interleaves the callbacks exactly as
+declared. An around callback never stays suspended between two calls.
 
 `before`, `after`, `around` and `do` are reserved keys in a transition's hash, like
 `from`, `to`, `if` and `unless`. `do:` is refused, since a branch has three kinds

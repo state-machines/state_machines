@@ -196,31 +196,35 @@ module StateMachines
     #
     # Configuration options:
     # * +before+ - Whether to run before callbacks.
-    # * +after+ - Whether to run after callbacks.  If false, the run is a
-    #   preview (e.g. validating before a save): the before callbacks run up
-    #   to the first around callback, which is not entered, then the block,
-    #   and no after callbacks.  The next run with +after+ enabled continues
-    #   the chain from there on its own stack, so the around callbacks wrap
-    #   its action, and does not repeat the before callbacks already run.
+    # * +after+ - Whether to run after callbacks.  If false (and +before+ is
+    #   enabled), the run is a preview (e.g. validating before a save): every
+    #   before callback runs, the around callbacks are skipped (not entered,
+    #   their conditions not evaluated), then the block, and no after
+    #   callbacks (failure callbacks if it halts or the block fails).  The
+    #   next run with +after+ enabled does not repeat those before callbacks;
+    #   its around callbacks wrap only its action.  So after a preview, a
+    #   before callback declared after an around callback has run outside
+    #   that around; without a preview, callbacks interleave as declared.
     #   Default is true.
     #
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
     def run_callbacks(options = {}, &)
       options = { before: true, after: true }.merge(options)
-      return preview(&) unless options[:after]
+      return preview(&) if options[:before] && !options[:after]
 
       if options[:before]
         @success = false
         halted = !catch(:halt) do
-          before(@preview_index || 0, &)
+          before(&)
           true
         end
       end
 
-      # After callbacks are only run if an around callback didn't halt after
-      # yielding, or the run failed
-      after if !(@before_run && halted) || !@success
+      # After callbacks are only run if:
+      # * An around callback didn't halt after yielding OR the run failed
+      # * They're enabled or the run didn't succeed
+      after if (!(@before_run && halted) || !@success) && (options[:after] || !@success)
 
       @before_run
     end
@@ -285,7 +289,7 @@ module StateMachines
     def reset
       @before_run = @persisted = @after_run = false
       @before_callbacks = nil
-      @preview_index = nil
+      @previewed = nil
     end
 
     # Determines equality of transitions by testing whether the object, states,
@@ -312,7 +316,7 @@ module StateMachines
     # Whether a preview run (run_callbacks with after: false) has run part of
     # this transition's before chain, which the next full run continues
     def previewed?
-      !@preview_index.nil?
+      !@previewed.nil?
     end
 
     # Completes a transition whose before phase has already run by executing
@@ -330,22 +334,24 @@ module StateMachines
 
     private
 
-    # A preview run: the before callbacks from where the last preview stopped
-    # up to the first around callback that applies (not entered: it wraps the
-    # action of the full run), then the block; on a halt or a failed block,
-    # the failure callbacks.  Returns false if a before callback halted.
+    # A preview run: every before callback not run by an earlier preview,
+    # skipping the around callbacks (not entered, nor their conditions
+    # evaluated: they wrap the action of the full run), then the block; on a
+    # halt or a failed block, the failure callbacks.  Running all the befores
+    # lets a validation in the block see what the full run's befores set, so
+    # it agrees with the full run.  Returns false if a before callback halted.
     def preview # rubocop:disable Naming/PredicateMethod -- returns whether the befores ran, as run_callbacks does
-      index = @preview_index || 0
+      @previewed ||= {}.compare_by_identity
       halted = !catch(:halt) do
-        while (callback = before_callbacks[index])
-          break if callback.type == :around && callback.branch.matches?(object, context)
+        before_callbacks.each do |callback|
+          next if callback.type == :around || @previewed.key?(callback)
 
+          # Recorded before running, so a halting callback is not run again
+          @previewed[callback] = true
           callback.call(object, context, self)
-          index += 1
         end
         true
       end
-      @preview_index = index
 
       if halted
         @success = false
@@ -373,25 +379,21 @@ module StateMachines
       callback = before_callbacks[index]
 
       if callback
-        # Check if callback matches this transition using branch
-        if callback.branch.matches?(object, context)
-          if callback.type == :around
-            # The rest of the chain, and the action, run inside the around
-            callback.call(object, context, self) do
-              before(index + 1, &)
-
-              # If the block failed (success is false), we should halt
-              # the around callback from continuing
-              throw :halt unless @success
-            end
-          else
-            # Normal before callback
-            callback.call(object, context, self)
-            # Continue with next callback
+        # Callback#call evaluates the callback's conditions (once) and answers
+        # whether it applied
+        if callback.type == :around
+          # The rest of the chain, and the action, run inside the around
+          applied = callback.call(object, context, self) do
             before(index + 1, &)
+
+            # If the block failed (success is false), we should halt
+            # the around callback from continuing
+            throw :halt unless @success
           end
+          before(index + 1, &) unless applied
         else
-          # Skip to next callback if it doesn't match
+          # A preview already ran this before callback
+          callback.call(object, context, self) unless @previewed&.key?(callback)
           before(index + 1, &)
         end
       else

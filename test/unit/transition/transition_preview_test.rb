@@ -119,3 +119,92 @@ class TransitionRunWithoutPreviewTest < StateMachinesTest
 
   def preview; end
 end
+
+class TransitionPreviewOrderTest < StateMachinesTest
+  def setup
+    @log = log = []
+    @calls = calls = Hash.new(0)
+    klass = Class.new
+    @machine = StateMachines::Machine.new(klass, initial: :parked) do
+      event(:ignite) { transition parked: :idling }
+      before_transition(if: ->(_) { calls[:first] += 1 }) { log << :first_before }
+      around_transition(if: ->(_) { (calls[:around] += 1) == 2 }) do |_object, _transition, block|
+        log << :around_in
+        block.call
+        log << :around_out
+      end
+      before_transition { log << :second_before }
+    end
+    @transition = @machine.events[:ignite].transition_for(klass.new)
+  end
+
+  def action
+    @log << :action
+    { success: true }
+  end
+
+  def test_should_interleave_as_declared_without_a_preview
+    @calls[:around] = 1
+    @transition.run_callbacks { action }
+
+    assert_equal %i[first_before around_in second_before action around_out], @log
+  end
+
+  def test_should_run_every_before_in_the_preview
+    @transition.run_callbacks(after: false) { action }
+
+    assert_equal %i[first_before second_before action], @log
+  end
+
+  def test_should_not_evaluate_around_conditions_in_the_preview
+    @transition.run_callbacks(after: false) { action }
+
+    assert_equal 0, @calls[:around]
+  end
+
+  def test_should_wrap_only_the_action_after_a_preview
+    @calls[:around] = 1
+    @transition.run_callbacks(after: false) { { success: true } }
+    @log.clear
+    @transition.run_callbacks { action }
+
+    assert_equal %i[around_in action around_out], @log
+  end
+
+  def test_should_evaluate_each_condition_once
+    @transition.run_callbacks { action }
+
+    assert_equal({ first: 1, around: 1 }, @calls)
+  end
+
+  def test_should_not_run_befores_without_before_or_after
+    @transition.run_callbacks(before: false, after: false) { action }
+
+    assert_empty @log
+  end
+end
+
+# A before declared after an around must count for validation too: the
+# preview runs it, so the preview and the full run agree
+class TransitionPreviewValidationAgreementTest < StateMachinesTest
+  def setup
+    klass = Class.new { attr_accessor :token }
+    @machine = StateMachines::Machine.new(klass, initial: :parked) do
+      event(:ignite) { transition parked: :idling }
+      around_transition { |_object, _transition, block| block.call }
+      before_transition { |object| object.token = :issued }
+    end
+    @object = klass.new
+    @transition = @machine.events[:ignite].transition_for(@object)
+  end
+
+  def test_should_validate_with_what_every_before_set
+    seen = nil
+    @transition.run_callbacks(after: false) do
+      seen = @object.token
+      { success: true }
+    end
+
+    assert_equal :issued, seen
+  end
+end
