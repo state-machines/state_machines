@@ -3,6 +3,13 @@
 * Drop support to EOL rubies.
 * Support kwargs for ruby 3.0+.
 
+## [0.305.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.304.0...state_machines/v0.305.0) (2026-11-17)
+
+
+### Features
+
+* add Transition#persisted? ([f696130](https://github.com/state-machines/state_machines/commit/f6961304e97f4d7b55c8305da5598bd011b0b1ca))
+
 ## [0.304.0](https://github.com/state-machines/state_machines/compare/state_machines/v0.303.0...state_machines/v0.304.0) (2026-11-17)
 
 
