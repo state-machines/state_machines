@@ -119,35 +119,39 @@ module StateMachines
 
     # === Extended State Machine Assertions ===
 
+    # Assert the machine's states, in any order. Names resolve through the
+    # machine ('parked' is :parked). The nil state is only listed when expected,
+    # since a machine without an initial state has one implicitly.
     def assert_sm_states_list(machine, expected_states, message = nil)
-      actual_states = machine.states.map(&:name).compact
-      default_message = "Expected states #{expected_states} but got #{actual_states}"
+      expected = expected_states.map { |state| machine.states[state]&.name || state }
+      actual = machine.states.map(&:name)
+      actual.compact! unless expected_states.include?(nil)
+      default_message = "Expected states #{expected.inspect} but got #{actual.inspect}"
 
-      _sm_assert_equal(expected_states.sort, actual_states.sort, message || default_message)
+      _sm_assert_equal(expected.sort_by(&:inspect), actual.sort_by(&:inspect), message || default_message)
     end
 
     def refute_sm_state_defined(machine, state, message = nil)
-      state_exists = machine.states.any? { |s| s.name == state }
-      default_message = "Expected state #{state} to not be defined in machine"
+      default_message = "Expected state #{state.inspect} to not be defined in machine"
 
-      _sm_refute(state_exists, message || default_message)
+      _sm_refute(machine.states[state], message || default_message)
     end
     alias assert_sm_state_not_defined refute_sm_state_defined
 
+    # @raise [IndexError] if +expected_state+ is not a known state
     def assert_sm_initial_state(machine, expected_state, message = nil)
-      state_obj = machine.state(expected_state)
-      is_initial = state_obj&.initial?
-      default_message = "Expected state #{expected_state} to be the initial state"
+      state = machine.states.fetch(expected_state)
+      default_message = "Expected state #{state.name.inspect} to be the initial state"
 
-      _sm_assert(is_initial, message || default_message)
+      _sm_assert(state.initial?, message || default_message)
     end
 
+    # @raise [IndexError] if +state+ is not a known state
     def assert_sm_final_state(machine, state, message = nil)
-      state_obj = machine.states[state]
-      is_final = state_obj&.final?
-      default_message = "Expected state #{state} to be final"
+      state = machine.states.fetch(state)
+      default_message = "Expected state #{state.name.inspect} to be final"
 
-      _sm_assert(is_final, message || default_message)
+      _sm_assert(state.final?, message || default_message)
     end
 
     # Assert the set of states the machine's events can lead to from a state,
@@ -164,14 +168,7 @@ module StateMachines
       names = machine.states.map(&:name)
       expected = expected_to_states.map { |state| machine.states.fetch(state).name }.uniq
       actual = machine.events.flat_map do |event|
-        event.branches.flat_map do |branch|
-          requirement = branch.state_requirements.detect { |candidate| candidate[:from].matches?(from) }
-          next [] unless requirement
-
-          # Same target resolution as Event#transition_for. first(1), not
-          # first: a transition into the nil state must not read as none.
-          requirement[:to].is_a?(LoopbackMatcher) ? [from] : requirement[:to].filter([from] | names).first(1)
-        end
+        event.branches.flat_map { |branch| _sm_branch_targets(branch, from, names) }
       end.uniq
       by_definition = ->(name) { names.index(name) }
       default_message = "Expected transitions from #{from.inspect} to #{expected.inspect} but got #{actual.inspect}"
@@ -179,29 +176,37 @@ module StateMachines
       _sm_assert_equal(expected.sort_by(&by_definition), actual.sort_by(&by_definition), message || default_message)
     end
 
+    # Refute that an event has a branch from +from+ to +to+, ignoring guards.
+    #
+    # @raise [IndexError] if +on+, +from+ or +to+ is unknown
     def refute_sm_transition_allowed(machine, from:, to:, on:, message: nil)
-      event = machine.events[on]
-      is_allowed = event&.branches&.any? { |branch| branch.known_states.include?(from) && branch.to == to }
-      default_message = "Expected transition from #{from} to #{to} on #{on} to not be allowed"
+      event = machine.events.fetch(on)
+      from = machine.states.fetch(from).name
+      to = machine.states.fetch(to).name
+      names = machine.states.map(&:name)
+      is_allowed = event.branches.any? { |branch| _sm_branch_targets(branch, from, names) == [to] }
+      default_message = "Expected transition from #{from.inspect} to #{to.inspect} on #{event.name.inspect} to not be allowed"
 
       _sm_refute(is_allowed, message || default_message)
     end
     alias assert_sm_transition_not_allowed refute_sm_transition_allowed
 
     def assert_sm_event_triggers(object, event, machine_name = :state, message = nil)
-      initial_state = object.send(machine_name)
+      machine = object.class.state_machine(machine_name)
+      initial_state = machine.read(object, :state)
       object.send("#{event}!")
-      state_changed = initial_state != object.send(machine_name)
+      state_changed = initial_state != machine.read(object, :state)
       default_message = "Expected event #{event} to trigger state change on #{machine_name}"
 
       _sm_assert(state_changed, message || default_message)
     end
 
     def refute_sm_event_triggers(object, event, machine_name = :state, message = nil)
-      initial_state = object.send(machine_name)
+      machine = object.class.state_machine(machine_name)
+      initial_state = machine.read(object, :state)
       begin
         object.send("#{event}!")
-        state_unchanged = initial_state == object.send(machine_name)
+        state_unchanged = initial_state == machine.read(object, :state)
         default_message = "Expected event #{event} to not trigger state change on #{machine_name}"
 
         _sm_assert(state_unchanged, message || default_message)
@@ -290,15 +295,14 @@ module StateMachines
     #   # Specific machine
     #   assert_sm_triggers_event(vehicle, :disable, machine_name: :alarm) { vehicle.turn_off_alarm }
     def assert_sm_triggers_event(object, expected_events, machine_name: :state, message: nil)
-      expected_events = Array(expected_events)
       triggered_events = []
 
       # Get the state machine
       machine = object.class.state_machines[machine_name]
       raise ArgumentError, "No state machine found for #{machine_name}" unless machine
 
-      # Save original callbacks to restore later
-      machine.callbacks[:before].dup
+      # Resolve the names ('crash' is :crash); an unknown event raises IndexError
+      expected_events = Array(expected_events).map { |event| machine.events.fetch(event).name }
 
       # Add a temporary callback to track triggered events
       temp_callback = machine.before_transition do |_obj, transition|
@@ -724,15 +728,25 @@ module StateMachines
       assert false, message
     end
 
+    # The target a branch would pick from +from+ (as Event#transition_for
+    # does, ignoring guards), as [] or [target]. first(1), not first: a
+    # transition into the nil state must not read as none.
+    def _sm_branch_targets(branch, from, names)
+      requirement = branch.state_requirements.detect { |candidate| candidate[:from].matches?(from) }
+      return [] unless requirement
+
+      requirement[:to].is_a?(LoopbackMatcher) ? [from] : requirement[:to].filter([from] | names).first(1)
+    end
+
     # Whether a callback's from/to requirement admits the expected states. A
     # loopback (same) lands where it left, so without an expected source the
     # source is the target itself.
-    def _sm_state_requirement_matches?(requirement, options)
+    def _sm_state_requirement_matches?(requirement, states)
       loopback = requirement[:to].is_a?(LoopbackMatcher)
-      from = options.key?(:from) ? options[:from] : options[:to]
-      return false if (options.key?(:from) || loopback) && !requirement[:from].matches?(from)
+      from = states.key?(:from) ? states[:from] : states[:to]
+      return false if (states.key?(:from) || loopback) && !requirement[:from].matches?(from)
 
-      !options.key?(:to) || requirement[:to].matches?(options[:to], from: from)
+      !states.key?(:to) || requirement[:to].matches?(states[:to], from: from)
     end
 
     # Whether every expected callable (one or an Array) is among the defined
@@ -756,10 +770,14 @@ module StateMachines
 
       callbacks = machine.callbacks[callback_type] || []
 
-      # Extract expected conditions
-      expected_event = options[:on]
-      expected_from = options[:from]
-      expected_to = options[:to]
+      # Extract expected conditions. States and events resolve to their
+      # canonical names first, since the branch matchers compare those: a raw
+      # 'parked' would never equal :parked, and would pass any all - :parked.
+      # An unknown name raises IndexError.
+      expected_event = machine.events.fetch(options[:on]).name if options.key?(:on)
+      states = options.slice(:from, :to).transform_values { |state| machine.states.fetch(state).name }
+      expected_from = states[:from]
+      expected_to = states[:to]
       expected_method = options[:do]
       expected_if = options[:if]
       expected_unless = options[:unless]
@@ -771,8 +789,8 @@ module StateMachines
         branch = callback.branch
 
         next false if options.key?(:on) && !branch.event_requirement.matches?(expected_event)
-        next false if (options.key?(:from) || options.key?(:to)) &&
-                      branch.state_requirements.none? { |requirement| _sm_state_requirement_matches?(requirement, options) }
+        next false if states.any? &&
+                      branch.state_requirements.none? { |requirement| _sm_state_requirement_matches?(requirement, states) }
         next false if options.key?(:do) && !_sm_includes_callables?(callback.instance_variable_get(:@methods), expected_method)
         next false if options.key?(:if) && !_sm_includes_callables?(branch.if_condition, expected_if)
         next false if options.key?(:unless) && !_sm_includes_callables?(branch.unless_condition, expected_unless)

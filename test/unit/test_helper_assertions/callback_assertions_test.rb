@@ -10,6 +10,7 @@ class CallbackAssertionsTest < StateMachinesTest
       event(:ignite) { transition parked: :idling }
       event(:crash) { transition idling: :parked }
       event(:wait) { transition all => same }
+      state nil
 
       before_transition any => :idling, do: :warm_up
       before_transition all - :parked => :parked, do: :cool_down
@@ -80,5 +81,38 @@ class CallbackAssertionsTest < StateMachinesTest
 
   def test_array_conditions_do_not_match_an_absent_member
     assert_assertion_fails { assert_after_transition(@machine, on: :ignite, do: :honk, if: :hungry?) }
+  end
+end
+
+class CallbackAssertionsNameResolutionTest < StateMachinesTest
+  class Mover
+    state_machine :state, initial: :parked do
+      event(:go) { transition parked: :moving }
+      event(:halt) { transition moving: :parked }
+
+      before_transition all - :parked => :moving, do: :audit
+      before_transition parked: :moving, on: :go, do: :log
+    end
+  end
+
+  def setup
+    @machine = Mover.state_machine
+  end
+
+  def test_string_state_names_resolve_before_a_blacklist
+    error = assert_raises(Minitest::Assertion) { assert_before_transition(@machine, from: 'parked', to: :moving, do: :audit) }
+    assert_match(/from: :parked/, error.message)
+  end
+
+  def test_string_names_resolve_before_a_whitelist
+    assert_before_transition(@machine, from: 'parked', to: 'moving', on: 'go', do: :log)
+  end
+
+  def test_unknown_state_raises
+    assert_raises(IndexError) { assert_before_transition(@machine, from: :flying, do: :log) }
+  end
+
+  def test_unknown_event_raises
+    assert_raises(IndexError) { assert_before_transition(@machine, on: :fly, do: :log) }
   end
 end
