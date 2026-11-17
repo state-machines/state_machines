@@ -56,6 +56,8 @@ module StateMachines
       @transient = false
       @paused_fiber = nil
       @resuming = false
+      @continuation_block = nil
+      @paused_context = @resume_context = @resume_error = nil
       @fiber_thread_storage = nil
 
       @event = machine.events.fetch(event)
@@ -210,7 +212,7 @@ module StateMachines
     #
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
-    def run_callbacks(options = {}, &)
+    def run_callbacks(options = {}, &block)
       options = { before: true, after: true }.merge(options)
 
       # If we have a paused fiber and we're not trying to resume (after: false),
@@ -223,20 +225,24 @@ module StateMachines
 
       # Check if we're resuming from a pause
       if @paused_fiber&.alive? && options[:after]
-        # The continuation (the action) runs here, on the caller's fiber, and
-        # the paused fiber is resumed only to finish the around callbacks it
-        # holds, which then see the action's outcome.  This holds with
-        # fiber: false too (ActiveRecord's save after an explicit valid?):
-        # skipping the resume there dropped the action and ran the after
-        # callbacks on the stale success of the pause.  Without a block,
-        # @success is the one preserved from the pause.
-        run_continuation(&) if block_given?
-        halted = pausable { true }
+        # The continuation (the action) runs once, where the unpaused path
+        # would run it: inside the paused fiber, with the context the around
+        # callbacks set and their unwinding on an exception.  With
+        # fiber: false (ActiveRecord's save after an explicit valid?) it may
+        # not run in another fiber, so it runs here with that context bridged
+        # (see #resume_on_caller).  Without a block, @success is the one
+        # preserved from the pause.
+        halted = if options[:fiber] == false
+                   resume_on_caller(&block)
+                 else
+                   @continuation_block = block if block_given?
+                   pausable { true }
+                 end
       else
         @success = false
         # For normal execution (not pause/resume), default to success
         # The action block will override this if needed
-        halted = pausable(pausable_options) { before(options[:after], &) } if options[:before]
+        halted = pausable(pausable_options) { before(options[:after], &block) } if options[:before]
       end
 
       # After callbacks are only run if:
@@ -355,11 +361,11 @@ module StateMachines
     # Returns true if the transition was successfully resumed and completed,
     # false if there was no paused fiber, and raises an exception if the
     # transition was halted.
-    def resume!(&)
+    def resume!(&block)
       return false unless paused?
 
-      # The continuation runs here, then the fiber finishes the arounds
-      run_continuation(&) if block_given?
+      # The continuation runs inside the resumed fiber, as in run_callbacks
+      @continuation_block = block if block_given?
       !pausable { true }
     end
 
@@ -378,12 +384,44 @@ module StateMachines
 
     private
 
-    # Runs a paused transition's continuation (its action) on the caller's
-    # fiber and records its outcome for the around callbacks still paused
+    # Records a continuation's outcome for the around callbacks still paused
     def run_continuation
       action = { success: true }.merge(yield)
       @result = action[:result]
       @success = action[:success]
+    end
+
+    # Resumes a paused transition without running its continuation in another
+    # fiber.  The action runs on the caller with the paused fiber's context
+    # (Thread.current and Fiber storage as the around callbacks left them),
+    # and the fiber gets the context the action left, plus its exception if
+    # it raised, so the around callbacks see the same state, and unwind the
+    # same way, as when nothing paused.
+    def resume_on_caller(&block)
+      if block_given?
+        apply_fiber_context(@paused_context)
+        begin
+          run_continuation(&block)
+        rescue StandardError => e
+          @resume_error = e
+        end
+        @resume_context = capture_fiber_context
+      end
+      pausable { true }
+    end
+
+    # Thread.current (fiber-local) and Fiber storage of the current fiber
+    def capture_fiber_context
+      [capture_thread_locals, Fiber.current.storage || {}]
+    end
+
+    # Sets the current fiber's Thread.current and Fiber storage values
+    def apply_fiber_context(context)
+      return unless context
+
+      locals, storage = context
+      locals.each { |key, value| Thread.current[key] = value }
+      storage.each { |key, value| Fiber[key] = value }
     end
 
     # Runs a block that may get paused.  If the block doesn't pause, then
@@ -512,8 +550,29 @@ module StateMachines
       current_fiber = Fiber.current
       return unless current_fiber.respond_to?(:state_machine_fiber_pausable) && current_fiber.state_machine_fiber_pausable
 
-      # Resumed by run_callbacks once the action has run on the caller's fiber
+      # Snapshot for a resume that runs the action outside this fiber
+      @paused_context = capture_fiber_context
       Fiber.yield
+
+      # Resumed after the action ran on the caller (fiber: false): take back
+      # the context it left, and raise its exception here, inside the around
+      # callbacks, so they unwind as they would without a pause
+      if @resume_context || @resume_error
+        apply_fiber_context(@resume_context)
+        error = @resume_error
+        @paused_context = @resume_context = @resume_error = nil
+        raise error if error
+
+        return
+      end
+
+      # When we resume from the pause, execute the continuation block if present
+      return unless @continuation_block && !@result
+
+      action = { success: true }.merge(@continuation_block.call)
+      @result = action[:result]
+      @success = action[:success]
+      @continuation_block = nil
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only
