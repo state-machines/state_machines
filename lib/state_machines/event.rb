@@ -144,9 +144,11 @@ module StateMachines
       # select, not slice: the order the callbacks were written is their order
       given = options.select { |key, _| BRANCH_CALLBACK_TYPES.include?(key) } # rubocop:disable Style/HashSlice
       options = options.except(*BRANCH_CALLBACK_TYPES)
-      # Only callback keys: that can only be the old `transition after: :x`,
-      # a transition from a state named :after
-      raise reserved_key_error(*given.first) if options.empty?
+      # Callback keys are always callbacks.  Without any state requirement left
+      # (only guards and/or callbacks), the transition reads as the old
+      # `transition after: :x` (from a state named :after), so refuse it rather
+      # than silently turning it into an all => all branch
+      raise reserved_key_error(*given.first) if given.any? && (options.keys - NON_STATE_KEYS).empty?
 
       callbacks = given.map do |type, callables|
         assert_branch_callback!(type, callables)
@@ -401,17 +403,17 @@ module StateMachines
     BRANCH_CALLBACK_TYPES = %i[before around after].freeze
     private_constant :BRANCH_CALLBACK_TYPES
 
+    # Transition options that are not state requirements (the event and guards)
+    NON_STATE_KEYS = %i[on except_on if unless if_state unless_state if_all_states unless_all_states if_any_state unless_any_state].freeze
+    private_constant :NON_STATE_KEYS
+
     private
 
-    # Refuses a branch callback that cannot be one: a state matcher, nil, or
-    # a name of a known state are what +transition before: :parked+ meant
-    # before these keys were reserved, so say how to write that transition
+    # Checks a branch callback's value by type only, so the outcome never
+    # depends on which states exist or were declared first
     def assert_branch_callback!(type, callables)
       values = callables.is_a?(Array) ? callables : [callables]
-      state_like = values.empty? || values.any? do |value|
-        value.nil? || value.is_a?(Matcher) || ((value.is_a?(Symbol) || value.is_a?(String)) && machine.states[value])
-      end
-      raise reserved_key_error(type, callables) if state_like
+      raise ArgumentError, "#{type}: needs at least one method name, Proc or Method" if values.empty?
 
       invalid = values.reject { |value| value.is_a?(Symbol) || value.is_a?(String) || value.is_a?(Proc) || value.is_a?(Method) }
       return if invalid.empty?

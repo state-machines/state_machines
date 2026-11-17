@@ -87,10 +87,15 @@ module StateMachines
     #     end
     #   end
     #
+    # Branch callbacks (<tt>:before</tt>, <tt>:around</tt>, <tt>:after</tt>)
+    # work as in StateMachines::Event#transition, e.g.
+    # <tt>transition to: :idling, on: :ignite, after: :log_ignition</tt>.
+    #
     # See StateMachines::Machine#transition for a description of the possible
     # configurations for defining transitions.
     def transition(options)
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :on, :if, :unless)
+      # :do is let through so Event#transition explains it (use :after)
+      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :on, :if, :unless, :before, :around, :after, :do)
       raise ArgumentError, 'Must specify :on event' unless options[:on]
       raise ArgumentError, 'Must specify either :to or :from state' unless !options[:to] ^ !options[:from]
 

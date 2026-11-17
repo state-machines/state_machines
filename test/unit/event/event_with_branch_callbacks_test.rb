@@ -203,19 +203,37 @@ class EventWithReservedTransitionKeysTest < StateMachinesTest
                  'to transition from a state named :after, write `transition from: :after, to: :parked`', error.message
   end
 
-  def test_should_explain_a_known_state_as_callback
-    error = assert_raises(ArgumentError) do
-      define do
-        state :idling
-        event(:ignite) { transition parked: :idling, before: :idling }
-      end
-    end
-    assert_match(/write `transition from: :before, to: :idling`/, error.message)
+  def test_should_explain_callbacks_with_only_guards
+    error = assert_raises(ArgumentError) { define { event(:ignite) { transition after: :finish, if: :okay? } } }
+    assert_match(/write `transition from: :after, to: :finish`/, error.message)
   end
 
-  def test_should_explain_a_state_matcher
+  def test_should_read_a_callback_naming_a_state_as_a_callback
+    machine = define do
+      state :audit
+      event(:ignite) { transition from: :parked, to: :idling, after: :audit }
+    end
+
+    assert_equal [[:audit]], machine.events[:ignite].branches.first.callbacks.map(&:callables)
+  end
+
+  def test_should_not_depend_on_state_declaration_order
+    machine = define do
+      event(:ignite) { transition parked: :idling, after: :audit }
+      state :audit
+    end
+
+    assert_equal [[:audit]], machine.events[:ignite].branches.first.callbacks.map(&:callables)
+  end
+
+  def test_should_refuse_a_state_matcher_as_callback
     error = assert_raises(ArgumentError) { define { event(:ignite) { transition parked: :idling, around: same } } }
-    assert_match(/write `transition from: :around, to: same`/, error.message)
+    assert_match(/around: takes method names/, error.message)
+  end
+
+  def test_should_refuse_an_empty_callback_list
+    error = assert_raises(ArgumentError) { define { event(:ignite) { transition parked: :idling, after: [] } } }
+    assert_equal 'after: needs at least one method name, Proc or Method', error.message
   end
 
   def test_should_refuse_other_values
@@ -258,5 +276,47 @@ class EventWithBranchCallbackAssertionsTest < StateMachinesTest
 
   def test_should_keep_types_apart
     assert_raises(Minitest::Assertion) { assert_after_transition(@machine, on: :ignite, do: :check) }
+  end
+end
+
+class StateContextWithBranchCallbacksTest < StateMachinesTest
+  def setup
+    @klass = Class.new do
+      attr_reader :log
+
+      def initialize
+        @log = []
+        super
+      end
+
+      def log_ignition = @log << :ignition
+      def check = @log << :check
+
+      state_machine(initial: :parked) do
+        state :parked do
+          transition to: :idling, on: :ignite, before: :check, after: :log_ignition
+        end
+      end
+    end
+  end
+
+  def test_should_run_them_for_the_state_transition
+    vehicle = @klass.new
+    vehicle.ignite
+
+    assert_equal %i[check ignition], vehicle.log
+  end
+
+  def test_should_keep_them_on_the_branch
+    branch = @klass.state_machine.events[:ignite].branches.first
+
+    assert_equal %i[before after], branch.callbacks.map(&:type)
+  end
+
+  def test_should_explain_do
+    error = assert_raises(ArgumentError) do
+      Class.new { state_machine(initial: :parked) { state(:parked) { transition to: :idling, on: :ignite, do: :log } } }
+    end
+    assert_equal 'transition does not take do:; use after: (or before:/around:)', error.message
   end
 end
