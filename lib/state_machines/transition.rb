@@ -215,13 +215,16 @@ module StateMachines
 
       if options[:before]
         @success = false
-        halted = !catch(:halt) do
-          before(&)
-          true
+        begin
+          halted = !catch(:halt) do
+            before(&)
+            true
+          end
+        ensure
+          # However it ends, the full run consumed any preview: the
+          # transition is now like one never previewed after the same run
+          @previewed = nil
         end
-        # The full run consumed any preview: the transition is now like one
-        # never previewed (a collection resets it before running it again)
-        @previewed = nil
       end
 
       # After callbacks are only run if:
@@ -344,14 +347,19 @@ module StateMachines
     # lets a validation in the block see what the full run's befores set, so
     # it agrees with the full run.  Returns false if it halted, including a
     # halt from the block.
+    #
+    # Preview bookkeeping (which befores ran) exists only from a successful
+    # preview to the end of its full run: it is built aside and kept only if
+    # this preview succeeds, so a preview that halts, fails or raises leaves
+    # the transition as it found it, minus any earlier preview.
     def preview # rubocop:disable Naming/PredicateMethod -- returns whether the befores ran, as run_callbacks does
-      @previewed ||= {}.compare_by_identity
+      previewed = @previewed ? @previewed.dup : {}.compare_by_identity
+      @previewed = nil
       halted = !catch(:halt) do
         before_callbacks.each do |callback|
-          next if callback.type == :around || @previewed.key?(callback)
+          next if callback.type == :around || previewed.key?(callback)
 
-          # Recorded before running, so a halting callback is not run again
-          @previewed[callback] = true
+          previewed[callback] = true
           callback.call(object, context, self)
         end
 
@@ -365,9 +373,15 @@ module StateMachines
       end
       @success = false if halted
 
-      # A preview that halts or fails is a failed transition: its failure
-      # callbacks run, as in a full run (after callbacks only follow success)
-      after unless @success
+      if @success
+        @previewed = previewed
+      else
+        # A preview that halts or fails is a failed transition: its failure
+        # callbacks run, as in a full run, without marking the after phase
+        # as done (the full run that may follow runs its own)
+        after
+        @after_run = false
+      end
       !halted
     end
 
