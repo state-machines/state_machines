@@ -225,8 +225,15 @@ module StateMachines
         context.send(:alias_method, context_name, method_name)
         context.send(:define_method, method_name) do |*args, **kwargs, &block|
           state = self.class.state_machine(machine_name).states.fetch(state_name)
-          state.call(self, context_name, args: args, kwargs: kwargs, method_name: method_name,
-                                         method_missing: -> { super(*args, **kwargs, &block) }, &block)
+          # Out of state: hand over to whatever is defined above this context,
+          # decided up front rather than by rescuing a NoMethodError, which
+          # could come from deeper in the stack (another receiver)
+          fallback = lambda do
+            return super(*args, **kwargs, &block) if StateMachines::State.fallback?(self, context, method_name)
+
+            raise state.invalid_context(self, method_name, args: args, kwargs: kwargs)
+          end
+          state.call(self, context_name, args: args, kwargs: kwargs, method_name: method_name, method_missing: fallback, &block)
         end
         context.send(visibility, method_name) if visibility
       end
@@ -253,29 +260,41 @@ module StateMachines
     # the dispatch options so that no argument of the method can be mistaken
     # for one:
     # * <tt>:method_missing</tt> - Called instead when the object is not in this
-    #   state (e.g. to dispatch to the superclass)
+    #   state (e.g. to dispatch to the superclass); its errors propagate as
+    #   they are.  Without one, the call raises InvalidContext.
     # * <tt>:method_name</tt> - The name reported when no state handles the call
     def call(object, method, args: [], kwargs: {}, method_missing: nil, method_name: method, &)
-      state = machine.states.match!(object)
-
       # include_all: the aliased context method keeps a protected original's
       # visibility, and respond_to? alone would not see it
-      if state == self && object.respond_to?(method, true)
+      if machine.states.match!(object) == self && object.respond_to?(method, true)
         object.send(method, *args, **kwargs, &)
       elsif method_missing
-        # Dispatch to the superclass since the object either isn't in this state
-        # or this state doesn't handle the method
-        begin
-          method_missing.call
-        rescue NoMethodError => e
-          raise unless e.name.to_s == method_name.to_s && e.args == (kwargs.empty? ? args : args + [kwargs])
-
-          # No valid context for this method
-          raise InvalidContext.new(object,
-                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{method_name}",
-                                   method_name, args)
-        end
+        method_missing.call
+      else
+        raise invalid_context(object, method_name, args: args, kwargs: kwargs)
       end
+    end
+
+    # The InvalidContext for calling +method_name+ on +object+ outside this
+    # state.  Its args are what NoMethodError#args would hold: the positional
+    # arguments, then the keywords as a Hash when any were given.
+    def invalid_context(object, method_name, args: [], kwargs: {}) # :nodoc:
+      current = machine.states.match!(object)
+      InvalidContext.new(object,
+                         "State #{current.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{method_name}",
+                         method_name, kwargs.empty? ? args : [*args, kwargs])
+    end
+
+    # Whether a call to +method_name+ that leaves +context+ (a state context
+    # module) has somewhere to go: a definition above that context in the
+    # object's lookup chain (another state's context, an ancestor, a
+    # singleton extension), or a method_missing that claims it through
+    # respond_to_missing?.
+    def self.fallback?(object, context, method_name) # :nodoc:
+      # Kernel#method, in case the object overrides #method (e.g. a request)
+      method = Kernel.instance_method(:method).bind_call(object, method_name)
+      method = method.super_method until method.nil? || method.owner == context
+      !method&.super_method.nil? || object.send(:respond_to_missing?, method_name, true)
     end
 
     def draw(graph, options = {}, io = $stdout)
