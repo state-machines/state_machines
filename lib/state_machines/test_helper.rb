@@ -724,6 +724,30 @@ module StateMachines
       assert false, message
     end
 
+    # Whether a callback's from/to requirement admits the expected states. A
+    # loopback (same) lands where it left, so without an expected source the
+    # source is the target itself.
+    def _sm_state_requirement_matches?(requirement, options)
+      loopback = requirement[:to].is_a?(LoopbackMatcher)
+      from = options.key?(:from) ? options[:from] : options[:to]
+      return false if (options.key?(:from) || loopback) && !requirement[:from].matches?(from)
+
+      !options.key?(:to) || requirement[:to].matches?(options[:to], from: from)
+    end
+
+    # Whether every expected callable (one or an Array) is among the defined
+    # ones. Method names compare as String/Symbol alike; anything else, such as
+    # a lambda, only matches itself.
+    def _sm_includes_callables?(defined, expected)
+      defined = Array(defined)
+      name = ->(value) { value.is_a?(Symbol) || value.is_a?(String) }
+      Array(expected).all? do |wanted|
+        defined.any? do |candidate|
+          name.call(candidate) && name.call(wanted) ? candidate.to_s == wanted.to_s : candidate.equal?(wanted)
+        end
+      end
+    end
+
     # Internal helper for checking transition callbacks
     def _assert_transition_callback(callback_type, machine_or_class, options, message)
       # Get the machine
@@ -740,64 +764,18 @@ module StateMachines
       expected_if = options[:if]
       expected_unless = options[:unless]
 
-      # Find matching callback
+      # Find matching callback. Requirements are checked with the matchers'
+      # own matches?, so all / all - [...] / same behave as they do at runtime,
+      # and an expected nil state is an expectation, not an omission.
       matching_callback = callbacks.find do |callback|
         branch = callback.branch
 
-        # Check event requirement
-        if expected_event
-          event_requirement = branch.event_requirement
-          event_matches = if event_requirement && event_requirement.respond_to?(:values)
-                            event_requirement.values.include?(expected_event)
-                          else
-                            false
-                          end
-          next false unless event_matches
-        end
-
-        # Check state requirements (from/to)
-        if expected_from || expected_to
-          state_matches = false
-          branch.state_requirements.each do |req|
-            from_matches = !expected_from || (req[:from] && req[:from].respond_to?(:values) && req[:from].values.include?(expected_from))
-            to_matches = !expected_to || (req[:to] && req[:to].respond_to?(:values) && req[:to].values.include?(expected_to))
-
-            if from_matches && to_matches
-              state_matches = true
-              break
-            end
-          end
-          next false unless state_matches
-        end
-
-        # Check method requirement
-        if expected_method
-          methods = callback.instance_variable_get(:@methods) || []
-          method_matches = methods.any? do |method|
-            (method.is_a?(Symbol) && method == expected_method) ||
-              (method.is_a?(String) && method.to_sym == expected_method) ||
-              (method.respond_to?(:call) && method.respond_to?(:source_location))
-          end
-          next false unless method_matches
-        end
-
-        # Check if condition
-        if expected_if
-          if_condition = branch.if_condition
-          if_matches = (if_condition.is_a?(Symbol) && if_condition == expected_if) ||
-                       (if_condition.is_a?(String) && if_condition.to_sym == expected_if) ||
-                       if_condition.respond_to?(:call)
-          next false unless if_matches
-        end
-
-        # Check unless condition
-        if expected_unless
-          unless_condition = branch.unless_condition
-          unless_matches = (unless_condition.is_a?(Symbol) && unless_condition == expected_unless) ||
-                           (unless_condition.is_a?(String) && unless_condition.to_sym == expected_unless) ||
-                           unless_condition.respond_to?(:call)
-          next false unless unless_matches
-        end
+        next false if options.key?(:on) && !branch.event_requirement.matches?(expected_event)
+        next false if (options.key?(:from) || options.key?(:to)) &&
+                      branch.state_requirements.none? { |requirement| _sm_state_requirement_matches?(requirement, options) }
+        next false if options.key?(:do) && !_sm_includes_callables?(callback.instance_variable_get(:@methods), expected_method)
+        next false if options.key?(:if) && !_sm_includes_callables?(branch.if_condition, expected_if)
+        next false if options.key?(:unless) && !_sm_includes_callables?(branch.unless_condition, expected_unless)
 
         true
       end
@@ -805,12 +783,12 @@ module StateMachines
       return if matching_callback
 
       expected_parts = []
-      expected_parts << "on: #{expected_event.inspect}" if expected_event
-      expected_parts << "from: #{expected_from.inspect}" if expected_from
-      expected_parts << "to: #{expected_to.inspect}" if expected_to
-      expected_parts << "do: #{expected_method.inspect}" if expected_method
-      expected_parts << "if: #{expected_if.inspect}" if expected_if
-      expected_parts << "unless: #{expected_unless.inspect}" if expected_unless
+      expected_parts << "on: #{expected_event.inspect}" if options.key?(:on)
+      expected_parts << "from: #{expected_from.inspect}" if options.key?(:from)
+      expected_parts << "to: #{expected_to.inspect}" if options.key?(:to)
+      expected_parts << "do: #{expected_method.inspect}" if options.key?(:do)
+      expected_parts << "if: #{expected_if.inspect}" if options.key?(:if)
+      expected_parts << "unless: #{expected_unless.inspect}" if options.key?(:unless)
 
       default_message = "Expected #{callback_type}_transition callback with #{expected_parts.join(', ')} to be defined, but it was not found"
 
