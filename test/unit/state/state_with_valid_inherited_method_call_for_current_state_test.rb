@@ -27,7 +27,7 @@ class StateWithValidInheritedMethodCallForCurrentStateTest < StateMachinesTest
   end
 
   def test_should_be_able_to_call_super
-    assert_equal [1, 2], @state.call(@object, :speed, 1)
+    assert_equal [1, 2], @state.call(@object, :speed, args: [1])
   end
 
   def test_should_allow_redefinition
@@ -37,6 +37,6 @@ class StateWithValidInheritedMethodCallForCurrentStateTest < StateMachinesTest
       end
     end
 
-    assert_equal [1, 3], @state.call(@object, :speed, 1)
+    assert_equal [1, 3], @state.call(@object, :speed, args: [1])
   end
 end

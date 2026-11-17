@@ -221,10 +221,10 @@ module StateMachines
         context_name = context_name_for(method_name)
         protected_method = context.protected_method_defined?(method_name)
         context.send(:alias_method, context_name, method_name)
-        context.send(:define_method, method_name) do |*args, &block|
+        context.send(:define_method, method_name) do |*args, **kwargs, &block|
           state = self.class.state_machine(machine_name).states.fetch(state_name)
-          options = { method_missing: -> { super(*args, &block) }, method_name: method_name }
-          state.call(self, context_name, *(args + [options]), &block)
+          state.call(self, context_name, args: args, kwargs: kwargs, method_name: method_name,
+                                         method_missing: -> { super(*args, **kwargs, &block) }, &block)
         end
         context.send(:protected, method_name) if protected_method
       end
@@ -244,26 +244,31 @@ module StateMachines
     #
     # If the method has never been defined for this state, then a NoMethodError
     # will be raised.
-    def call(object, method, *args, &)
-      options = args.last.is_a?(Hash) ? args.pop : {}
-      options = { method_name: method }.merge(options)
+    #
+    # The method's own arguments come in +args+ and +kwargs+, kept apart from
+    # the dispatch options so that no argument of the method can be mistaken
+    # for one:
+    # * <tt>:method_missing</tt> - Called instead when the object is not in this
+    #   state (e.g. to dispatch to the superclass)
+    # * <tt>:method_name</tt> - The name reported when no state handles the call
+    def call(object, method, args: [], kwargs: {}, method_missing: nil, method_name: method, &)
       state = machine.states.match!(object)
 
       # include_all: the aliased context method keeps a protected original's
       # visibility, and respond_to? alone would not see it
       if state == self && object.respond_to?(method, true)
-        object.send(method, *args, &)
-      elsif (method_missing = options[:method_missing])
+        object.send(method, *args, **kwargs, &)
+      elsif method_missing
         # Dispatch to the superclass since the object either isn't in this state
         # or this state doesn't handle the method
         begin
           method_missing.call
         rescue NoMethodError => e
-          raise unless e.name.to_s == options[:method_name].to_s && e.args == args
+          raise unless e.name.to_s == method_name.to_s && e.args == (kwargs.empty? ? args : args + [kwargs])
 
           # No valid context for this method
           raise InvalidContext.new(object,
-                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{options[:method_name]}")
+                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{method_name}")
         end
       end
     end

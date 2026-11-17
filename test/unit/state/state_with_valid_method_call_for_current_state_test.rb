@@ -22,7 +22,7 @@ class StateWithValidMethodCallForCurrentStateTest < StateMachinesTest
   end
 
   def test_should_pass_arguments_through
-    assert_equal 1, @state.call(@object, :speed, 1, method_missing: -> {})
+    assert_equal 1, @state.call(@object, :speed, args: [1], method_missing: -> {})
   end
 
   def test_should_pass_blocks_through
@@ -30,6 +30,6 @@ class StateWithValidMethodCallForCurrentStateTest < StateMachinesTest
   end
 
   def test_should_pass_both_arguments_and_blocks_through
-    assert_equal [1, 2], @state.call(@object, :speed, 1, method_missing: -> {}) { 2 }
+    assert_equal [1, 2], @state.call(@object, :speed, args: [1], method_missing: -> {}) { 2 }
   end
 end
