@@ -351,6 +351,51 @@ end
 The reader is also available on the event itself:
 `Vehicle.state_machine.events[:park].refusal(vehicle)`.
 
+## Branch Callbacks
+
+A `transition` can carry its own `before:`, `after:` and `around:` callbacks.
+They run only when that transition is the branch chosen for the event, so they
+share its guards without repeating them in an `after_transition`:
+
+```ruby
+class Vehicle
+  state_machine initial: :parked do
+    event :ignite do
+      transition parked: :idling, if: :warm?
+      transition parked: :preheating, after: :start_glow_plugs
+      transition stalled: :idling, before: :check_battery, after: %i[log_restart notify_owner]
+    end
+  end
+end
+```
+
+Each takes what `after_transition`'s `do:` takes: a method name (Symbol or
+String), an Array of them, or a Proc/Method. They are ordinary callbacks:
+`bind_to_object`, the integration's terminator and `throw :halt` behave as for
+`before_transition`/`after_transition`.
+
+They wrap closest to the state change: the machine's `before_transition` and
+`around_transition` callbacks run first, then the branch's `before:`/`around:`
+(in the order written), then the change; then the branch's `after:`, then the
+machine's `after_transition`. A branch `after:` runs only when the transition
+succeeds; there is no branch-level `after_failure` (use `after_failure`).
+`assert_before_transition`/`assert_after_transition` see branch callbacks, matched
+against their branch.
+
+`before`, `after`, `around` and `do` are reserved keys in a transition's hash, like
+`from`, `to`, `if` and `unless`. `do:` is refused, since a branch has three kinds
+of callbacks. A state named `:after` (or `:before`, `:around`) is written with
+`from:`/`to:`:
+
+```ruby
+transition from: :after, to: :parked
+```
+
+The branches keep their callbacks in `Branch#callbacks`
+(`Vehicle.state_machine.events[:ignite].branches.last.callbacks`), as
+`StateMachines::Callback` objects with `#type` and `#callables`, for renderers
+and tooling.
+
 # Coordinated State Management
 
 State machines can coordinate with each other using state guards, allowing transitions to depend on the state of other state machines within the same object. This enables complex system modeling where components are interdependent.

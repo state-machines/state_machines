@@ -37,8 +37,29 @@ module StateMachines
     # * +to+ / +except_to+
     attr_reader :known_states
 
+    # The callbacks scoped to this branch by an event's
+    # <tt>transition ..., before: / after: / around:</tt>, in the order they
+    # were given, as StateMachines::Callback instances (see Callback#type and
+    # Callback#callables).  They run only when this branch is the one selected
+    # for a transition, so this branch's guards apply to them.  Frozen; empty
+    # for branches without callbacks.
+    attr_reader :callbacks
+
+    # Key under which Event#transition hands over the branch callbacks: not a
+    # Symbol, so no state name can collide with it
+    CALLBACKS = Object.new.freeze
+    private_constant :CALLBACKS
+
+    # Builds the options hash for a branch with callbacks (used by Event)
+    def self.options_with_callbacks(options, callbacks) # :nodoc:
+      options.merge(CALLBACKS => callbacks)
+    end
+
     # Creates a new branch
     def initialize(options = {}) # :nodoc:
+      options = options.dup
+      @callbacks = (options.delete(CALLBACKS) || []).freeze
+
       # Build conditionals
       @if_condition = options.delete(:if)
       @unless_condition = options.delete(:unless)

@@ -768,7 +768,18 @@ module StateMachines
       machine = machine_or_class.is_a?(StateMachines::Machine) ? machine_or_class : machine_or_class.state_machine
       raise ArgumentError, 'No state machine found' unless machine
 
-      callbacks = machine.callbacks[callback_type] || []
+      # Each candidate is [callback, branch it is matched against]: a
+      # machine-wide callback has its own branch; a transition's before: /
+      # around: / after: callback is matched against that transition branch
+      # (its event, states and guards).  Before includes around, as the
+      # machine keeps both in one chain.
+      branch_types = callback_type == :before ? %i[before around] : [callback_type]
+      candidates = (machine.callbacks[callback_type] || []).map { |callback| [callback, callback.branch] }
+      machine.events.each do |event|
+        event.branches.each do |branch|
+          branch.callbacks.each { |callback| candidates << [callback, branch] if branch_types.include?(callback.type) }
+        end
+      end
 
       # Extract expected conditions. States and events resolve to their
       # canonical names first, since the branch matchers compare those: a raw
@@ -785,9 +796,7 @@ module StateMachines
       # Find matching callback. Requirements are checked with the matchers'
       # own matches?, so all / all - [...] / same behave as they do at runtime,
       # and an expected nil state is an expectation, not an omission.
-      matching_callback = callbacks.find do |callback|
-        branch = callback.branch
-
+      matching_callback = candidates.find do |(callback, branch)|
         next false if options.key?(:on) && !branch.event_requirement.matches?(expected_event)
         next false if states.any? &&
                       branch.state_requirements.none? { |requirement| _sm_state_requirement_matches?(requirement, states) }

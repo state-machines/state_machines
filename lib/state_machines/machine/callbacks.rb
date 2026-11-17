@@ -316,7 +316,22 @@ module StateMachines
         add_callback(:failure, parsed_options, &)
       end
 
+      # Builds the Callback for a branch's before: / after: / around: (see
+      # Event#transition), configured like the machine's own callbacks
+      def branch_callback(type, callables) # :nodoc:
+        options = { do: callables }
+        terminator = callback_terminator
+        options[:terminator] = terminator if terminator
+        Callback.new(type, options)
+      end
+
       private
+
+      # The terminator for this machine's callbacks; integrations override it
+      # (nil keeps Callback's default)
+      def callback_terminator
+        nil
+      end
 
       def add_transition_callback(type, args, options, &)
         # Extract legacy positional arguments and merge with keyword options

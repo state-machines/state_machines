@@ -121,14 +121,43 @@ module StateMachines
     #
     # See StateMachines::Machine#transition for a description of the possible
     # configurations for defining transitions.
+    #
+    # Branch callbacks:
+    # * <tt>:before</tt>, <tt>:around</tt>, <tt>:after</tt> - Callbacks that
+    #   run only when this branch is the one selected, so its guards apply.
+    #   Each takes what after_transition's +:do+ takes: a method name, an
+    #   Array of them, or a Proc / Method.  They run closest to the state
+    #   change: after the machine's before / around callbacks, in the order
+    #   written, and (+:after+, on success only) before the machine's after
+    #   callbacks.  See StateMachines::Branch#callbacks.
+    #
+    #   transition :parked => :idling, :after => :log_ignition
+    #
+    # These keys, and +:do+ (refused: use +:after+), are reserved: a state
+    # named :after is written <tt>transition from: :after, to: :parked</tt>.
     def transition(options)
       raise ArgumentError, 'Must specify as least one transition requirement' if options.empty?
+      raise ArgumentError, 'transition does not take do:; use after: (or before:/around:)' if options.key?(:do)
+
+      # before: / after: / around: are this branch's callbacks, in the order
+      # given; the keys are reserved, so they are never read as a state
+      # select, not slice: the order the callbacks were written is their order
+      given = options.select { |key, _| BRANCH_CALLBACK_TYPES.include?(key) } # rubocop:disable Style/HashSlice
+      options = options.except(*BRANCH_CALLBACK_TYPES)
+      # Only callback keys: that can only be the old `transition after: :x`,
+      # a transition from a state named :after
+      raise reserved_key_error(*given.first) if options.empty?
+
+      callbacks = given.map do |type, callables|
+        assert_branch_callback!(type, callables)
+        machine.branch_callback(type, callables)
+      end
 
       # Only a certain subset of explicit options are allowed for transition
       # requirements
       StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :except_from, :except_to, :if, :unless, :if_state, :unless_state, :if_all_states, :unless_all_states, :if_any_state, :unless_any_state) if (options.keys - %i[from to on except_from except_to except_on if unless if_state unless_state if_all_states unless_all_states if_any_state unless_any_state]).empty?
 
-      branches << branch = Branch.new(options.merge(on: name))
+      branches << branch = Branch.new(Branch.options_with_callbacks(options.merge(on: name), callbacks))
       @known_states |= branch.known_states
       branch
     end
@@ -174,7 +203,7 @@ module StateMachines
                match[:to].filter(values).first
              end
 
-        return Transition.new(object, machine, name, from, to, !custom_from_state)
+        return Transition.new(object, machine, name, from, to, !custom_from_state, branch: branch)
       end
 
       # No transition matched
@@ -367,6 +396,33 @@ module StateMachines
       machine.define_helper(:instance, "#{qualified_name}!") do |machine, object, *args, **kwargs|
         object.send(qualified_name, *args, **kwargs) || raise(StateMachines::InvalidTransition.new(object, machine, name))
       end
+    end
+    # The keys of a transition's options that hold branch callbacks
+    BRANCH_CALLBACK_TYPES = %i[before around after].freeze
+    private_constant :BRANCH_CALLBACK_TYPES
+
+    private
+
+    # Refuses a branch callback that cannot be one: a state matcher, nil, or
+    # a name of a known state are what +transition before: :parked+ meant
+    # before these keys were reserved, so say how to write that transition
+    def assert_branch_callback!(type, callables)
+      values = callables.is_a?(Array) ? callables : [callables]
+      state_like = values.empty? || values.any? do |value|
+        value.nil? || value.is_a?(Matcher) || ((value.is_a?(Symbol) || value.is_a?(String)) && machine.states[value])
+      end
+      raise reserved_key_error(type, callables) if state_like
+
+      invalid = values.reject { |value| value.is_a?(Symbol) || value.is_a?(String) || value.is_a?(Proc) || value.is_a?(Method) }
+      return if invalid.empty?
+
+      raise ArgumentError, "#{type}: takes method names (Symbol/String), Procs or Methods, not #{invalid.first.inspect}"
+    end
+
+    def reserved_key_error(type, value)
+      to = value.is_a?(Matcher) ? value.description : value.inspect
+      ArgumentError.new("#{type}: is reserved in transition for a branch callback; " \
+                        "to transition from a state named #{type.inspect}, write `transition from: #{type.inspect}, to: #{to}`")
     end
   end
 end

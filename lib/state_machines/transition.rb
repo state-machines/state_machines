@@ -43,10 +43,15 @@ module StateMachines
     # @see StateMachines::Event#refusal for the meaning of each reason
     attr_accessor :refusal
 
+    # The event branch selected for this transition, whose before: / after: /
+    # around: callbacks it runs; nil for a transition not built by an event
+    attr_reader :branch
+
     # Creates a new, specific transition
-    def initialize(object, machine, event, from_name, to_name, read_state = true) # :nodoc:
+    def initialize(object, machine, event, from_name, to_name, read_state = true, branch: nil) # :nodoc:
       @object = object
       @machine = machine
+      @branch = branch
       @args = []
       @transient = false
       @paused_fiber = nil
@@ -298,6 +303,7 @@ module StateMachines
     # the state has already been persisted
     def reset
       @before_run = @persisted = @after_run = false
+      @before_callbacks = nil
       # Kill so ensure blocks in paused callbacks still run (CRuby only:
       # TruffleRuby lacks Fiber#kill, JRuby's doesn't wait for ensure)
       @paused_fiber.kill if RUBY_ENGINE == 'ruby' && @paused_fiber&.alive? && !@paused_fiber.equal?(Fiber.current)
@@ -521,7 +527,7 @@ module StateMachines
     def before(complete = true, index = 0, &)
       return if @before_run
 
-      callback = machine.callbacks[:before][index]
+      callback = before_callbacks[index]
 
       if callback
         # Check if callback matches this transition using branch
@@ -587,8 +593,10 @@ module StateMachines
       @fiber_thread_storage.each { |key, value| Thread.current[key] = value } if @fiber_thread_storage
 
       catch(:halt) do
-        type = @success ? :after : :failure
-        machine.callbacks[type].each { |callback| callback.call(object, context, self) }
+        # A branch's afters run before the machine's, closest to the change;
+        # they run on success only (a branch has no after_failure)
+        callbacks = @success ? branch_callbacks(:after) + machine.callbacks[:after] : machine.callbacks[:failure]
+        callbacks.each { |callback| callback.call(object, context, self) }
       end
 
       @after_run = true
@@ -604,6 +612,18 @@ module StateMachines
     #   transition.context    # => {:on => :ignite, :from => :parked, :to => :idling}
     def context
       @context ||= { on: event, from: from_name, to: to_name }
+    end
+
+    # The before chain: the machine's before / around callbacks, then the
+    # selected branch's, so branch callbacks wrap closest to the state change
+    def before_callbacks
+      @before_callbacks ||= machine.callbacks[:before] + branch_callbacks(:before, :around)
+    end
+
+    def branch_callbacks(*types)
+      return [] unless branch
+
+      branch.callbacks.select { |callback| types.include?(callback.type) }
     end
   end
 end
