@@ -56,7 +56,6 @@ module StateMachines
       @transient = false
       @paused_fiber = nil
       @resuming = false
-      @continuation_block = nil
       @fiber_thread_storage = nil
 
       @event = machine.events.fetch(event)
@@ -211,7 +210,7 @@ module StateMachines
     #
     # This will return true if all before callbacks gets executed.  After
     # callbacks will not have an effect on the result.
-    def run_callbacks(options = {}, &block)
+    def run_callbacks(options = {}, &)
       options = { before: true, after: true }.merge(options)
 
       # If we have a paused fiber and we're not trying to resume (after: false),
@@ -224,16 +223,20 @@ module StateMachines
 
       # Check if we're resuming from a pause
       if @paused_fiber&.alive? && options[:after]
-        # Resume the paused fiber
-        # Don't reset @success when resuming - preserve the state from the pause
-        # Store the block for later execution
-        @continuation_block = block if block_given?
-        halted = pausable(pausable_options) { true }
+        # The continuation (the action) runs here, on the caller's fiber, and
+        # the paused fiber is resumed only to finish the around callbacks it
+        # holds, which then see the action's outcome.  This holds with
+        # fiber: false too (ActiveRecord's save after an explicit valid?):
+        # skipping the resume there dropped the action and ran the after
+        # callbacks on the stale success of the pause.  Without a block,
+        # @success is the one preserved from the pause.
+        run_continuation(&) if block_given?
+        halted = pausable { true }
       else
         @success = false
         # For normal execution (not pause/resume), default to success
         # The action block will override this if needed
-        halted = pausable(pausable_options) { before(options[:after], &block) } if options[:before]
+        halted = pausable(pausable_options) { before(options[:after], &) } if options[:before]
       end
 
       # After callbacks are only run if:
@@ -309,7 +312,6 @@ module StateMachines
       @paused_fiber.kill if RUBY_ENGINE == 'ruby' && @paused_fiber&.alive? && !@paused_fiber.equal?(Fiber.current)
       @paused_fiber = nil
       @resuming = false
-      @continuation_block = nil
       @fiber_thread_storage = nil
     end
 
@@ -353,17 +355,12 @@ module StateMachines
     # Returns true if the transition was successfully resumed and completed,
     # false if there was no paused fiber, and raises an exception if the
     # transition was halted.
-    def resume!(&block)
+    def resume!(&)
       return false unless paused?
 
-      # Store continuation block if provided
-      @continuation_block = block if block_given?
-
-      # Run the pausable block which will resume the fiber
-      halted = pausable { true }
-
-      # Return whether the transition completed successfully
-      !halted
+      # The continuation runs here, then the fiber finishes the arounds
+      run_continuation(&) if block_given?
+      !pausable { true }
     end
 
     # Completes a transition whose before phase has already run by executing
@@ -380,6 +377,14 @@ module StateMachines
     end
 
     private
+
+    # Runs a paused transition's continuation (its action) on the caller's
+    # fiber and records its outcome for the around callbacks still paused
+    def run_continuation
+      action = { success: true }.merge(yield)
+      @result = action[:result]
+      @success = action[:success]
+    end
 
     # Runs a block that may get paused.  If the block doesn't pause, then
     # execution will continue as normal.  If the block gets paused, then it
@@ -507,15 +512,8 @@ module StateMachines
       current_fiber = Fiber.current
       return unless current_fiber.respond_to?(:state_machine_fiber_pausable) && current_fiber.state_machine_fiber_pausable
 
+      # Resumed by run_callbacks once the action has run on the caller's fiber
       Fiber.yield
-
-      # When we resume from the pause, execute the continuation block if present
-      return unless @continuation_block && !@result
-
-      action = { success: true }.merge(@continuation_block.call)
-      @result = action[:result]
-      @success = action[:success]
-      @continuation_block = nil
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only
