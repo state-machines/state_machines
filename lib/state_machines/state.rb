@@ -246,8 +246,8 @@ module StateMachines
     # Calls a method defined in this state's context on the given object.  All
     # arguments and any block will be passed into the method defined.
     #
-    # If the method has never been defined for this state, then a NoMethodError
-    # will be raised.
+    # If the object is not in this state and no other definition handles the
+    # call, StateMachines::InvalidContext (a NoMethodError) is raised.
     #
     # The method's own arguments come in +args+ and +kwargs+, kept apart from
     # the dispatch options so that no argument of the method can be mistaken
@@ -272,7 +272,8 @@ module StateMachines
 
           # No valid context for this method
           raise InvalidContext.new(object,
-                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{method_name}")
+                                   "State #{state.name.inspect} for #{machine.name.inspect} is not a valid context for calling ##{method_name}",
+                                   method_name, args)
         end
       end
     end

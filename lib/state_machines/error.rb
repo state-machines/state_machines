@@ -146,7 +146,18 @@ module StateMachines
     end
   end
 
-  # A method was called in an invalid state context
-  class InvalidContext < Error
+  # A state-specific method was called on an object whose current state does
+  # not define it.  It is a NoMethodError, as documented for state behaviors:
+  # the method does not exist for the object in that state.  #object is the
+  # receiver, as on the other StateMachines errors.
+  class InvalidContext < NoMethodError
+    def initialize(object, message = nil, name = nil, args = []) # :nodoc:
+      super(message, name, args, receiver: object)
+    end
+
+    # The object the method was called on
+    def object
+      receiver
+    end
   end
 end

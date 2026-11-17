@@ -271,14 +271,15 @@ module StateMachines
       # === Invalid behaviors
       #
       # If a specific behavior has not been defined for a state, then a
-      # NoMethodError exception will be raised, indicating that that method would
-      # not normally exist for an object with that state.
+      # StateMachines::InvalidContext, which is a NoMethodError, will be raised,
+      # indicating that that method would not normally exist for an object with
+      # that state.
       #
       # Using the example from before:
       #
       #   vehicle = Vehicle.new
       #   vehicle.state = 'backing_up'
-      #   vehicle.speed               # => NoMethodError: undefined method 'speed' for #<Vehicle:0xb7d296ac> in state "backing_up"
+      #   vehicle.speed               # => StateMachines::InvalidContext: State :backing_up for :state is not a valid context for calling #speed
       #
       # === Using matchers
       #

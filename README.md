@@ -211,7 +211,8 @@ vehicle                         # => #<Vehicle:0xb7cf4eac @state="first_gear", @
 vehicle.fire_state_event(:shift_up) # => #<StateMachines::Transition attribute=:state event=:shift_up ...>
 
 # Call state-driven behavior that's undefined for the state raises a NoMethodError
-vehicle.speed                   # => NoMethodError: super: no superclass method `speed' for #<Vehicle:0xb7cf4eac>
+# (StateMachines::InvalidContext)
+vehicle.speed                   # => StateMachines::InvalidContext: State :second_gear for :state is not a valid context for calling #speed
 vehicle                         # => #<Vehicle:0xb7cf4eac @state="second_gear", @seatbelt_on=true>
 
 # The bang (!) operator can raise exceptions if the event fails
