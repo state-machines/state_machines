@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require_relative 'transition_collection_with_action_hook_base_test'
+require_relative 'transition_collection_with_action_hook_base'
 
-class TransitionCollectionWithActionHookMultipleTest < TransitionCollectionWithActionHookBaseTest
+class TransitionCollectionWithActionHookMultipleTest < StateMachinesTest
+  include TransitionCollectionWithActionHookBase
+
   def setup
     super
 

@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'unit/eval_helper/eval_helpers_base_test'
 
-class EvalHelpersSymbolTest < EvalHelpersBaseTest
+class EvalHelpersSymbolTest < StateMachinesTest
+  include StateMachines::EvalHelpers
+
   def setup
     class << (@object = Object.new)
       def callback

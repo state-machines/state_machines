@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require 'test_helper'
-require 'unit/eval_helper/eval_helpers_base_test'
 
-class EvalHelpersProcTest < EvalHelpersBaseTest
+class EvalHelpersProcTest < StateMachinesTest
+  include StateMachines::EvalHelpers
+
   def setup
     @object = Object.new
     @proc = ->(obj) { obj }

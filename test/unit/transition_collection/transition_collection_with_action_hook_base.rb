@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'test_helper'
-
-class TransitionCollectionWithActionHookBaseTest < StateMachinesTest
+# Shared setup for the TransitionCollection action hook tests
+module TransitionCollectionWithActionHookBase
   def setup
     @superclass = Class.new do
       def save
@@ -30,6 +29,4 @@ class TransitionCollectionWithActionHookBaseTest < StateMachinesTest
 
     @transition = StateMachines::Transition.new(@object, @machine, :ignite, :parked, :idling)
   end
-
-  def default_test; end
 end

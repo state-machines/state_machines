@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class MachineWithOtherStates < StateMachinesTest
+class MachineWithOtherStatesTest < StateMachinesTest
   def setup
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass, initial: :parked)

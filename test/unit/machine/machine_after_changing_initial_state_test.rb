@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class MachineAfterChangingInitialState < StateMachinesTest
+class MachineAfterChangingInitialStateTest < StateMachinesTest
   def setup
     @klass = Class.new
     @machine = StateMachines::Machine.new(@klass, initial: :parked)
@@ -16,7 +16,7 @@ class MachineAfterChangingInitialState < StateMachinesTest
   end
 
   def test_should_include_in_known_states
-    assert_equal(%i[parked idling], @machine.states.map { |state| state.name })
+    assert_equal(%i[parked idling], @machine.states.map(&:name))
   end
 
   def test_should_reset_original_initial_state

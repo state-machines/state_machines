@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class MachineWithInitialStateWithValueAndOwnerDefault < StateMachinesTest
+class MachineWithInitialStateWithValueAndOwnerDefaultTest < StateMachinesTest
   def setup
     @original_stderr = $stderr
     $stderr = StringIO.new
@@ -18,11 +18,11 @@ class MachineWithInitialStateWithValueAndOwnerDefault < StateMachinesTest
     end
   end
 
-  def test_should_not_warn_about_wrong_default
-    assert_equal '', $stderr.string
-  end
-
   def teardown
     $stderr = @original_stderr
+  end
+
+  def test_should_not_warn_about_wrong_default
+    assert_equal '', $stderr.string
   end
 end
