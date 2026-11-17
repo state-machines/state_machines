@@ -99,6 +99,12 @@ class TransitionPreviewedThenRunTest < StateMachinesTest
     assert_equal [:before], @log
   end
 
+  def test_should_run_failure_callbacks_when_the_preview_fails
+    @transition.run_callbacks(after: false) { { success: false } }
+
+    assert_equal %i[before failure], @log
+  end
+
   def test_should_leave_nothing_entered_without_the_full_run
     preview
 

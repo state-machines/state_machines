@@ -332,9 +332,9 @@ module StateMachines
 
     # A preview run: the before callbacks from where the last preview stopped
     # up to the first around callback that applies (not entered: it wraps the
-    # action of the full run), then the block.  Returns false if a before
-    # callback halted.
-    def preview
+    # action of the full run), then the block; on a halt or a failed block,
+    # the failure callbacks.  Returns false if a before callback halted.
+    def preview # rubocop:disable Naming/PredicateMethod -- returns whether the befores ran, as run_callbacks does
       index = @preview_index || 0
       halted = !catch(:halt) do
         while (callback = before_callbacks[index])
@@ -349,13 +349,16 @@ module StateMachines
 
       if halted
         @success = false
-        return false
+      else
+        action = block_given? ? { success: true }.merge(yield) : { success: true }
+        @result = action[:result]
+        @success = action[:success]
       end
 
-      action = block_given? ? { success: true }.merge(yield) : { success: true }
-      @result = action[:result]
-      @success = action[:success]
-      true
+      # A preview that halts or fails is a failed transition: its failure
+      # callbacks run, as in a full run (after callbacks only follow success)
+      after unless @success
+      !halted
     end
 
     # Runs the machine's +before+ callbacks for this transition.  Only
