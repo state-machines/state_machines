@@ -150,14 +150,33 @@ module StateMachines
       _sm_assert(is_final, message || default_message)
     end
 
+    # Assert the set of states the machine's events can lead to from a state,
+    # ignoring guards. Each branch contributes the target it would pick for
+    # +from+ (a loopback contributes +from+ itself); order does not matter.
+    #
+    # @param machine [StateMachines::Machine] The state machine
+    # @param from [Symbol, String, nil] The source state
+    # @param expected_to_states [Array] The expected target states
+    # @param message [String, nil] Custom failure message
+    # @raise [IndexError] if +from+ or an expected state is not a known state
     def assert_sm_possible_transitions(machine, from:, expected_to_states:, message: nil)
-      actual_transitions = machine.events.flat_map do |event|
-        event.branches.select { |branch| branch.known_states.include?(from) }
-             .map(&:to)
-      end.uniq
-      default_message = "Expected transitions from #{from} to #{expected_to_states} but got #{actual_transitions}"
+      from = machine.states.fetch(from).name
+      names = machine.states.map(&:name)
+      expected = expected_to_states.map { |state| machine.states.fetch(state).name }.uniq
+      actual = machine.events.flat_map do |event|
+        event.branches.flat_map do |branch|
+          requirement = branch.state_requirements.detect { |candidate| candidate[:from].matches?(from) }
+          next [] unless requirement
 
-      _sm_assert_equal(expected_to_states.sort, actual_transitions.sort, message || default_message)
+          # Same target resolution as Event#transition_for. first(1), not
+          # first: a transition into the nil state must not read as none.
+          requirement[:to].is_a?(LoopbackMatcher) ? [from] : requirement[:to].filter([from] | names).first(1)
+        end
+      end.uniq
+      by_definition = ->(name) { names.index(name) }
+      default_message = "Expected transitions from #{from.inspect} to #{expected.inspect} but got #{actual.inspect}"
+
+      _sm_assert_equal(expected.sort_by(&by_definition), actual.sort_by(&by_definition), message || default_message)
     end
 
     def refute_sm_transition_allowed(machine, from:, to:, on:, message: nil)
