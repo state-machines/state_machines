@@ -57,8 +57,12 @@ module StateMachines
     def match(object)
       value = machine.read(object, :state)
       indexed = self[value, :value]
-      # A custom :if matcher has the last word, even over an indexed value
-      indexed&.matches?(value) ? indexed : detect { |state| state.matches?(value) }
+      # An index hit is eql?, so it matches by == unless the state has a custom
+      # :if matcher, which has the last word. Each matcher runs at most once:
+      # the scan skips the candidate already asked.
+      return indexed if indexed && (!indexed.matcher || indexed.matches?(value))
+
+      detect { |state| !state.equal?(indexed) && state.matches?(value) }
     end
 
     # Determines the current state of the given object as configured by this

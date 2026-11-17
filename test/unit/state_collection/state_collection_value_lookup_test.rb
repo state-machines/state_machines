@@ -97,3 +97,21 @@ class StateCollectionValueLookupWithMatcherTest < StateMachinesTest
     assert_same @machine.states[:parked], @machine.states.match(@object)
   end
 end
+
+class StateCollectionValueLookupWithStatefulMatcherTest < StateMachinesTest
+  def test_should_ask_an_indexed_matcher_once
+    calls = 0
+    klass = Class.new { attr_accessor :state }
+    machine = StateMachines::Machine.new(klass, initial: :parked) do
+      state :idle, if: lambda { |_value|
+        calls += 1
+        calls == 2
+      }
+    end
+    object = klass.new
+    object.state = 'idle'
+
+    assert_nil machine.states.match(object)
+    assert_equal 1, calls
+  end
+end
