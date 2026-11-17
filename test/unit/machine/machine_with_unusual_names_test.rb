@@ -146,4 +146,30 @@ class StateContextWithUnusualMethodNamesTest < StateMachinesTest
     assert_equal :parked_secret, @object.send(:secret)
   end
 end
+
+class MachineWithProtectedActionTest < StateMachinesTest
+  def setup
+    base = Class.new do
+      protected
+
+      def persist(*)
+        :persisted
+      end
+    end
+    @klass = Class.new(base) { state_machine(initial: :parked, action: :persist) { event(:ignite) { transition parked: :idling } } }
+  end
+
+  def test_should_keep_the_action_protected
+    assert @klass.protected_method_defined?(:persist)
+    assert_raises(NoMethodError) { @klass.new.persist }
+  end
+
+  def test_should_still_run_events_through_it
+    object = @klass.new
+
+    assert object.ignite
+    assert_equal 'idling', object.state
+  end
+end
+
 # rubocop:enable Naming/MethodName
