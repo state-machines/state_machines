@@ -9,7 +9,7 @@ class CallbackWithBoundMethodIdentityTest < StateMachinesTest
     @block = ->(*args) { [self, *args] }
     @line = __LINE__ - 1
     @callback = StateMachines::Callback.new(:before, do: @block, bind_to_object: true)
-    @methods = @callback.instance_variable_get(:@methods)
+    @methods = @callback.callables
   end
 
   def test_should_keep_the_users_block
@@ -36,14 +36,14 @@ class CallbackWithBoundMethodIdentityTest < StateMachinesTest
   def test_should_keep_a_symbol_proc_recognisable
     callback = StateMachines::Callback.new(:before, do: :upcase.to_proc, bind_to_object: true)
 
-    assert_match(/\(&:upcase\)/, callback.instance_variable_get(:@methods).first.inspect)
+    assert_match(/\(&:upcase\)/, callback.callables.first.inspect)
   end
 
   def test_should_keep_a_block_given_to_the_callback
     block = proc { :ran }
     callback = StateMachines::Callback.new(:before, bind_to_object: true, &block)
 
-    assert_same block, callback.instance_variable_get(:@methods).first
+    assert_same block, callback.callables.first
   end
 end
 

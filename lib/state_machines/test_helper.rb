@@ -791,7 +791,7 @@ module StateMachines
         next false if options.key?(:on) && !branch.event_requirement.matches?(expected_event)
         next false if states.any? &&
                       branch.state_requirements.none? { |requirement| _sm_state_requirement_matches?(requirement, states) }
-        next false if options.key?(:do) && !_sm_includes_callables?(callback.instance_variable_get(:@methods), expected_method)
+        next false if options.key?(:do) && !_sm_includes_callables?(callback.callables, expected_method)
         next false if options.key?(:if) && !_sm_includes_callables?(branch.if_condition, expected_if)
         next false if options.key?(:unless) && !_sm_includes_callables?(branch.unless_condition, expected_unless)
 

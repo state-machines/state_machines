@@ -108,6 +108,18 @@ module StateMachines
     # See StateMachines::Branch for more information.
     attr_reader :branch
 
+    # The methods this callback runs, as configured: Symbols / Strings naming
+    # methods on the object, and the user's own Procs and Methods, in order
+    # (positional arguments, then +:do+, then the block).  With
+    # +bind_to_object+ the Procs are still the user's own, so their identity,
+    # +source_location+ and +inspect+ describe the user's code.  Frozen.
+    #
+    #   callback = StateMachines::Callback.new(:before, :log, do: ->(vehicle) {})
+    #   callback.callables  # => [:log, #<Proc:0x...(lambda)>]
+    def callables
+      @methods
+    end
+
     # Creates a new callback that can get called based on the configured
     # options.
     #
@@ -140,6 +152,7 @@ module StateMachines
       bind_to_object = options.delete(:bind_to_object)
       @bound_methods = {}.compare_by_identity
       @methods.each { |method| @bound_methods[method] ||= bound_method(method) if bind_to_object && method.is_a?(Proc) }
+      @methods.freeze
 
       @terminator = options.delete(:terminator)
       @branch = Branch.new(options)
