@@ -382,6 +382,9 @@ succeeds; there is no branch-level `after_failure` (use `after_failure`).
 `assert_before_transition`/`assert_after_transition` see branch callbacks, matched
 against their branch.
 
+A transition takes its callback chain when it starts: a `before_transition`
+registered while that chain is running applies from the next transition on.
+
 `before`, `after`, `around` and `do` are reserved keys in a transition's hash, like
 `from`, `to`, `if` and `unless`. `do:` is refused, since a branch has three kinds
 of callbacks. A state named `:after` (or `:before`, `:around`) is written with

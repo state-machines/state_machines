@@ -615,7 +615,10 @@ module StateMachines
     end
 
     # The before chain: the machine's before / around callbacks, then the
-    # selected branch's, so branch callbacks wrap closest to the state change
+    # selected branch's, so branch callbacks wrap closest to the state change.
+    # It is taken once per run: a callback registered while the chain runs
+    # (e.g. from inside a before_transition) applies from the next transition,
+    # not to the one in progress, whose chain cannot change under it.
     def before_callbacks
       @before_callbacks ||= machine.callbacks[:before] + branch_callbacks(:before, :around)
     end
