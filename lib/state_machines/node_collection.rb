@@ -4,8 +4,10 @@ require_relative 'options_validator'
 
 module StateMachines
   # Represents a collection of nodes in a state machine, be it events or states.
-  # Nodes will not differentiate between the String and Symbol versions of the
-  # values being indexed.
+  # Lookups treat a key and its string form as the same key (:parked, 'parked',
+  # and 10 / '10' / :'10' for numeric keys).  The one exception is nil: it is
+  # only ever found by nil, since nil.to_s is '' and would otherwise collide
+  # with a node keyed by :"" or ''.
   class NodeCollection
     include Enumerable
 
@@ -29,7 +31,6 @@ module StateMachines
       @indices = @index_names.each_with_object({}) do |name, indices|
         indices[name] = {}
         indices[:"#{name}_to_s"] = {}
-        indices[:"#{name}_to_sym"] = {}
       end
       @default_index = Array(options[:index]).first
       @contexts = []
@@ -146,9 +147,7 @@ module StateMachines
     # If the key cannot be found, then nil will be returned.
     def [](key, index_name = @default_index)
       index(index_name)[key] ||
-        index(:"#{index_name}_to_s")[key.to_s] ||
-        (to_sym?(key) && index(:"#{index_name}_to_sym")[:"#{key}"]) ||
-        nil
+        (key.nil? ? nil : index(:"#{index_name}_to_s")[key.to_s])
     end
 
     # Gets the node indexed by the given key.  By default, this will look up the
@@ -182,20 +181,18 @@ module StateMachines
       node.send(attribute)
     end
 
-    # Adds the given key / node combination to an index, including the string
-    # and symbol versions of the index
+    # Adds the given key / node combination to an index, including its string
+    # version.  A nil key has no string version: nil.to_s is '', which would
+    # make nil and :"" the same key.
     def add_to_index(name, key, node)
       index(name)[key] = node
-      index(:"#{name}_to_s")[key.to_s] = node
-      index(:"#{name}_to_sym")[:"#{key}"] = node if to_sym?(key)
+      index(:"#{name}_to_s")[key.to_s] = node unless key.nil?
     end
 
-    # Removes the given key from an index, including the string and symbol
-    # versions of the index
+    # Removes the given key from an index, including its string version
     def remove_from_index(name, key)
       index(name).delete(key)
-      index(:"#{name}_to_s").delete(key.to_s)
-      index(:"#{name}_to_sym").delete(:"#{key}") if to_sym?(key)
+      index(:"#{name}_to_s").delete(key.to_s) unless key.nil?
     end
 
     # Updates the node for the given index, including the string and symbol
@@ -210,11 +207,6 @@ module StateMachines
 
       remove_from_index(name, old_key)
       add_to_index(name, new_key, node)
-    end
-
-    # Determines whether the given value can be converted to a symbol
-    def to_sym?(value)
-      "#{value}" != ''
     end
 
     # Evaluates the given context for a particular node.  This will only

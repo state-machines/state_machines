@@ -53,9 +53,9 @@ module StateMachines
       end
 
       actual = object.send(name_method)
-      default_message = "Expected #{object.class}##{machine_name} to be #{expected_state}, but was #{actual}"
+      default_message = "Expected #{object.class}##{machine_name} to be #{expected_state.inspect}, but was #{actual.inspect}"
 
-      _sm_assert_equal(expected_state.to_s, actual.to_s, message || default_message)
+      _sm_assert(_sm_same_state?(expected_state, actual), message || default_message)
     end
 
     # Assert that an object can transition via a specific event
@@ -374,7 +374,7 @@ module StateMachines
 
       # Check that transition succeeded
       state_changed = initial_state != final_state
-      correct_final_state = final_state.to_s == expected_state.to_s
+      correct_final_state = _sm_same_state?(expected_state, final_state)
 
       default_message = "Expected sync execution of '#{event}' to change #{machine_name} from '#{initial_state}' to '#{expected_state}', but got '#{final_state}'"
 
@@ -579,6 +579,13 @@ module StateMachines
     alias expect_parallel_refused assert_sm_parallel_refused
 
     private
+
+    # Compares a state name or value with an expected state, treating a
+    # String and its Symbol as equal.  nil only equals nil: comparing by to_s
+    # alone would make the nil state and a state named :"" indistinguishable.
+    def _sm_same_state?(expected, actual)
+      expected.nil? || actual.nil? ? expected.nil? && actual.nil? : expected.to_s == actual.to_s
+    end
 
     # Finds the machine and its event, accepting the plain or the
     # namespace-qualified event name, and raising when either is missing
