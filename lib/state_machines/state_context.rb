@@ -94,8 +94,8 @@ module StateMachines
     # See StateMachines::Machine#transition for a description of the possible
     # configurations for defining transitions.
     def transition(options)
-      # :do is let through so Event#transition explains it (use :after)
-      StateMachines::OptionsValidator.assert_valid_keys!(options, :from, :to, :on, :if, :unless, :before, :around, :after, :do)
+      # :do is not valid, but is let through so Event#transition explains it
+      StateMachines::OptionsValidator.assert_valid_keys!(options.except(:do), :from, :to, :on, :if, :unless, :before, :around, :after)
       raise ArgumentError, 'Must specify :on event' unless options[:on]
       raise ArgumentError, 'Must specify either :to or :from state' unless !options[:to] ^ !options[:from]
 

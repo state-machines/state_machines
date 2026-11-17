@@ -13,22 +13,22 @@ class StateContextTransitionTest < StateMachinesTest
 
   def test_should_not_allow_except_to
     exception = assert_raises(ArgumentError) { @state_context.transition(except_to: :idling) }
-    assert_equal 'Unknown key: :except_to. Valid keys are: :from, :to, :on, :if, :unless', exception.message
+    assert_equal 'Unknown key: :except_to. Valid keys are: :from, :to, :on, :if, :unless, :before, :around, :after', exception.message
   end
 
   def test_should_not_allow_except_from
     exception = assert_raises(ArgumentError) { @state_context.transition(except_from: :idling) }
-    assert_equal 'Unknown key: :except_from. Valid keys are: :from, :to, :on, :if, :unless', exception.message
+    assert_equal 'Unknown key: :except_from. Valid keys are: :from, :to, :on, :if, :unless, :before, :around, :after', exception.message
   end
 
   def test_should_not_allow_implicit_transitions
     exception = assert_raises(ArgumentError) { @state_context.transition(parked: :idling) }
-    assert_equal 'Unknown key: :parked. Valid keys are: :from, :to, :on, :if, :unless', exception.message
+    assert_equal 'Unknown key: :parked. Valid keys are: :from, :to, :on, :if, :unless, :before, :around, :after', exception.message
   end
 
   def test_should_not_allow_except_on
     exception = assert_raises(ArgumentError) { @state_context.transition(except_on: :park) }
-    assert_equal 'Unknown key: :except_on. Valid keys are: :from, :to, :on, :if, :unless', exception.message
+    assert_equal 'Unknown key: :except_on. Valid keys are: :from, :to, :on, :if, :unless, :before, :around, :after', exception.message
   end
 
   def test_should_require_on_event
