@@ -219,14 +219,16 @@ module StateMachines
       state_name = name
       new_methods.each do |(method_name, _method)|
         context_name = context_name_for(method_name)
-        protected_method = context.protected_method_defined?(method_name)
+        visibility = if context.private_method_defined?(method_name) then :private
+                     elsif context.protected_method_defined?(method_name) then :protected
+                     end
         context.send(:alias_method, context_name, method_name)
         context.send(:define_method, method_name) do |*args, **kwargs, &block|
           state = self.class.state_machine(machine_name).states.fetch(state_name)
           state.call(self, context_name, args: args, kwargs: kwargs, method_name: method_name,
                                          method_missing: -> { super(*args, **kwargs, &block) }, &block)
         end
-        context.send(:protected, method_name) if protected_method
+        context.send(visibility, method_name) if visibility
       end
 
       true
@@ -234,8 +236,10 @@ module StateMachines
 
     # The list of methods that have been defined in this state's context
     def context_methods
-      @context.instance_methods.inject({}) do |methods, name|
-        methods.merge(name.to_sym => @context.instance_method(name))
+      # Private ones too: they are as state-specific as public ones, and an
+      # unwrapped private method would run its state body in every state
+      (@context.instance_methods + @context.private_instance_methods).to_h do |name|
+        [name.to_sym, @context.instance_method(name)]
       end
     end
 
